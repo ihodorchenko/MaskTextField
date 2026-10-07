@@ -102,6 +102,43 @@ final class MaskTransformerTests: XCTestCase {
         XCTAssertEqual(mock.text, "__")
     }
 
+    // MARK: - Позиция курсора
+
+    func testDeleteBackwardAtCursorRemovesPrecedingCharacter() {
+        transformer.mask = "dd-dd"
+
+        _ = transformer.onTextInput("1", at: 0)
+        _ = transformer.onTextInput("2", at: 0)
+        _ = transformer.onTextInput("3", at: 0)
+        _ = transformer.onTextInput("4", at: 0)
+
+        XCTAssertEqual(transformer.text, "1234")
+        XCTAssertEqual(mock.text, "12-34")
+
+        // Курсор после "2" (индекс 2 — литерал '-'), удаляем символ перед курсором.
+        transformer.onDeleteBackward(at: 2)
+
+        XCTAssertEqual(transformer.text, "134")
+        XCTAssertEqual(mock.text, "1_-34")
+        XCTAssertEqual(mock.cursorPosition, 1)
+    }
+
+    func testInsertAtCursorFillsPositionAtOrAfterCursor() {
+        transformer.mask = "dddd"
+
+        _ = transformer.onTextInput("1", at: 0)
+        _ = transformer.onTextInput("2", at: 0)
+
+        XCTAssertEqual(mock.text, "12__")
+
+        // Вставка с позиции 3 заполняет позицию 3, а не первую пустую (2).
+        _ = transformer.onTextInput("9", at: 3)
+
+        XCTAssertEqual(mock.text, "12_9")
+        XCTAssertEqual(transformer.text, "129")
+        XCTAssertEqual(mock.cursorPosition, 4)
+    }
+
     // MARK: - Количество вводимых позиций
 
     func testOnlyEnteredCount() {

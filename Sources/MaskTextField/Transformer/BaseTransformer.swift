@@ -47,13 +47,13 @@ open class BaseTransformer {
     }
 
     @discardableResult
-    open func onTextInput(_ text: String) -> Bool {
+    open func onTextInput(_ text: String, at offset: Int = 0) -> Bool {
         // virtual
         self.text = (self.text ?? "") + text
         return true
     }
 
-    open func onDeleteBackward() {
+    open func onDeleteBackward(at offset: Int = Int.max) {
         // virtual
         guard !(self.text ?? "").isEmpty else { return }
         _ = self.text?.removeLast()
