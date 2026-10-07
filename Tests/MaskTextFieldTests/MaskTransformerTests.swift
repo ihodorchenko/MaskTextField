@@ -257,8 +257,8 @@ final class MaskTransformerTests: XCTestCase {
 
 final class SupportUtilitiesTests: XCTestCase {
 
-    func testForwardApplicationOperator() {
-        let formatter = NumberFormatter() => {
+    func testWith() {
+        let formatter = with(NumberFormatter()) {
             $0.numberStyle = .decimal
             $0.decimalSeparator = "."
         }
