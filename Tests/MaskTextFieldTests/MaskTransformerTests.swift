@@ -223,6 +223,26 @@ final class MaskTransformerTests: XCTestCase {
         wait(for: [expectation], timeout: 2.5)
     }
 
+    func testHideCharsTimerCanceledOnMaskChange() {
+        transformer.mask = "dd"
+        transformer.hideChars = true
+        _ = transformer.onTextInput("1") // "1_", запускает таймер скрытия для "1"
+
+        // Смена маски уничтожает старые позиции и их таймеры.
+        transformer.mask = "ddd"
+
+        XCTAssertEqual(mock.text, "___")
+
+        // Спустя больше, чем задержка скрытия, старый таймер не должен
+        // ничего «завеить» в новой маске.
+        let expectation = expectation(description: "stale timer")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+            XCTAssertEqual(self.mock.text, "___")
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 2.5)
+    }
+
     // MARK: - Установка значения без маски
 
     func testSetTextValuePopulatesMask() {

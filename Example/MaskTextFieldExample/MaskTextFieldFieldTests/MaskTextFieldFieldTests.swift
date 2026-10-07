@@ -103,6 +103,19 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertEqual(field.text, "+375 (29) 123-45-67")
     }
 
+    func testPasteStripsInvalidCharacters() {
+        field.maskText = "dd-dd"
+
+        _ = field.textField(
+            field,
+            shouldChangeCharactersIn: NSRange(location: 0, length: 0),
+            replacementString: "1a2b3c4d"
+        )
+
+        XCTAssertEqual(field.textValue, "1234")
+        XCTAssertEqual(field.text, "12-34")
+    }
+
     // MARK: - Удаление
 
     func testBackspaceAtCursorRemovesPrecedingCharacter() {
@@ -208,6 +221,27 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertEqual(delegate.shouldChangeCharactersCalls, 1)
         XCTAssertEqual(field.text, "__")
         XCTAssertEqual(field.textValue, "")
+    }
+
+    // MARK: - Edit actions
+
+    func testResetEditActionsClearsFilter() {
+        // Обеспечиваем, что системный paste разрешён (в буфере есть текст).
+        UIPasteboard.general.string = "test"
+        let pasteSelector = ResponderStandardEditActions.paste.selector
+        let fresh = MaskTextField()
+
+        // Запрещаем paste через фильтр.
+        field.filterEditActions(notAllowed: [.paste])
+        XCTAssertFalse(field.canPerformAction(pasteSelector, withSender: nil))
+
+        field.resetEditActions()
+
+        // После сброса поле ведёт себя как «чистое» (фильтр снят).
+        XCTAssertEqual(
+            field.canPerformAction(pasteSelector, withSender: nil),
+            fresh.canPerformAction(pasteSelector, withSender: nil)
+        )
     }
 
     // MARK: - Helpers
