@@ -129,18 +129,20 @@ public class MaskTransformer: FilterTransformer {
 
     // MARK: - override func
 
-    open override func onDeleteBackward() {
-        self.deleteChar()
-        self.setTextAndCursor()
+    open override func onDeleteBackward(at offset: Int = Int.max) {
+        guard let index = self.removeLastEntered(before: offset) else { return }
+
+        self.setTextAndCursor(cursorPosition: index)
     }
 
-    open override func onTextInput(_ text: String) -> Bool {
+    open override func onTextInput(_ text: String, at offset: Int = 0) -> Bool {
         guard let f = text.first else { return false }
 
-        let result = self.enterChar(f)
-        self.setTextAndCursor()
+        guard let index = self.insert(char: f, at: offset) else { return false }
 
-        return result
+        self.setTextAndCursor(cursorPosition: index + 1)
+
+        return true
     }
 
     open override func onSelectionChanged() {
@@ -219,27 +221,47 @@ public class MaskTransformer: FilterTransformer {
         self.setTextAndCursor()
     }
 
-    private func enterChar(_ char: Character) -> Bool {
-        guard let f = self._maskInfo.first(where: { $0.canEntered && $0.enteredChar == CharInfo.nilChar }) else { return false }
+    /// Вставляет символ в первую пустую вводимую позицию, начиная с `offset`.
+    /// Возвращает индекс позиции либо `nil`, если позиции нет или символ не подходит.
+    private func insert(char: Character, at offset: Int) -> Int? {
+        let start = min(max(offset, 0), self._maskInfo.count)
+        guard start < self._maskInfo.count else { return nil }
 
-        guard f.isValid(char: char) else { return false }
+        for index in start..<self._maskInfo.count {
+            let info = self._maskInfo[index]
+            guard info.canEntered, info.isNilChar else { continue }
 
-        f.enteredChar = char
+            guard info.isValid(char: char) else { return nil }
+            info.enteredChar = char
+            return index
+        }
 
-        return true
+        return nil
     }
 
-    private func deleteChar() {
-        guard let l = self._maskInfo.last(where: { $0.canEntered && $0.enteredChar != CharInfo.nilChar }) else { return }
+    /// Удаляет последнюю заполненную позицию с индексом не больше `offset`.
+    /// Возвращает индекс удалённой позиции либо `nil`, если удалять нечего.
+    private func removeLastEntered(before offset: Int) -> Int? {
+        var index = min(offset, self._maskInfo.count - 1)
+        guard index >= 0 else { return nil }
 
-        l.enteredChar = CharInfo.nilChar
+        while index >= 0 {
+            let info = self._maskInfo[index]
+            if info.canEntered, !info.isNilChar {
+                info.enteredChar = CharInfo.nilChar
+                return index
+            }
+            index -= 1
+        }
+
+        return nil
     }
 
-    private func setTextAndCursor() {
+    private func setTextAndCursor(cursorPosition: Int? = nil) {
         var text: String = ""
         var cursor: Int = 0
 
-        self.getTextAndCursor(&cursor, &text)
+        self.getTextAndCursor(&cursor, &text, cursorPosition: cursorPosition)
 
         guard let control = self.control else { return }
 
@@ -253,7 +275,7 @@ public class MaskTransformer: FilterTransformer {
         control.setCursorPosition(cursor)
     }
 
-    private func getTextAndCursor(_ cursor: inout Int, _ text: inout String) {
+    private func getTextAndCursor(_ cursor: inout Int, _ text: inout String, cursorPosition: Int? = nil) {
         if self.hideChars {
             if let lastEnteredChar = self._maskInfo.last(where: { $0.enteredChar != CharInfo.nilChar }) {
                 self._maskInfo.forEach {
@@ -307,6 +329,11 @@ public class MaskTransformer: FilterTransformer {
 
         if let first = self._maskInfo.firstIndex(where: { $0.canEntered && $0.isNilChar }) {
             cursor = first
+        }
+
+        // Явная позиция курсора после редактирования (вставка/удаление).
+        if let position = cursorPosition {
+            cursor = min(max(position, 0), self._maskInfo.count)
         }
 
         if self.maskMode == .gradualMask {

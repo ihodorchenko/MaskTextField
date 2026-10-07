@@ -39,7 +39,7 @@ open class FilterTransformer: BaseTransformer {
         }
     }
 
-    open override func onTextInput(_ text: String) -> Bool {
+    open override func onTextInput(_ text: String, at offset: Int = 0) -> Bool {
         if text.count != 1 {
             return true
         }
