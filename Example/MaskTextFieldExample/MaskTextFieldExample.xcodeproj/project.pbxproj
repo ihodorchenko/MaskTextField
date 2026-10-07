@@ -8,11 +8,13 @@
 
 /* Begin PBXFileReference section */
 		ACE8A8843076AA5800BBA997 /* MaskTextFieldExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MaskTextFieldExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BEEF000000000000000000A1 /* MaskTextFieldFieldTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MaskTextFieldFieldTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXBuildFile section */
 		FACE0001000000000000000C /* MaskTextField in Frameworks */ = {isa = PBXBuildFile; productRef = FACE0001000000000000000B /* MaskTextField */; };
 		FACE0001000000000000000E /* MaskTextFieldSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = FACE0001000000000000000D /* MaskTextFieldSwiftUI */; };
+		BEEF000000000000000000AA /* MaskTextField in Frameworks */ = {isa = PBXBuildFile; productRef = FACE0001000000000000000B /* MaskTextField */; };
 /* End PBXBuildFile section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -41,9 +43,20 @@
 			path = MaskTextFieldExample;
 			sourceTree = "<group>";
 		};
+		BEEF000000000000000000A2 /* MaskTextFieldFieldTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MaskTextFieldFieldTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		BEEF000000000000000000A4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				BEEF000000000000000000AA /* MaskTextField in Frameworks */,
+			);
+		};
 		ACE8A8813076AA5800BBA997 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
@@ -58,6 +71,7 @@
 			isa = PBXGroup;
 			children = (
 				ACE8A8863076AA5800BBA997 /* MaskTextFieldExample */,
+				BEEF000000000000000000A2 /* MaskTextFieldFieldTests */,
 				ACE8A8853076AA5800BBA997 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -95,6 +109,30 @@
 			productReference = ACE8A8843076AA5800BBA997 /* MaskTextFieldExample.app */;
 			productType = "com.apple.product-type.application";
 		};
+		BEEF000000000000000000A6 /* MaskTextFieldFieldTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BEEF000000000000000000A7 /* Build configuration list for PBXNativeTarget "MaskTextFieldFieldTests" */;
+			buildPhases = (
+				BEEF000000000000000000A3 /* Sources */,
+				BEEF000000000000000000A4 /* Frameworks */,
+				BEEF000000000000000000A5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BEEF000000000000000000AB /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				BEEF000000000000000000A2 /* MaskTextFieldFieldTests */,
+			);
+			name = MaskTextFieldFieldTests;
+			packageProductDependencies = (
+				FACE0001000000000000000B /* MaskTextField */,
+			);
+			productName = MaskTextFieldFieldTests;
+			productReference = BEEF000000000000000000A1 /* MaskTextFieldFieldTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -107,6 +145,10 @@
 				TargetAttributes = {
 					ACE8A8833076AA5800BBA997 = {
 						CreatedOnToolsVersion = 27.0;
+					};
+					BEEF000000000000000000A6 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = ACE8A8833076AA5800BBA997 /* MaskTextFieldExample */;
 					};
 				};
 			};
@@ -128,11 +170,17 @@
 			projectRoot = "";
 			targets = (
 				ACE8A8833076AA5800BBA997 /* MaskTextFieldExample */,
+				BEEF000000000000000000A6 /* MaskTextFieldFieldTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		BEEF000000000000000000A5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
 		ACE8A8823076AA5800BBA997 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
@@ -141,6 +189,11 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		BEEF000000000000000000A3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 		ACE8A8803076AA5800BBA997 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
@@ -347,6 +400,48 @@
 			};
 			name = Release;
 		};
+		BEEF000000000000000000A8 /* Debug configuration for PBXNativeTarget "MaskTextFieldFieldTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.MaskTextFieldExample.MaskTextFieldFieldTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MaskTextFieldExample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MaskTextFieldExample";
+			};
+			name = Debug;
+		};
+		BEEF000000000000000000A9 /* Release configuration for PBXNativeTarget "MaskTextFieldFieldTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.MaskTextFieldExample.MaskTextFieldFieldTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MaskTextFieldExample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MaskTextFieldExample";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -366,7 +461,33 @@
 			);
 			defaultConfigurationName = Release;
 		};
+		BEEF000000000000000000A7 /* Build configuration list for PBXNativeTarget "MaskTextFieldFieldTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BEEF000000000000000000A8 /* Debug configuration for PBXNativeTarget "MaskTextFieldFieldTests" */,
+				BEEF000000000000000000A9 /* Release configuration for PBXNativeTarget "MaskTextFieldFieldTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin PBXTargetDependency section */
+		BEEF000000000000000000AB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = ACE8A8833076AA5800BBA997 /* MaskTextFieldExample */;
+			targetProxy = BEEF000000000000000000AC /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXContainerItemProxy section */
+		BEEF000000000000000000AC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ACE8A87C3076AA5800BBA997 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ACE8A8833076AA5800BBA997;
+			remoteInfo = MaskTextFieldExample;
+		};
+/* End PBXContainerItemProxy section */
 	};
 	rootObject = ACE8A87C3076AA5800BBA997 /* Project object */;
 	validationLevel = 1;

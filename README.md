@@ -171,11 +171,22 @@ The project already references the local package (`relativePath = ../..`).
 
 ## Tests
 
+Package-level tests (transformer logic, run without a host app):
+
 ```sh
 xcodebuild -scheme MaskTextField-Package \
   -destination 'platform=iOS Simulator,name=iPhone 16' \
   test
 ```
 
+Hosted field tests (`MaskTextField` integration, run inside the example app):
+
+```sh
+xcodebuild -project Example/MaskTextFieldExample/MaskTextFieldExample.xcodeproj \
+  -scheme MaskTextFieldExample \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  test
+```
+
 Tests cover mask rendering, input/deletion, rejection of invalid characters,
-display modes, and character veiling on focus loss.
+display modes, character veiling on focus loss, and cursor positioning.
