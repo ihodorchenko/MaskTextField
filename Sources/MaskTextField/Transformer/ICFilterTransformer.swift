@@ -35,7 +35,7 @@ open class ICFilterTransformer: ICBaseTransformer {
             var s = value.filter { control.check(char: $0) }
             s = control.correct(string: s)
             super.text = s
-            control.selectedTextRange = control.textRange(from: control.endOfDocument, to: control.endOfDocument)
+            control.setCursorPosition(s.count)
         }
     }
 

@@ -1,8 +1,9 @@
-import UIKit
+import Foundation
 @testable import MaskTextField
 
 /// Минимальная реализация `ICMaskTextFieldProtocol` для юнит-тестов трансформеров.
-/// Не использует реальный `UITextField`, поэтому тесты выполняются быстро и детерминированно.
+/// Не зависит от UIKit и не использует реальный `UITextField`, поэтому тесты
+/// выполняются быстро и детерминированно.
 final class MockMaskTextField: ICMaskTextFieldProtocol {
     var text: String?
     var culture: NumberFormatter = {
@@ -13,23 +14,14 @@ final class MockMaskTextField: ICMaskTextFieldProtocol {
         return f
     }()
 
-    var selectedTextRange: UITextRange?
-
-    private let begin = UITextPosition()
-    private let end = UITextPosition()
+    /// Последняя позиция курсора, запрошенная трансформером.
+    private(set) var cursorPosition: Int = 0
 
     func check(char: Character) -> Bool { true }
     func check(string: String) -> Bool { true }
     func correct(string: String) -> String { string }
 
-    func textRange(from fromPosition: UITextPosition, to toPosition: UITextPosition) -> UITextRange? {
-        UITextRange()
+    func setCursorPosition(_ offset: Int) {
+        cursorPosition = offset
     }
-
-    func position(from position: UITextPosition, offset: Int) -> UITextPosition? {
-        UITextPosition()
-    }
-
-    var beginningOfDocument: UITextPosition { begin }
-    var endOfDocument: UITextPosition { end }
 }
