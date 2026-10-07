@@ -12,6 +12,7 @@
 
 /* Begin PBXBuildFile section */
 		FACE0001000000000000000C /* MaskTextField in Frameworks */ = {isa = PBXBuildFile; productRef = FACE0001000000000000000B /* MaskTextField */; };
+		FACE0001000000000000000E /* MaskTextFieldSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = FACE0001000000000000000D /* MaskTextFieldSwiftUI */; };
 /* End PBXBuildFile section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -26,6 +27,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FACE0001000000000000000A /* XCLocalSwiftPackageReference "MaskTextField" */;
 			productName = MaskTextField;
+		};
+		FACE0001000000000000000D /* MaskTextFieldSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FACE0001000000000000000A /* XCLocalSwiftPackageReference "MaskTextField" */;
+			productName = MaskTextFieldSwiftUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 
@@ -42,6 +48,7 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				FACE0001000000000000000C /* MaskTextField in Frameworks */,
+				FACE0001000000000000000E /* MaskTextFieldSwiftUI in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -82,6 +89,7 @@
 			name = MaskTextFieldExample;
 			packageProductDependencies = (
 				FACE0001000000000000000B /* MaskTextField */,
+				FACE0001000000000000000D /* MaskTextFieldSwiftUI */,
 			);
 			productName = MaskTextFieldExample;
 			productReference = ACE8A8843076AA5800BBA997 /* MaskTextFieldExample.app */;

@@ -10,12 +10,21 @@ let package = Package(
         .library(
             name: "MaskTextField",
             targets: ["MaskTextField"]
+        ),
+        .library(
+            name: "MaskTextFieldSwiftUI",
+            targets: ["MaskTextFieldSwiftUI"]
         )
     ],
     targets: [
         .target(
             name: "MaskTextField",
             path: "Sources/MaskTextField"
+        ),
+        .target(
+            name: "MaskTextFieldSwiftUI",
+            dependencies: ["MaskTextField"],
+            path: "Sources/MaskTextFieldSwiftUI"
         ),
         .testTarget(
             name: "MaskTextFieldTests",

@@ -61,6 +61,32 @@ print(field.textValue) // "291234567"
 While editing, the field shows `+375 (29) 123-45-67`; after losing focus it shows
 `+375 (••) •••-••-••`.
 
+## SwiftUI
+
+The `MaskTextFieldSwiftUI` product provides a ready-to-use `MaskedTextField`
+view for SwiftUI:
+
+```swift
+import SwiftUI
+import MaskTextFieldSwiftUI
+
+struct MyView: View {
+    @State private var phone = ""
+
+    var body: some View {
+        MaskedTextField(
+            mask: "+375 (dd) ddd-dd-dd",
+            maskLostFocus: "+375 (^d^d) ^d^d^d-^d^d-^d^d",
+            keyboardType: .numberPad,
+            textValue: $phone
+        )
+    }
+}
+```
+
+Add the `MaskTextFieldSwiftUI` product to your target in Xcode, or via
+`.product(name: "MaskTextFieldSwiftUI", package: "MaskTextField")` in `Package.swift`.
+
 ## Mask syntax
 
 A mask is a string where special characters define editable positions and all
@@ -146,7 +172,7 @@ The project already references the local package (`relativePath = ../..`).
 ## Tests
 
 ```sh
-xcodebuild -scheme MaskTextField \
+xcodebuild -scheme MaskTextField-Package \
   -destination 'platform=iOS Simulator,name=iPhone 16' \
   test
 ```
