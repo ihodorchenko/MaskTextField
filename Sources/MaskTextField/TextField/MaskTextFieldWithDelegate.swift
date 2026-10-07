@@ -18,11 +18,11 @@ extension MaskTextField: UITextFieldDelegate {
         }
 
         if range.length == 1 && string.isEmpty {
-            self._transformer.onDeleteBackward(at: range.location)
+            self._transformer.onDeleteBackward(at: (self.text ?? "").characterIndex(utf16Offset: range.location))
             return false
         }
 
-        self._transformer.onTextInput(string, at: range.location)
+        self._transformer.onTextInput(string, at: (self.text ?? "").characterIndex(utf16Offset: range.location))
         return false
     }
 
