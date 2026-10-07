@@ -64,6 +64,24 @@ public class MaskTransformer: FilterTransformer {
         self._onlyEnteredCount
     }
 
+    /// Нормализует вставляемую строку: оставляет только символы, допустимые
+    /// на вводимых позициях, и обрезает до их количества (при вставке
+    /// используются последние символы).
+    open override func normalizedValue(from value: String) -> String {
+        let entered = self._maskInfo.filter { $0.canEntered }
+        guard !entered.isEmpty else { return "" }
+
+        let filtered = value.filter { char in
+            entered.contains { $0.isValid(char: char) }
+        }
+
+        let count = self.onlyEnteredCount
+        if filtered.count > count {
+            return filtered.substring(start: filtered.count - count, length: count)
+        }
+        return filtered
+    }
+
     override open var text: String? {
         get {
             self._maskInfo.reduce(into: "") { result, info in

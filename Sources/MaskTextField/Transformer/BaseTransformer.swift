@@ -26,6 +26,12 @@ open class BaseTransformer {
         return 0
     }
 
+    /// Нормализует строку для вставки. Для поля без маски возвращает строку
+    /// без изменений; подклассы могут переопределить (например, снять маску).
+    open func normalizedValue(from value: String) -> String {
+        return value
+    }
+
     // MARK: - func
 
     open func onGotFocus() {

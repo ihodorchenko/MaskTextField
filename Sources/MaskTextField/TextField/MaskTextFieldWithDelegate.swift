@@ -7,16 +7,7 @@ extension MaskTextField: UITextFieldDelegate {
         defer { self.notification() }
 
         if string.count > 1 {
-            var newString = self.correct(string: string)
-
-            if !newString.isEmpty {
-                let onlyEnteredCount: Int = self._transformer.onlyEnteredCount
-
-                newString = newString.count < onlyEnteredCount ? newString :
-                newString.substring(start: newString.count - onlyEnteredCount, length: onlyEnteredCount)
-            }
-
-            self.textValue = newString
+            self.textValue = self._transformer.normalizedValue(from: self.correct(string: string))
 
             return false
         }
