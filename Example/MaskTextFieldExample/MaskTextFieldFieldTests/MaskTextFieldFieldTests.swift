@@ -122,6 +122,18 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertEqual(field.text, "1_-34")
     }
 
+    func testDeleteBackwardKeepsMaskStateInSync() {
+        field.maskText = "dd-dd"
+        field.textValue = "1234" // "12-34"
+
+        // Прямой вызов (аппаратная клавиатура/меню) не должен разсинхронизировать
+        // состояние маски: удаление обязано идти через трансформер.
+        field.deleteBackward()
+
+        XCTAssertEqual(field.textValue, "123")
+        XCTAssertEqual(field.text, "12-3_")
+    }
+
     // MARK: - Курсор
 
     func testCursorAdvancesAfterTyping() {

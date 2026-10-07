@@ -30,7 +30,7 @@ extension MaskTextField: UITextFieldDelegate {
         return false
     }
 
-    private func notification() {
+    func notification() {
         NotificationCenter.default.post(name: UITextField.textDidChangeNotification, object: self, userInfo: nil)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {

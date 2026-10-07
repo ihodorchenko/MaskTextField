@@ -172,9 +172,16 @@ public class MaskTextField: UITextField {
     // MARK: - clear text
 
     public override func deleteBackward() {
-        super.deleteBackward()
+        // Удаление обязано идти через трансформер: `super.deleteBackward()`
+        // удаляет символ из отображаемого текста напрямую, разсинхронизируя
+        // состояние маски (`_maskInfo`).
+        let start = self.selectedTextRange?.start ?? self.endOfDocument
+        let utf16Offset = self.offset(from: self.beginningOfDocument, to: start)
+        guard utf16Offset > 0 else { return }
 
+        self._transformer.onDeleteBackward(at: (self.text ?? "").characterIndex(utf16Offset: utf16Offset))
         self.deleteBackwardPublisher = ()
+        self.notification()
     }
 
     // MARK: - edit menu
