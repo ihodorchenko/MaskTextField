@@ -472,7 +472,7 @@ extension MaskTransformer {
             }
         }
 
-        public var veiledMaskChar: Character = CharInfo.nilChar
+        public var veiledMaskChar: Character = MaskTransformer.hideChar
         public var hiddenChar: Bool = false
         public var veiledChar: Bool = false
 
