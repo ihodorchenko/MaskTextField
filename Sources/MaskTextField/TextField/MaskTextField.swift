@@ -204,7 +204,10 @@ public class MaskTextField: UITextField {
         filterEditActions(actions: notAllowed, allowed: false)
     }
 
-    public func resetEditActions() { editActions = nil }
+    public func resetEditActions() {
+        editActions = nil
+        filterEditActions = nil
+    }
 
     public override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         if let actions = self.editActions {
