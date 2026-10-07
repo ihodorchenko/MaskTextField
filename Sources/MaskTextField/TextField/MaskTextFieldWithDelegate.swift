@@ -33,10 +33,8 @@ extension MaskTextField: UITextFieldDelegate {
     func notification() {
         NotificationCenter.default.post(name: UITextField.textDidChangeNotification, object: self, userInfo: nil)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-            self.sendActions(for: .valueChanged)
-            self.sendActions(for: .editingChanged)
-        }
+        self.sendActions(for: .valueChanged)
+        self.sendActions(for: .editingChanged)
     }
 
     public func textFieldDidBeginEditing(_ textField: UITextField) {
