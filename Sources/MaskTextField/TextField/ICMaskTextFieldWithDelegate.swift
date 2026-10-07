@@ -47,9 +47,7 @@ extension ICMaskTextField: UITextFieldDelegate {
     public func textFieldDidBeginEditing(_ textField: UITextField) {
         self._delegate?.textFieldDidBeginEditing?(textField)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
-            self._transformer.onGotFocus()
-        })
+        self._transformer.onGotFocus()
     }
 
     public func textFieldDidEndEditing(_ textField: UITextField) {

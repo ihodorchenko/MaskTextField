@@ -348,8 +348,6 @@ public class ICMaskTextField: UITextField {
     }
 
     public func redrawMaskText() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
-            self._transformer.onSelectionChanged()
-        })
+        self._transformer.onSelectionChanged()
     }
 }
