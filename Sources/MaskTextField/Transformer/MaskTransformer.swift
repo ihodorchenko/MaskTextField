@@ -520,12 +520,12 @@ extension MaskTransformer {
             self._timer?.invalidate()
             self._timer = nil
 
-            self._timer = Timer.scheduledTimer(
-                withTimeInterval: CharInfo.hideCharDelay,
-                repeats: false
-            ) { [weak self] _ in
+            let timer = Timer(timeInterval: CharInfo.hideCharDelay, repeats: false) { [weak self] _ in
                 self?.hideTimerFired()
             }
+            // `.common` — чтобы таймер срабатывал и во время скролла/трекинга.
+            RunLoop.main.add(timer, forMode: .common)
+            self._timer = timer
         }
 
         private func hideTimerFired() {
