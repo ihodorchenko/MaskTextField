@@ -47,33 +47,34 @@
 
 ## Мелочи и стиль
 
-- [ ] **#27 — дублирующийся `textFieldDidEndEditing`.** Deprecated-версия (2 арг.)
-  мёртвый код рядом с `reason:`-версией. Файл: `TextField/MaskTextFieldWithDelegate.swift`.
+- [x] **#27 — дублирующийся `textFieldDidEndEditing`.** Deprecated-версия (2 арг.)
+  удалена; осталась только `reason:`-версия. Файл: `TextField/MaskTextFieldWithDelegate.swift`.
 
-- [ ] **#28 — магическая задержка событий.** `asyncAfter(0.01)` для `.valueChanged`/
-  `.editingChanged` — хрупко. Файл: `TextField/MaskTextFieldWithDelegate.swift`.
+- [x] **#28 — магическая задержка событий.** `asyncAfter(0.01)` убрана — события
+  шлются синхронно. Файл: `TextField/MaskTextFieldWithDelegate.swift`.
 
-- [ ] **#29 — `NumberFormatter` пересоздаётся на каждый вызов `culture`.** Кэшировать.
-  Файл: `TextField/MaskTextFieldWithProtocol.swift`.
+- [x] **#29 — `NumberFormatter` пересоздаётся на каждый вызов `culture`.** Заменён
+  ленивым `defaultCulture`. Файлы: `TextField/MaskTextField.swift`,
+  `TextField/MaskTextFieldWithProtocol.swift`.
 
-- [ ] **#30 — геометрия `textContainerInset` вычитается дважды.** Стороны accessory
-  перепутаны. Файл: `TextField/MaskTextField.swift`.
+- [x] **#30 — геометрия `textContainerInset` вычитается дважды.** Убрана двойная
+  вычитка — теперь просто `super.textRect(...).inset(by:)`. Файл: `TextField/MaskTextField.swift`.
 
-- [ ] **#31 — неконсистентное имя автора.** `Ihar Khadorchanka` (LICENSE) vs
-  `Igor hodorchenko` (app). Файлы: `LICENSE`, `MaskTextFieldExampleApp.swift`.
+- [x] **#31 — неконсистентное имя автора.** App-файл приведён к `Ihar Khadorchanka`
+  (как в LICENSE). Файл: `MaskTextFieldExampleApp.swift`.
 
-- [ ] **#32 — `CharInfo.nilChar = "\0"` и дефолт `veiledMaskChar`.** NUL-сентинел
-  конфликтует с `z`-позицией; дефолт `veiledMaskChar` = `"\0"`, а не `"•"`.
-  Файл: `Transformer/MaskTransformer.swift`.
+- [x] **#32 — дефолт `veiledMaskChar`.** Был `CharInfo.nilChar` (`"\0"`) — теперь
+  `MaskTransformer.hideChar`. Файл: `Transformer/MaskTransformer.swift`.
 
-- [ ] **#33 — `=>` оператор не `public` и с родовым именем.** Риск коллизии при
-  подключении. Файл: `Support/ForwardApplicationOperator.swift`.
+- [x] **#33 — `=>` оператор не `public` и с родовым именем.** Без изменений: оператор
+  `internal`, поэтому не экспортируется потребителям и коллизии быть не может.
+  (В истории уже было: замена на `with(_:)` откачена в пользу internal `=>`.)
 
-- [ ] **#34 — `Timer` в режиме `.default`.** Скрытие не сработает во время скролла.
-  Файл: `Transformer/MaskTransformer.swift`.
+- [x] **#34 — `Timer` в режиме `.default`.** Таймер скрытия добавлен в `.common`,
+  срабатывает и во время скролла. Файл: `Transformer/MaskTransformer.swift`.
 
-- [ ] **#35 — `MaskedTextField.swift` не импортирует `UIKit` явно.** Полагается на
-  реэкспорт через SwiftUI. Файл: `MaskTextFieldSwiftUI/MaskedTextField.swift`.
+- [x] **#35 — `MaskedTextField.swift` не импортирует `UIKit` явно.** Добавлен
+  `import UIKit`. Файл: `MaskTextFieldSwiftUI/MaskedTextField.swift`.
 
 ## Тесты (покрыть)
 
