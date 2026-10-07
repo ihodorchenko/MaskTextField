@@ -58,6 +58,15 @@ public class MaskTextField: UITextField {
     @Published
     public internal(set) var clearButtonPublisher: Void = ()
 
+    /// Кэш `NumberFormatter` по умолчанию (используется, когда `charValidator` не задан).
+    lazy var defaultCulture: NumberFormatter = NumberFormatter() => {
+        $0.groupingSeparator = Locale.current.groupingSeparator
+        $0.decimalSeparator = Locale.current.decimalSeparator
+        $0.usesGroupingSeparator = true
+        $0.formatterBehavior = .behavior10_4
+        $0.numberStyle = .decimal
+    }
+
     public private(set) lazy var textPublisher: AnyPublisher<String, Never> = NotificationCenter.default
         .publisher(for: UITextField.textDidChangeNotification, object: self)
         .map {
