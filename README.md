@@ -45,7 +45,7 @@ For local development you can reference a path:
 ```swift
 import MaskTextField
 
-let field = ICMaskTextField()
+let field = MaskTextField()
 
 // Mask shown while editing
 field.maskText = "+375 (dd) ddd-dd-dd"
@@ -86,7 +86,7 @@ Examples:
 | `dddd dddd dddd dddd` | `4111111111111111` | `4111 1111 1111 1111` |
 | `\dA`                 | `X7`           | `d7` (`\d` is a literal `d`) |
 
-## Key `ICMaskTextField` properties
+## Key `MaskTextField` properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -94,13 +94,13 @@ Examples:
 | `maskLostFocus` | `String` | Mask used when the field loses focus |
 | `maskChar` | `Character` | Placeholder character (`_` by default) |
 | `veiledMaskChar` | `Character` | Character that veils entered characters (`•` by default) |
-| `maskMode` | `ICMaskMode` | `.fullMask` or `.gradualMask` |
+| `maskMode` | `MaskMode` | `.fullMask` or `.gradualMask` |
 | `hideChars` | `Bool` | Password mode (characters are veiled after a delay) |
 | `hiddenMaskIfEnteredTextEmpty` | `Bool` | Hide the mask when the value is empty and the field is not focused |
 | `textValue` | `String?` | Raw value without the mask (read/write) |
 | `onlyEnteredCount` | `Int` | Number of editable positions |
 | `visibleTextMask` | `String` | The mask being displayed |
-| `charValidator` | `ICCharValidator?` | Additional input restrictions |
+| `charValidator` | `CharValidator?` | Additional input restrictions |
 
 Combine publishers: `textPublisher`, `deleteBackwardPublisher`,
 `clearButtonPublisher`.
@@ -108,7 +108,7 @@ Combine publishers: `textPublisher`, `deleteBackwardPublisher`,
 ## Custom character validator
 
 ```swift
-final class DecimalValidator: ICCharValidator {
+final class DecimalValidator: CharValidator {
     var culture: NumberFormatter = {
         let f = NumberFormatter()
         f.numberStyle = .decimal
@@ -120,21 +120,21 @@ final class DecimalValidator: ICCharValidator {
     func correct(string: String) -> String { string }
 }
 
-let field = ICMaskTextField()
+let field = MaskTextField()
 field.charValidator = DecimalValidator()
 field.maskText = "d.dd"
 ```
 
 ## Architecture
 
-Input is processed by a chain of transformers (`ICBaseTransformer` →
-`ICFilterTransformer` → `ICMaskTransformer`):
+Input is processed by a chain of transformers (`BaseTransformer` →
+`FilterTransformer` → `MaskTransformer`):
 
-- `ICBaseTransformer` — a plain, unmasked field;
-- `ICFilterTransformer` — character filtering and decimal separator normalization;
-- `ICMaskTransformer` — mask application, character veiling, display modes.
+- `BaseTransformer` — a plain, unmasked field;
+- `FilterTransformer` — character filtering and decimal separator normalization;
+- `MaskTransformer` — mask application, character veiling, display modes.
 
-The logic works through the `ICMaskTextFieldProtocol`, so the transformers can be
+The logic works through the `MaskTextFieldProtocol`, so the transformers can be
 tested without a real `UITextField`.
 
 ## Example app

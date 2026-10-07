@@ -1,6 +1,6 @@
 import UIKit
 
-extension ICMaskTextField: UITextFieldDelegate {
+extension MaskTextField: UITextFieldDelegate {
     public func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         _ = self.externalDelegate?.textField?(textField, shouldChangeCharactersIn: range, replacementString: string)
 

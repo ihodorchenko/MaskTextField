@@ -1,6 +1,6 @@
 import UIKit
 
-extension ICMaskTextField: ICMaskTextFieldProtocol {
+extension MaskTextField: MaskTextFieldProtocol {
     public var culture: NumberFormatter {
         return self.charValidator?.culture ?? (NumberFormatter() => {
             $0.groupingSeparator = Locale.current.groupingSeparator

@@ -5,7 +5,7 @@ import Foundation
 /// Протокол не зависит от UIKit: всё позиционирование курсора свёрнуто в
 /// один метод `setCursorPosition(_:)`, работающий с целочисленным смещением.
 /// Благодаря этому логику маски можно тестировать без `UITextField` и без UIKit.
-public protocol ICMaskTextFieldProtocol: AnyObject {
+public protocol MaskTextFieldProtocol: AnyObject {
     var text: String? { get set }
     var culture: NumberFormatter { get }
 

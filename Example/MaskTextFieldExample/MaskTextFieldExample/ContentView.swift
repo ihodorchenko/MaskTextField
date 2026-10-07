@@ -51,11 +51,11 @@ struct ContentView: View {
     }
 }
 
-/// Обёртка над `ICMaskTextField` для использования в SwiftUI.
+/// Обёртка над `MaskTextField` для использования в SwiftUI.
 private struct MaskedTextField: UIViewRepresentable {
     var mask: String
     var maskLostFocus: String = ""
-    var maskMode: ICMaskMode = .fullMask
+    var maskMode: MaskMode = .fullMask
     var maskChar: Character = "_"
     var veiledMaskChar: Character = "•"
     var hideChars: Bool = false
@@ -68,15 +68,15 @@ private struct MaskedTextField: UIViewRepresentable {
         Coordinator(self)
     }
 
-    func makeUIView(context: Context) -> ICMaskTextField {
-        let field = ICMaskTextField()
+    func makeUIView(context: Context) -> MaskTextField {
+        let field = MaskTextField()
         apply(to: field)
         field.delegate = context.coordinator
         field.setContentHuggingPriority(.defaultHigh, for: .vertical)
         return field
     }
 
-    func updateUIView(_ field: ICMaskTextField, context: Context) {
+    func updateUIView(_ field: MaskTextField, context: Context) {
         apply(to: field)
 
         // Пишем обратно только при реальном расхождении, чтобы не зациклить обновления.
@@ -85,7 +85,7 @@ private struct MaskedTextField: UIViewRepresentable {
         }
     }
 
-    private func apply(to field: ICMaskTextField) {
+    private func apply(to field: MaskTextField) {
         field.maskText = mask
         field.maskLostFocus = maskLostFocus
         field.maskMode = maskMode
@@ -104,7 +104,7 @@ private struct MaskedTextField: UIViewRepresentable {
         }
 
         func textFieldDidChangeSelection(_ textField: UITextField) {
-            guard let field = textField as? ICMaskTextField else { return }
+            guard let field = textField as? MaskTextField else { return }
             let value = field.textValue ?? ""
             if parent.textValue != value {
                 DispatchQueue.main.async {

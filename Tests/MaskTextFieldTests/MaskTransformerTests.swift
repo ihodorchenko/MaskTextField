@@ -1,15 +1,15 @@
 import XCTest
 @testable import MaskTextField
 
-final class ICMaskTransformerTests: XCTestCase {
+final class MaskTransformerTests: XCTestCase {
 
     private var mock: MockMaskTextField!
-    private var transformer: ICMaskTransformer!
+    private var transformer: MaskTransformer!
 
     override func setUp() {
         super.setUp()
         mock = MockMaskTextField()
-        transformer = ICMaskTransformer(textField: mock)
+        transformer = MaskTransformer(textField: mock)
     }
 
     override func tearDown() {
@@ -107,6 +107,19 @@ final class ICMaskTransformerTests: XCTestCase {
     func testOnlyEnteredCount() {
         transformer.mask = "+375 (dd) ddd-dd-dd"
         XCTAssertEqual(transformer.onlyEnteredCount, 9)
+    }
+
+    func testZMaskAcceptsAnyCharacter() {
+        transformer.mask = "zz"
+
+        // `z` — вводимая позиция без проверки: принимает и букву, и цифру.
+        XCTAssertEqual(transformer.onlyEnteredCount, 2)
+
+        _ = transformer.onTextInput("a")
+        _ = transformer.onTextInput("1")
+
+        XCTAssertEqual(transformer.text, "a1")
+        XCTAssertEqual(mock.text, "a1")
     }
 
     // MARK: - Режимы отображения

@@ -2,7 +2,7 @@ import Foundation
 import UIKit
 import Combine
 
-public class ICMaskTextField: UITextField {
+public class MaskTextField: UITextField {
 
     private var didSetupWhiteTintColorForClearTextFieldButton = false
 
@@ -31,9 +31,9 @@ public class ICMaskTextField: UITextField {
 
     /// Пользовательский делегат, задаваемый через `delegate`.
     ///
-    /// `ICMaskTextField` сам является делегатом самого себя (`super.delegate`),
+    /// `MaskTextField` сам является делегатом самого себя (`super.delegate`),
     /// чтобы обрабатывать маску. Внешний делегат хранится отдельно, а вызовы
-    /// делегата форвардятся в него из `ICMaskTextFieldWithDelegate`.
+    /// делегата форвардятся в него из `MaskTextFieldWithDelegate`.
     internal weak var externalDelegate: UITextFieldDelegate?
 
     public override var delegate: UITextFieldDelegate? {
@@ -46,7 +46,7 @@ public class ICMaskTextField: UITextField {
     public init() {
         super.init(frame: .zero)
 
-        // Внутренний делегат — сам `ICMaskTextField`; пользовательский делегат
+        // Внутренний делегат — сам `MaskTextField`; пользовательский делегат
         // задаётся через `delegate` и хранится в `externalDelegate`.
         super.delegate = self
 
@@ -56,7 +56,7 @@ public class ICMaskTextField: UITextField {
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
 
-        // Внутренний делегат — сам `ICMaskTextField`; пользовательский делегат
+        // Внутренний делегат — сам `MaskTextField`; пользовательский делегат
         // задаётся через `delegate` и хранится в `externalDelegate`.
         super.delegate = self
 
@@ -222,11 +222,11 @@ public class ICMaskTextField: UITextField {
     // MARK: - mask
 
     /// Дополнительные ограничения на вводимые символы.
-    public weak var charValidator: ICCharValidator?
+    public weak var charValidator: CharValidator?
 
     /// Система преобразования символов.
-    internal lazy var _transformer: ICBaseTransformer = {
-        return ICBaseTransformer(textField: self)
+    internal lazy var _transformer: BaseTransformer = {
+        return BaseTransformer(textField: self)
     }()
 
     /// Настраиваемая маска (+375 (dd) ddd-dd-dd).
@@ -234,15 +234,15 @@ public class ICMaskTextField: UITextField {
     public var maskText: String = "" {
         didSet {
             if !self.maskText.isEmpty {
-                if let mt = self._transformer as? ICMaskTransformer {
+                if let mt = self._transformer as? MaskTransformer {
                     mt.mask = self.maskText
                 } else {
-                    self._transformer = ICMaskTransformer(textField: self) => {
+                    self._transformer = MaskTransformer(textField: self) => {
                         $0.mask = self.maskText
                     }
                 }
             } else {
-                self._transformer = ICBaseTransformer(textField: self)
+                self._transformer = BaseTransformer(textField: self)
             }
         }
     }
@@ -252,10 +252,10 @@ public class ICMaskTextField: UITextField {
         didSet {
             guard !self.maskLostFocus.isEmpty else { return }
 
-            if let mt = self._transformer as? ICMaskTransformer {
+            if let mt = self._transformer as? MaskTransformer {
                 mt.maskLostFocus = self.maskLostFocus
             } else {
-                self._transformer = ICMaskTransformer(textField: self) => {
+                self._transformer = MaskTransformer(textField: self) => {
                     $0.maskLostFocus = self.maskLostFocus
                 }
             }
@@ -265,10 +265,10 @@ public class ICMaskTextField: UITextField {
     /// Символ маски, на котором происходит ввод (+375 (__) ___-__-__).
     public var maskChar: Character = "_" {
         didSet {
-            if let mt = self._transformer as? ICMaskTransformer {
+            if let mt = self._transformer as? MaskTransformer {
                 mt.maskChar = self.maskChar
             } else {
-                self._transformer = ICMaskTransformer(textField: self) => {
+                self._transformer = MaskTransformer(textField: self) => {
                     $0.maskChar = self.maskChar
                 }
             }
@@ -278,10 +278,10 @@ public class ICMaskTextField: UITextField {
     /// Символ, который при потере фокуса заменяет отредактированные символы в маске (+375 (XX) XXX-XX-XX).
     public var veiledMaskChar: Character = "•" {
         didSet {
-            if let mt = self._transformer as? ICMaskTransformer {
+            if let mt = self._transformer as? MaskTransformer {
                 mt.veiledMaskChar = self.veiledMaskChar
             } else {
-                self._transformer = ICMaskTransformer(textField: self) => {
+                self._transformer = MaskTransformer(textField: self) => {
                     $0.veiledMaskChar = self.veiledMaskChar
                 }
             }
@@ -291,10 +291,10 @@ public class ICMaskTextField: UITextField {
     /// Включает режим пароля.
     public var hideChars: Bool = false {
         didSet {
-            if let mt = self._transformer as? ICMaskTransformer {
+            if let mt = self._transformer as? MaskTransformer {
                 mt.hideChars = self.hideChars
             } else {
-                self._transformer = ICMaskTransformer(textField: self) => {
+                self._transformer = MaskTransformer(textField: self) => {
                     $0.hideChars = self.hideChars
                 }
             }
@@ -312,12 +312,12 @@ public class ICMaskTextField: UITextField {
     }
 
     /// Режим отображения маски.
-    public var maskMode: ICMaskMode = .fullMask {
+    public var maskMode: MaskMode = .fullMask {
         didSet {
-            if let mt = self._transformer as? ICMaskTransformer {
+            if let mt = self._transformer as? MaskTransformer {
                 mt.maskMode = self.maskMode
             } else {
-                self._transformer = ICMaskTransformer(textField: self) => {
+                self._transformer = MaskTransformer(textField: self) => {
                     $0.maskMode = self.maskMode
                 }
             }
@@ -327,10 +327,10 @@ public class ICMaskTextField: UITextField {
     /// Не отображать маску, если значение пустое, когда поле не в фокусе.
     public var hiddenMaskIfEnteredTextEmpty: Bool = false {
         didSet {
-            if let mt = self._transformer as? ICMaskTransformer {
+            if let mt = self._transformer as? MaskTransformer {
                 mt.hiddenMaskIfEnteredTextEmpty = self.hiddenMaskIfEnteredTextEmpty
             } else {
-                self._transformer = ICMaskTransformer(textField: self) => {
+                self._transformer = MaskTransformer(textField: self) => {
                     $0.hiddenMaskIfEnteredTextEmpty = self.hiddenMaskIfEnteredTextEmpty
                 }
             }
@@ -344,12 +344,12 @@ public class ICMaskTextField: UITextField {
 
     /// Отображаемая маска.
     public var visibleTextMask: String {
-        return (self._transformer as? ICMaskTransformer)?.visibleTextMask ?? ""
+        return (self._transformer as? MaskTransformer)?.visibleTextMask ?? ""
     }
 
     /// Отображаемая маска после потери фокуса.
     public var visibleTextMaskLostFocus: String {
-        return (self._transformer as? ICMaskTransformer)?.visibleTextMaskLostFocus ?? ""
+        return (self._transformer as? MaskTransformer)?.visibleTextMaskLostFocus ?? ""
     }
 
     public func redrawMaskText() {
