@@ -356,7 +356,7 @@ public class MaskTransformer: FilterTransformer {
             } else if c == "^" && index + 1 < self.mask.count {
                 index += 1
                 c = self.mask[index]
-                ci = with(CharInfo(char: c, masChar: self.maskChar, transformer: self, escaped: false)) {
+                ci = CharInfo(char: c, masChar: self.maskChar, transformer: self, escaped: false) => {
                     $0.veiledChar = true
                 }
             } else {
@@ -391,7 +391,7 @@ public class MaskTransformer: FilterTransformer {
             } else if c == "^" && index + 1 < self.maskLostFocus.count {
                 index += 1
                 c = self.maskLostFocus[index]
-                ci = with(CharInfo(char: c, masChar: self.maskChar, transformer: self, escaped: false)) {
+                ci = CharInfo(char: c, masChar: self.maskChar, transformer: self, escaped: false) => {
                     $0.veiledChar = true
                 }
             } else {
