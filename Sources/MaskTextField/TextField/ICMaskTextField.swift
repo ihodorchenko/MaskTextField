@@ -90,7 +90,7 @@ public class ICMaskTextField: UITextField {
         return CGRect(
             x: rec.minX,
             y: rec.minY,
-            width: rec.width - self.textContainerInset.right,
+            width: width,
             height: rec.height
         )
     }
