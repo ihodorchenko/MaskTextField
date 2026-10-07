@@ -2,7 +2,7 @@ import UIKit
 
 extension ICMaskTextField: UITextFieldDelegate {
     public func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        _ = self._delegate?.textField?(textField, shouldChangeCharactersIn: range, replacementString: string)
+        _ = self.externalDelegate?.textField?(textField, shouldChangeCharactersIn: range, replacementString: string)
 
         defer { self.notification() }
 
@@ -45,42 +45,42 @@ extension ICMaskTextField: UITextFieldDelegate {
     }
 
     public func textFieldDidBeginEditing(_ textField: UITextField) {
-        self._delegate?.textFieldDidBeginEditing?(textField)
+        self.externalDelegate?.textFieldDidBeginEditing?(textField)
 
         self._transformer.onGotFocus()
     }
 
     public func textFieldDidEndEditing(_ textField: UITextField) {
-        self._delegate?.textFieldDidEndEditing?(textField)
+        self.externalDelegate?.textFieldDidEndEditing?(textField)
 
         self._transformer.onLostFocus()
     }
 
     public func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
-        return self._delegate?.textFieldShouldBeginEditing?(textField) ?? true
+        return self.externalDelegate?.textFieldShouldBeginEditing?(textField) ?? true
     }
 
     public func textFieldShouldEndEditing(_ textField: UITextField) -> Bool {
-        return self._delegate?.textFieldShouldEndEditing?(textField) ?? true
+        return self.externalDelegate?.textFieldShouldEndEditing?(textField) ?? true
     }
 
     public func textFieldDidEndEditing(_ textField: UITextField, reason: UITextField.DidEndEditingReason) {
-        self._delegate?.textFieldDidEndEditing?(textField, reason: reason)
+        self.externalDelegate?.textFieldDidEndEditing?(textField, reason: reason)
 
         self._transformer.onLostFocus()
     }
 
     public func textFieldDidChangeSelection(_ textField: UITextField) {
-        self._delegate?.textFieldDidChangeSelection?(textField)
+        self.externalDelegate?.textFieldDidChangeSelection?(textField)
 
         self._transformer.onSelectionChanged()
     }
 
     public func textFieldShouldClear(_ textField: UITextField) -> Bool {
-        return self._delegate?.textFieldShouldClear?(textField) ?? true
+        return self.externalDelegate?.textFieldShouldClear?(textField) ?? true
     }
 
     public func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        return self._delegate?.textFieldShouldReturn?(textField) ?? true
+        return self.externalDelegate?.textFieldShouldReturn?(textField) ?? true
     }
 }

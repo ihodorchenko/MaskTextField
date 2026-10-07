@@ -29,19 +29,16 @@ public class ICMaskTextField: UITextField {
         .receive(on: RunLoop.main)
         .eraseToAnyPublisher()
 
-    internal weak var _delegate: UITextFieldDelegate?
-    public override var delegate: UITextFieldDelegate? {
-        get {
-            self._delegate
-        }
-        set {
-            if super.delegate != nil {
-                self._delegate = newValue
-                return
-            }
+    /// Пользовательский делегат, задаваемый через `delegate`.
+    ///
+    /// `ICMaskTextField` сам является делегатом самого себя (`super.delegate`),
+    /// чтобы обрабатывать маску. Внешний делегат хранится отдельно, а вызовы
+    /// делегата форвардятся в него из `ICMaskTextFieldWithDelegate`.
+    internal weak var externalDelegate: UITextFieldDelegate?
 
-            super.delegate = newValue
-        }
+    public override var delegate: UITextFieldDelegate? {
+        get { self.externalDelegate }
+        set { self.externalDelegate = newValue }
     }
 
     // MARK: - init
@@ -49,7 +46,9 @@ public class ICMaskTextField: UITextField {
     public init() {
         super.init(frame: .zero)
 
-        self.delegate = self
+        // Внутренний делегат — сам `ICMaskTextField`; пользовательский делегат
+        // задаётся через `delegate` и хранится в `externalDelegate`.
+        super.delegate = self
 
         self._initView()
     }
