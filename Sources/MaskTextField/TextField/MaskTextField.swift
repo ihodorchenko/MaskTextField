@@ -114,47 +114,11 @@ public class MaskTextField: UITextField {
     }
 
     override open func textRect(forBounds bounds: CGRect) -> CGRect {
-        let rec = super.textRect(forBounds: bounds).inset(by: self.textContainerInset)
-
-        var width: CGFloat = rec.width
-        if self.clearButtonMode == .always || self.clearButtonMode == .unlessEditing {
-            width -= self.textContainerInset.right
-        }
-        if self.rightViewMode == .always || self.rightViewMode == .unlessEditing {
-            width -= self.textContainerInset.right
-        }
-        if self.leftViewMode == .always || self.leftViewMode == .unlessEditing {
-            width -= self.textContainerInset.left
-        }
-
-        return CGRect(
-            x: rec.minX,
-            y: rec.minY,
-            width: width,
-            height: rec.height
-        )
+        super.textRect(forBounds: bounds).inset(by: self.textContainerInset)
     }
 
     override open func editingRect(forBounds bounds: CGRect) -> CGRect {
-        let rec = super.editingRect(forBounds: bounds).inset(by: self.textContainerInset)
-
-        var width: CGFloat = rec.width
-        if self.clearButtonMode == .always || self.clearButtonMode == .whileEditing {
-            width -= self.textContainerInset.right
-        }
-        if self.rightViewMode == .always || self.rightViewMode == .whileEditing {
-            width -= self.textContainerInset.right
-        }
-        if self.leftViewMode == .always || self.leftViewMode == .whileEditing {
-            width -= self.textContainerInset.left
-        }
-
-        return CGRect(
-            x: rec.minX,
-            y: rec.minY,
-            width: width,
-            height: rec.height
-        )
+        super.editingRect(forBounds: bounds).inset(by: self.textContainerInset)
     }
 
     override open func rightViewRect(forBounds bounds: CGRect) -> CGRect {
