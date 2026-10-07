@@ -369,15 +369,15 @@ public class MaskTransformer: FilterTransformer {
             if c == "\\" && index + 1 < self.mask.count {
                 index += 1
                 c = self.mask[index]
-                ci = CharInfo(char: c, masChar: self.maskChar, transformer: self, escaped: true)
+                ci = CharInfo(char: c, maskChar: self.maskChar, transformer: self, escaped: true)
             } else if c == "^" && index + 1 < self.mask.count {
                 index += 1
                 c = self.mask[index]
-                ci = CharInfo(char: c, masChar: self.maskChar, transformer: self, escaped: false) => {
+                ci = CharInfo(char: c, maskChar: self.maskChar, transformer: self, escaped: false) => {
                     $0.veiledChar = true
                 }
             } else {
-                ci = CharInfo(char: c, masChar: self.maskChar, transformer: self, escaped: false)
+                ci = CharInfo(char: c, maskChar: self.maskChar, transformer: self, escaped: false)
             }
 
             index += 1
@@ -404,15 +404,15 @@ public class MaskTransformer: FilterTransformer {
             if c == "\\" && index + 1 < self.maskLostFocus.count {
                 index += 1
                 c = self.maskLostFocus[index]
-                ci = CharInfo(char: c, masChar: self.maskChar, transformer: self, escaped: true)
+                ci = CharInfo(char: c, maskChar: self.maskChar, transformer: self, escaped: true)
             } else if c == "^" && index + 1 < self.maskLostFocus.count {
                 index += 1
                 c = self.maskLostFocus[index]
-                ci = CharInfo(char: c, masChar: self.maskChar, transformer: self, escaped: false) => {
+                ci = CharInfo(char: c, maskChar: self.maskChar, transformer: self, escaped: false) => {
                     $0.veiledChar = true
                 }
             } else {
-                ci = CharInfo(char: c, masChar: self.maskChar, transformer: self, escaped: false)
+                ci = CharInfo(char: c, maskChar: self.maskChar, transformer: self, escaped: false)
             }
 
             index += 1
@@ -469,9 +469,9 @@ extension MaskTransformer {
 
         // MARK: - init
 
-        init(char: Character, masChar: Character, transformer: MaskTransformer, escaped: Bool) {
+        init(char: Character, maskChar: Character, transformer: MaskTransformer, escaped: Bool) {
             self._char = char
-            self._maskChar = char
+            self._maskChar = maskChar
             self._transformer = transformer
             self._escaped = escaped
             self._type = MaskCharType.type(for: char)
