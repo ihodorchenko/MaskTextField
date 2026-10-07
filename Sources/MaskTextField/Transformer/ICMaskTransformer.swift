@@ -198,68 +198,64 @@ public class ICMaskTransformer: ICFilterTransformer {
         control.setCursorPosition(cursor)
     }
 
-    let lock = DispatchSemaphore(value: 1)
-
     private func getTextAndCursor(_ cursor: inout Int, _ text: inout String) {
-        lock.with {
-            if self.hideChars {
-                if let lastEnteredChar = self._maskInfo.last(where: { $0.enteredChar != CharInfo.nilChar }) {
-                    self._maskInfo.forEach {
-                        if $0.canEntered && $0 !== lastEnteredChar {
-                            $0.hiddenChar = true
-                        }
+        if self.hideChars {
+            if let lastEnteredChar = self._maskInfo.last(where: { $0.enteredChar != CharInfo.nilChar }) {
+                self._maskInfo.forEach {
+                    if $0.canEntered && $0 !== lastEnteredChar {
+                        $0.hiddenChar = true
                     }
                 }
             }
+        }
 
-            if self._isFocus || self._maskLostFocusInfo.isEmpty {
-                text = self._maskInfo.reduce("", { current, charInfo in
-                    if charInfo.enteredChar != CharInfo.nilChar {
-                        if self.hideChars {
-                            return current + "\(charInfo.hiddenChar ? charInfo.veiledMaskChar : charInfo.enteredChar)"
-                        } else {
-                            return current + "\(!charInfo.veiledChar ? charInfo.enteredChar : self._isFocus ? charInfo.enteredChar : self.veiledMaskChar)"
-                        }
+        if self._isFocus || self._maskLostFocusInfo.isEmpty {
+            text = self._maskInfo.reduce("", { current, charInfo in
+                if charInfo.enteredChar != CharInfo.nilChar {
+                    if self.hideChars {
+                        return current + "\(charInfo.hiddenChar ? charInfo.veiledMaskChar : charInfo.enteredChar)"
                     } else {
-                        return current + "\(charInfo.maskChar)"
+                        return current + "\(!charInfo.veiledChar ? charInfo.enteredChar : self._isFocus ? charInfo.enteredChar : self.veiledMaskChar)"
                     }
-                })
-            } else {
-                var realText = self._maskInfo.reduce("", { current, charInfo in
-                    if charInfo.enteredChar != CharInfo.nilChar {
-                        if self.hideChars {
-                            return current + "\(charInfo.hiddenChar ? charInfo.veiledMaskChar : charInfo.enteredChar)"
-                        } else {
-                            return current + "\(!charInfo.veiledChar ? charInfo.enteredChar : self._isFocus ? charInfo.enteredChar : self.veiledMaskChar)"
-                        }
-                    }
-
-                    return current
-                })
-
-                text = self._maskLostFocusInfo.reduce("", { current, charInfo in
-                    if charInfo.canEntered && !realText.isEmpty {
-                        let char = realText.removeFirst()
-                        return current + "\(char)"
+                } else {
+                    return current + "\(charInfo.maskChar)"
+                }
+            })
+        } else {
+            var realText = self._maskInfo.reduce("", { current, charInfo in
+                if charInfo.enteredChar != CharInfo.nilChar {
+                    if self.hideChars {
+                        return current + "\(charInfo.hiddenChar ? charInfo.veiledMaskChar : charInfo.enteredChar)"
                     } else {
-                        return current + "\(charInfo.maskChar)"
+                        return current + "\(!charInfo.veiledChar ? charInfo.enteredChar : self._isFocus ? charInfo.enteredChar : self.veiledMaskChar)"
                     }
-                })
-            }
+                }
 
-            cursor = self._maskInfo.count
+                return current
+            })
 
-            if let last = self._maskInfo.lastIndex(where: { $0.canEntered }) {
-                cursor = last + 1
-            }
+            text = self._maskLostFocusInfo.reduce("", { current, charInfo in
+                if charInfo.canEntered && !realText.isEmpty {
+                    let char = realText.removeFirst()
+                    return current + "\(char)"
+                } else {
+                    return current + "\(charInfo.maskChar)"
+                }
+            })
+        }
 
-            if let first = self._maskInfo.firstIndex(where: { $0.canEntered && $0.isNilChar }) {
-                cursor = first
-            }
+        cursor = self._maskInfo.count
 
-            if self.maskMode == .gradualMask {
-                text = text.substring(start: 0, length: cursor)
-            }
+        if let last = self._maskInfo.lastIndex(where: { $0.canEntered }) {
+            cursor = last + 1
+        }
+
+        if let first = self._maskInfo.firstIndex(where: { $0.canEntered && $0.isNilChar }) {
+            cursor = first
+        }
+
+        if self.maskMode == .gradualMask {
+            text = text.substring(start: 0, length: cursor)
         }
     }
 
