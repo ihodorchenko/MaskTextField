@@ -196,6 +196,26 @@ final class MaskTransformerTests: XCTestCase {
         XCTAssertEqual(transformer.text, "123456789")
         XCTAssertEqual(mock.text, "+375 (12) 345-67-89")
     }
+
+    // MARK: - Нормализация вставки
+
+    func testNormalizedValueStripsMaskLiterals() {
+        transformer.mask = "+375 (dd) ddd-dd-dd"
+
+        XCTAssertEqual(transformer.normalizedValue(from: "+375 (29) 123-45-67"), "291234567")
+    }
+
+    func testNormalizedValueKeepsRawValue() {
+        transformer.mask = "+375 (dd) ddd-dd-dd"
+
+        XCTAssertEqual(transformer.normalizedValue(from: "291234567"), "291234567")
+    }
+
+    func testNormalizedValueKeepsLastEnteredCharacters() {
+        transformer.mask = "dd-dd"
+
+        XCTAssertEqual(transformer.normalizedValue(from: "123456"), "3456")
+    }
 }
 
 final class SupportUtilitiesTests: XCTestCase {
