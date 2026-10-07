@@ -54,7 +54,13 @@ public class ICMaskTextField: UITextField {
     }
 
     required public init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        super.init(coder: aDecoder)
+
+        // Внутренний делегат — сам `ICMaskTextField`; пользовательский делегат
+        // задаётся через `delegate` и хранится в `externalDelegate`.
+        super.delegate = self
+
+        self._initView()
     }
 
     // MARK: - initialisation
