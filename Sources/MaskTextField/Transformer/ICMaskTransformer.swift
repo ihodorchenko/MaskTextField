@@ -195,9 +195,7 @@ public class ICMaskTransformer: ICFilterTransformer {
 
         control.text = text
 
-        let position = control.position(from: control.beginningOfDocument, offset: cursor) ?? control.endOfDocument
-
-        control.selectedTextRange = control.textRange(from: position, to: position)
+        control.setCursorPosition(cursor)
     }
 
     let lock = DispatchSemaphore(value: 1)

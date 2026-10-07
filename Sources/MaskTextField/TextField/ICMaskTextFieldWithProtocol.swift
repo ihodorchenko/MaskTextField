@@ -22,4 +22,9 @@ extension ICMaskTextField: ICMaskTextFieldProtocol {
     public func correct(string: String) -> String {
         return self.charValidator?.correct(string: string) ?? string
     }
+
+    public func setCursorPosition(_ offset: Int) {
+        let position = self.position(from: self.beginningOfDocument, offset: offset) ?? self.endOfDocument
+        self.selectedTextRange = self.textRange(from: position, to: position)
+    }
 }

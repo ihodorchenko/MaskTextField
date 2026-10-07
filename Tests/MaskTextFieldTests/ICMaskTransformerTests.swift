@@ -129,6 +129,15 @@ final class ICMaskTransformerTests: XCTestCase {
         XCTAssertEqual(mock.text, "+375 (1_) ___-__-__")
     }
 
+    func testCursorPositionMovesToFirstEmptyPosition() {
+        transformer.mask = "+375 (dd) ddd-dd-dd"
+
+        _ = transformer.onTextInput("2")
+
+        // Первая вводимая позиция (индекс 6) занята, курсор — на следующей (индекс 7).
+        XCTAssertEqual(mock.cursorPosition, 7)
+    }
+
     // MARK: - Скрытие символов при потере фокуса
 
     func testVeiledCharactersAreHiddenOnLostFocus() {
