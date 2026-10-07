@@ -30,36 +30,39 @@ public class ICMaskTransformer: ICFilterTransformer {
 
     override open var text: String? {
         get {
-            self._maskInfo.reduce("", { $0 + ($1.enteredChar != CharInfo.nilChar ? "\($1.enteredChar)" : "") })
-        }
-        set {
-            if self.text == newValue {
-                return
-            }
-
-            let value = newValue ?? ""
-
-            var i: Int = 0
-            for v in self._maskInfo {
-                if v.canEntered {
-                    var char = CharInfo.nilChar
-                    if i < value.count {
-                        for j in i..<value.count {
-                            if v.isValid(char: value[j]) {
-                                char = value[j]
-                                i = j
-                                break
-                            }
-                        }
-                    }
-
-                    v.enteredChar = i < value.count ? char : CharInfo.nilChar
-                    i += 1
+            self._maskInfo.reduce(into: "") { result, info in
+                if info.enteredChar != CharInfo.nilChar {
+                    result.append(info.enteredChar)
                 }
             }
-
-            self.setTextAndCursor()
         }
+        set {
+            self.distributeRawValue(newValue ?? "")
+        }
+    }
+
+    /// Раскладывает «сырое» значение (без маски) по вводимым позициям.
+    ///
+    /// Для каждой позиции берётся следующий подходящий по `isValid` символ;
+    /// неподходящие символы пропускаются. Если подходящих символов не осталось,
+    /// позиция остаётся пустой.
+    private func distributeRawValue(_ value: String) {
+        var valueIndex = 0
+
+        for info in self._maskInfo where info.canEntered {
+            while valueIndex < value.count, !info.isValid(char: value[valueIndex]) {
+                valueIndex += 1
+            }
+
+            if valueIndex < value.count {
+                info.enteredChar = value[valueIndex]
+                valueIndex += 1
+            } else {
+                info.enteredChar = CharInfo.nilChar
+            }
+        }
+
+        self.setTextAndCursor()
     }
 
     open var visibleTextMask: String {
