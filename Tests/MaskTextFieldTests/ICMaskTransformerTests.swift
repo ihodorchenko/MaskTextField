@@ -161,15 +161,8 @@ final class ICMaskTransformerTests: XCTestCase {
 
         transformer.text = "123456789"
 
-        // Установка значения перерисовывает маску асинхронно.
-        let expectation = expectation(description: "mask redrawn")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            XCTAssertEqual(self.transformer.text, "123456789")
-            XCTAssertEqual(self.mock.text, "+375 (12) 345-67-89")
-            expectation.fulfill()
-        }
-
-        wait(for: [expectation], timeout: 1)
+        XCTAssertEqual(transformer.text, "123456789")
+        XCTAssertEqual(mock.text, "+375 (12) 345-67-89")
     }
 }
 
