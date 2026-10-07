@@ -2,7 +2,7 @@ import UIKit
 
 extension MaskTextField: MaskTextFieldProtocol {
     public var culture: NumberFormatter {
-        return self.charValidator?.culture ?? (NumberFormatter() => {
+        return self.charValidator?.culture ?? (with(NumberFormatter()) {
             $0.groupingSeparator = Locale.current.groupingSeparator
             $0.decimalSeparator = Locale.current.decimalSeparator
             $0.usesGroupingSeparator = true
