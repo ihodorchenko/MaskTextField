@@ -1,8 +1,8 @@
 import Foundation
 
-/// Трансформер, фильтрующий вводимые символы через `ICCharValidator`
+/// Трансформер, фильтрующий вводимые символы через `CharValidator`
 /// и нормализующий десятичные разделители под текущую культуру.
-open class ICFilterTransformer: ICBaseTransformer {
+open class FilterTransformer: BaseTransformer {
     private let delimiters: [String] = [".", ","]
 
     open override var text: String? {

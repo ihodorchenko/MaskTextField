@@ -2,12 +2,12 @@ import Foundation
 
 /// Базовый трансформер текста. Реализует поведение "обычного" текстового поля
 /// без маски: ввод добавляет символы, удаление — убирает последний.
-open class ICBaseTransformer {
-    public private(set) weak var control: ICMaskTextFieldProtocol?
+open class BaseTransformer {
+    public private(set) weak var control: MaskTextFieldProtocol?
 
     // MARK: - init
 
-    public init(textField: ICMaskTextFieldProtocol) {
+    public init(textField: MaskTextFieldProtocol) {
         self.control = textField
     }
 

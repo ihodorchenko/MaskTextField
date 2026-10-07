@@ -13,7 +13,41 @@ import Foundation
 /// - `^c` — вводимая позиция, значение которой скрывается при потере фокуса
 ///
 /// Остальные символы — литералы, выводимые как есть.
-public class ICMaskTransformer: ICFilterTransformer {
+fileprivate enum MaskCharType {
+    case digit
+    case letter
+    case letterOrDigit
+    case anySymbol
+    case anySymbolOrDigit
+    case any
+
+    /// Возвращает тип по символу маски, либо `nil` для литерала.
+    static func type(for char: Character) -> MaskCharType? {
+        switch char {
+        case "d": return .digit
+        case "a": return .letter
+        case "A": return .letterOrDigit
+        case "x": return .anySymbol
+        case "X": return .anySymbolOrDigit
+        case "z": return .any
+        default: return nil
+        }
+    }
+
+    /// Регулярное выражение для валидации, либо `nil`, если проверка не нужна (`z`).
+    var regex: String? {
+        switch self {
+        case .digit: return "[0-9]"
+        case .letter: return "[a-zA-Z]"
+        case .letterOrDigit: return "[a-zA-Z0-9]"
+        case .anySymbol: return "[a-zA-Z!@#$%^&*()_\\-+={};:<>|./?.]"
+        case .anySymbolOrDigit: return "[a-zA-Z0-9!@#$%^&*()_\\-+={};:<>|./?.]"
+        case .any: return nil
+        }
+    }
+}
+
+public class MaskTransformer: FilterTransformer {
     public static let hideChar: Character = "•"
     public static let defaultMaskChar: Character = "_"
 
@@ -24,8 +58,10 @@ public class ICMaskTransformer: ICFilterTransformer {
 
     // MARK: - Filter Transformer
 
+    private var _onlyEnteredCount: Int = 0
+
     open override var onlyEnteredCount: Int {
-        self._maskInfo.filter { $0.canEntered }.count
+        self._onlyEnteredCount
     }
 
     override open var text: String? {
@@ -105,7 +141,7 @@ public class ICMaskTransformer: ICFilterTransformer {
 
     // MARK: - property
 
-    public var veiledMaskChar: Character = ICMaskTransformer.hideChar {
+    public var veiledMaskChar: Character = MaskTransformer.hideChar {
         didSet {
             self._maskInfo.forEach {
                 if $0.canEntered {
@@ -116,7 +152,7 @@ public class ICMaskTransformer: ICFilterTransformer {
         }
     }
 
-    public var maskChar: Character = ICMaskTransformer.defaultMaskChar {
+    public var maskChar: Character = MaskTransformer.defaultMaskChar {
         didSet {
             self._maskInfo.forEach {
                 if $0.canEntered {
@@ -147,7 +183,7 @@ public class ICMaskTransformer: ICFilterTransformer {
         }
     }
 
-    public var maskMode: ICMaskMode = .fullMask {
+    public var maskMode: MaskMode = .fullMask {
         didSet {
             self.setTextAndCursor()
         }
@@ -291,6 +327,8 @@ public class ICMaskTransformer: ICFilterTransformer {
 
             self._maskInfo.append(ci)
         }
+
+        self._onlyEnteredCount = self._maskInfo.filter { $0.canEntered }.count
     }
 
     private func createMaskLostFocusInformation() {
@@ -327,7 +365,7 @@ public class ICMaskTransformer: ICFilterTransformer {
     }
 }
 
-extension ICMaskTransformer {
+extension MaskTransformer {
     class CharInfo {
         public static let nilChar: Character = "\0"
         public static let hideCharDelay: TimeInterval = 1.5
@@ -337,33 +375,20 @@ extension ICMaskTransformer {
         private let _escaped: Bool
         private let _char: Character
         private let _maskChar: Character
+        private let _type: MaskCharType?
 
         private var _timer: Timer? = nil
-        private weak var _transformer: ICMaskTransformer? = nil
+        private weak var _transformer: MaskTransformer? = nil
 
         private lazy var _regex: NSPredicate? = {
-            switch self._char {
-            case "d":
-                return NSPredicate(format: "SELF MATCHES %@", "[0-9]")
-            case "a":
-                return NSPredicate(format: "SELF MATCHES %@", "[a-zA-Z]")
-            case "A":
-                return NSPredicate(format: "SELF MATCHES %@", "[a-zA-Z0-9]")
-            case "x":
-                return NSPredicate(format: "SELF MATCHES %@", "[a-zA-Z!@#$%^&*()_\\-+={};:<>|./?.]")
-            case "X":
-                return NSPredicate(format: "SELF MATCHES %@", "[a-zA-Z0-9!@#$%^&*()_\\-+={};:<>|./?.]")
-            case "z":
-                return nil
-            default:
-                return nil
-            }
+            guard let pattern = self._type?.regex else { return nil }
+            return NSPredicate(format: "SELF MATCHES %@", pattern)
         }()
 
         // MARK: - property
 
         public var canEntered: Bool {
-            return !self._escaped && self.isEntered
+            return !self._escaped && self._type != nil
         }
 
         private var _maskCharValue: Character?
@@ -382,17 +407,12 @@ extension ICMaskTransformer {
 
         // MARK: - init
 
-        init(char: Character, masChar: Character, transformer: ICMaskTransformer, escaped: Bool) {
+        init(char: Character, masChar: Character, transformer: MaskTransformer, escaped: Bool) {
             self._char = char
             self._maskChar = char
             self._transformer = transformer
             self._escaped = escaped
-        }
-
-        // MARK: - initialisation
-
-        private var isEntered: Bool {
-            return self._regex != nil
+            self._type = MaskCharType.type(for: char)
         }
 
         // MARK: - Entered Char
@@ -415,9 +435,12 @@ extension ICMaskTransformer {
         // MARK: - valid
 
         public func isValid(char: Character) -> Bool {
-            guard let regex = self._regex else { return true }
+            if let regex = self._regex {
+                return regex.evaluate(with: "\(char)")
+            }
 
-            return regex.evaluate(with: "\(char)")
+            // Нет регулярного выражения: литерал — false, `z` — принимает любой символ.
+            return self._type == .any
         }
 
         // MARK: - timer
