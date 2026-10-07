@@ -24,7 +24,8 @@ extension MaskTextField: MaskTextFieldProtocol {
     }
 
     public func setCursorPosition(_ offset: Int) {
-        let position = self.position(from: self.beginningOfDocument, offset: offset) ?? self.endOfDocument
+        let utf16Offset = (self.text ?? "").utf16Offset(characterIndex: offset)
+        let position = self.position(from: self.beginningOfDocument, offset: utf16Offset) ?? self.endOfDocument
         self.selectedTextRange = self.textRange(from: position, to: position)
     }
 }

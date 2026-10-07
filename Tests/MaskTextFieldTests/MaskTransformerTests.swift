@@ -274,4 +274,21 @@ final class SupportUtilitiesTests: XCTestCase {
         XCTAssertEqual("12345".substring(start: 99, length: 5), "")
         XCTAssertEqual("12345".substring(start: -1, length: 2), "")
     }
+
+    func testCharacterIndexFromUTF16Offset() {
+        // "😀" — 1 символ, но 2 UTF-16 единицы (суррогатная пара).
+        let s = "😀_"
+
+        XCTAssertEqual(s.characterIndex(utf16Offset: 0), 0)
+        XCTAssertEqual(s.characterIndex(utf16Offset: 2), 1)
+        XCTAssertEqual(s.characterIndex(utf16Offset: 3), 2)
+    }
+
+    func testUTF16OffsetFromCharacterIndex() {
+        let s = "😀_"
+
+        XCTAssertEqual(s.utf16Offset(characterIndex: 0), 0)
+        XCTAssertEqual(s.utf16Offset(characterIndex: 1), 2)
+        XCTAssertEqual(s.utf16Offset(characterIndex: 2), 3)
+    }
 }
