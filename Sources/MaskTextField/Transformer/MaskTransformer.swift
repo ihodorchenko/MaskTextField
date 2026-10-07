@@ -140,7 +140,9 @@ public class MaskTransformer: FilterTransformer {
 
         guard let index = self.insert(char: f, at: offset) else { return false }
 
-        self.setTextAndCursor(cursorPosition: index + 1)
+        // Курсор — на следующей пустой вводимой позиции, литералы пропускаются.
+        let cursor = self.nextEmptyEnteredIndex(after: index) ?? self._maskInfo.count
+        self.setTextAndCursor(cursorPosition: cursor)
 
         return true
     }
@@ -234,6 +236,21 @@ public class MaskTransformer: FilterTransformer {
             guard info.isValid(char: char) else { return nil }
             info.enteredChar = char
             return index
+        }
+
+        return nil
+    }
+
+    /// Индекс первой пустой вводимой позиции после `index` (литералы пропускаются).
+    /// Возвращает `nil`, если таких позиций нет.
+    private func nextEmptyEnteredIndex(after index: Int) -> Int? {
+        guard index + 1 < self._maskInfo.count else { return nil }
+
+        for i in (index + 1)..<self._maskInfo.count {
+            let info = self._maskInfo[i]
+            if info.canEntered && info.isNilChar {
+                return i
+            }
         }
 
         return nil
