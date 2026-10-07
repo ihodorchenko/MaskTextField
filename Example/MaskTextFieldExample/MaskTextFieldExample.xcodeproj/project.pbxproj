@@ -14,6 +14,7 @@
 /* Begin PBXBuildFile section */
 		FACE0001000000000000000C /* MaskTextField in Frameworks */ = {isa = PBXBuildFile; productRef = FACE0001000000000000000B /* MaskTextField */; };
 		FACE0001000000000000000E /* MaskTextFieldSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = FACE0001000000000000000D /* MaskTextFieldSwiftUI */; };
+		C0DE000000000000000000A3 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = C0DE000000000000000000A2 /* SnapshotTesting */; };
 		BEEF000000000000000000AA /* MaskTextField in Frameworks */ = {isa = PBXBuildFile; productRef = FACE0001000000000000000B /* MaskTextField */; };
 /* End PBXBuildFile section */
 
@@ -23,6 +24,17 @@
 			relativePath = ../..;
 		};
 /* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C0DE000000000000000000A1 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-snapshot-testing";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.17.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		FACE0001000000000000000B /* MaskTextField */ = {
@@ -34,6 +46,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FACE0001000000000000000A /* XCLocalSwiftPackageReference "MaskTextField" */;
 			productName = MaskTextFieldSwiftUI;
+		};
+		C0DE000000000000000000A2 /* SnapshotTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0DE000000000000000000A1 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */;
+			productName = SnapshotTesting;
 		};
 /* End XCSwiftPackageProductDependency section */
 
@@ -55,6 +72,7 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				BEEF000000000000000000AA /* MaskTextField in Frameworks */,
+				C0DE000000000000000000A3 /* SnapshotTesting in Frameworks */,
 			);
 		};
 		ACE8A8813076AA5800BBA997 /* Frameworks */ = {
@@ -128,6 +146,7 @@
 			name = MaskTextFieldFieldTests;
 			packageProductDependencies = (
 				FACE0001000000000000000B /* MaskTextField */,
+				C0DE000000000000000000A2 /* SnapshotTesting */,
 			);
 			productName = MaskTextFieldFieldTests;
 			productReference = BEEF000000000000000000A1 /* MaskTextFieldFieldTests.xctest */;
@@ -165,6 +184,7 @@
 			productRefGroup = ACE8A8853076AA5800BBA997 /* Products */;
 			packageReferences = (
 				FACE0001000000000000000A /* XCLocalSwiftPackageReference "MaskTextField" */,
+				C0DE000000000000000000A1 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
 			);
 			projectDirPath = "";
 			projectRoot = "";
