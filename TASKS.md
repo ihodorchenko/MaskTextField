@@ -38,8 +38,9 @@
 
 ## App Store / совместимость
 
-- [ ] **#25 — приватный `_clearButton` через KVC.** `value(forKey: "_clearButton")` —
-  приватный API UIKit, риск ревью и поломки. Файл: `TextField/MaskTextField.swift`.
+- [x] **#25 — приватный `_clearButton` через KVC.** Заменён собственной clear-кнопкой
+  через `rightView` (`clearButtonMode` переопределён, `clearButtonColor` красит её).
+  Файл: `TextField/MaskTextField.swift`. Snapshot перегенерирован.
 
 - [x] **#26 — `public extension String` засоряет API.** Краш-склонный `subscript`
   и хелперы глобально публичны. Сделать `internal`. Файл: `Support/String+Extensions.swift`.
