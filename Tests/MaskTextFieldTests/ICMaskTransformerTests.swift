@@ -154,6 +154,25 @@ final class ICMaskTransformerTests: XCTestCase {
         XCTAssertEqual(mock.text, "+3 (••)")
     }
 
+    func testHideCharsVeilsEnteredCharacterAfterDelay() {
+        transformer.mask = "dd"
+        transformer.hideChars = true
+
+        _ = transformer.onTextInput("1")
+
+        // Сразу после ввода символ виден.
+        XCTAssertEqual(mock.text, "1_")
+
+        // Через 1.5 секунды символ скрывается.
+        let expectation = expectation(description: "char hidden")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+            XCTAssertEqual(self.mock.text, "•_")
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 2.5)
+    }
+
     // MARK: - Установка значения без маски
 
     func testSetTextValuePopulatesMask() {
