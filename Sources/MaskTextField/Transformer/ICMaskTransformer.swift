@@ -424,13 +424,14 @@ extension ICMaskTransformer {
             self._timer = nil
 
             self._timer = Timer.scheduledTimer(
-                timeInterval: CharInfo.hideCharDelay,
-                target: self, selector: #selector(self.onCallback),
-                userInfo: nil, repeats: false)
+                withTimeInterval: CharInfo.hideCharDelay,
+                repeats: false
+            ) { [weak self] _ in
+                self?.hideTimerFired()
+            }
         }
 
-        @objc
-        private func onCallback() {
+        private func hideTimerFired() {
             self._timer?.invalidate()
             self._timer = nil
 
@@ -440,6 +441,10 @@ extension ICMaskTransformer {
 
             self.hiddenChar = true
             self._transformer?.charStateChanged()
+        }
+
+        deinit {
+            self._timer?.invalidate()
         }
     }
 }
