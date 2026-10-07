@@ -1,15 +1,20 @@
+//
+//  MaskTextFieldFieldTests.swift
+//  MaskTextFieldFieldTests
+//
+
 import XCTest
 import UIKit
-@testable import MaskTextField
+import MaskTextField
 
 /// Тесты реального `MaskTextField` (`UITextField`), покрывающие интеграцию
 /// UIKit-слоя: ввод/удаление через делегат, вставку, курсор, скрытие символов
 /// и проброс событий внешнему делегату.
 ///
-/// В отличие от `MaskTransformerTests`, здесь используется настоящий
-/// `UITextField`, поэтому проверяется и то, как маска взаимодействует с
-/// позиционированием курсора и текстом самого поля.
-final class MaskTextFieldTests: XCTestCase {
+/// Запускаются внутри host-приложения (`MaskTextFieldExample`), поэтому здесь
+/// доступен `UIApplication` и контрольные события (`sendActions`) работают без
+/// assert-шума, в отличие от UIKit-free тестов пакета.
+final class MaskTextFieldFieldTests: XCTestCase {
 
     private var field: MaskTextField!
 
