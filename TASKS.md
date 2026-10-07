@@ -16,23 +16,25 @@
 - [x] **#20 — `resetEditActions()` чистит только `editActions`.** `filterEditActions`
   остаётся активным — асимметрия. Файл: `TextField/MaskTextField.swift`.
 
-- [ ] **#21 — `deleteBackward()` обходит трансформер.** Дёргает `super` и шлёт
-  событие в обход маски; рассинхрон с `_maskInfo`. Нужно сначала воспроизвести
-  поведение аппаратного backspace/меню. Файл: `TextField/MaskTextField.swift`.
+- [x] **#21 — `deleteBackward()` обходит трансформер.** Дёргает `super` и шлёт
+  событие в обход маски; рассинхрон с `_maskInfo`. Теперь удаление идёт через
+  трансформер + `notification()`. Файл: `TextField/MaskTextField.swift`,
+  `TextField/MaskTextFieldWithDelegate.swift`.
 
 ## Логика / UX
 
-- [ ] **#22 — курсор отскакивает на первую пустую позицию.** `onSelectionChanged()`
-  вызывает `setTextAndCursor()` без позиции; пользователь не может поставить курсор
-  в середину. Файл: `Transformer/MaskTransformer.swift`.
+- [x] **#22 — курсор отскакивает на первую пустую позицию.** `onSelectionChanged()`
+  вызывает `setTextAndCursor()` без позиции. Теперь позиция читается из протокола
+  (`cursorOffset`) и сохраняется. Файл: `Transformer/MaskTransformer.swift`,
+  `Interface/MaskTextFieldProtocol.swift`.
 
-- [ ] **#23 — риск рекурсии курсора.** `textFieldDidChangeSelection` →
-  `onSelectionChanged` → `setTextAndCursor` → `setCursorPosition` → … Нет guard.
-  Связано с #22.
+- [x] **#23 — риск рекурсии курсора.** `textFieldDidChangeSelection` →
+  `onSelectionChanged` → `setTextAndCursor` → `setCursorPosition` → … Добавлен
+  guard `isRendering`. Файл: `Transformer/MaskTransformer.swift`.
 
-- [ ] **#24 — хрупкая переустановка свойств.** `maskText = ""` сбрасывает
-  `_transformer` в `BaseTransformer`, теряя `maskLostFocus`, `maskChar` и пр.
-  Файл: `TextField/MaskTextField.swift`.
+- [x] **#24 — хрупкая переустановка свойств.** `maskText = ""` сбрасывает
+  `_transformer` в `BaseTransformer`, теряя настройки. Добавлен `makeMaskTransformer()`
+  с полным набором настроек. Файл: `TextField/MaskTextField.swift`.
 
 ## App Store / совместимость
 
