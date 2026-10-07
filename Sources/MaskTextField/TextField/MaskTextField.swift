@@ -232,6 +232,23 @@ public class MaskTextField: UITextField {
         return BaseTransformer(textField: self)
     }()
 
+    /// Создаёт `MaskTransformer` с полным набором текущих настроек маски.
+    ///
+    /// Нужен, чтобы повторное включение маски (после `maskText = ""`, которое
+    /// сбрасывает трансформер в `BaseTransformer`) не теряло `maskChar`,
+    /// `veiledMaskChar`, `hideChars`, `maskMode` и `maskLostFocus`.
+    private func makeMaskTransformer() -> MaskTransformer {
+        MaskTransformer(textField: self) => {
+            $0.mask = self.maskText
+            $0.maskLostFocus = self.maskLostFocus
+            $0.maskChar = self.maskChar
+            $0.veiledMaskChar = self.veiledMaskChar
+            $0.hideChars = self.hideChars
+            $0.maskMode = self.maskMode
+            $0.hiddenMaskIfEnteredTextEmpty = self.hiddenMaskIfEnteredTextEmpty
+        }
+    }
+
     /// Настраиваемая маска (+375 (dd) ddd-dd-dd).
     /// Маска со скрытыми введёнными символами (+375 (^d^d) ^d^d^d-^d^d-^d^d) — при потере фокуса.
     public var maskText: String = "" {
@@ -240,9 +257,7 @@ public class MaskTextField: UITextField {
                 if let mt = self._transformer as? MaskTransformer {
                     mt.mask = self.maskText
                 } else {
-                    self._transformer = MaskTransformer(textField: self) => {
-                        $0.mask = self.maskText
-                    }
+                    self._transformer = self.makeMaskTransformer()
                 }
             } else {
                 self._transformer = BaseTransformer(textField: self)
@@ -258,9 +273,7 @@ public class MaskTextField: UITextField {
             if let mt = self._transformer as? MaskTransformer {
                 mt.maskLostFocus = self.maskLostFocus
             } else {
-                self._transformer = MaskTransformer(textField: self) => {
-                    $0.maskLostFocus = self.maskLostFocus
-                }
+                self._transformer = self.makeMaskTransformer()
             }
         }
     }
@@ -271,9 +284,7 @@ public class MaskTextField: UITextField {
             if let mt = self._transformer as? MaskTransformer {
                 mt.maskChar = self.maskChar
             } else {
-                self._transformer = MaskTransformer(textField: self) => {
-                    $0.maskChar = self.maskChar
-                }
+                self._transformer = self.makeMaskTransformer()
             }
         }
     }
@@ -284,9 +295,7 @@ public class MaskTextField: UITextField {
             if let mt = self._transformer as? MaskTransformer {
                 mt.veiledMaskChar = self.veiledMaskChar
             } else {
-                self._transformer = MaskTransformer(textField: self) => {
-                    $0.veiledMaskChar = self.veiledMaskChar
-                }
+                self._transformer = self.makeMaskTransformer()
             }
         }
     }
@@ -297,9 +306,7 @@ public class MaskTextField: UITextField {
             if let mt = self._transformer as? MaskTransformer {
                 mt.hideChars = self.hideChars
             } else {
-                self._transformer = MaskTransformer(textField: self) => {
-                    $0.hideChars = self.hideChars
-                }
+                self._transformer = self.makeMaskTransformer()
             }
         }
     }
@@ -320,9 +327,7 @@ public class MaskTextField: UITextField {
             if let mt = self._transformer as? MaskTransformer {
                 mt.maskMode = self.maskMode
             } else {
-                self._transformer = MaskTransformer(textField: self) => {
-                    $0.maskMode = self.maskMode
-                }
+                self._transformer = self.makeMaskTransformer()
             }
         }
     }
@@ -333,9 +338,7 @@ public class MaskTextField: UITextField {
             if let mt = self._transformer as? MaskTransformer {
                 mt.hiddenMaskIfEnteredTextEmpty = self.hiddenMaskIfEnteredTextEmpty
             } else {
-                self._transformer = MaskTransformer(textField: self) => {
-                    $0.hiddenMaskIfEnteredTextEmpty = self.hiddenMaskIfEnteredTextEmpty
-                }
+                self._transformer = self.makeMaskTransformer()
             }
         }
     }

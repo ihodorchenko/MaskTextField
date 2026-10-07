@@ -45,6 +45,17 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertEqual(field.text, "")
     }
 
+    func testMaskConfigurationSurvivesMaskToggle() {
+        field.maskChar = "#"
+        field.maskText = "dd"
+
+        // Выключаем маску, затем включаем снова — настройки должны сохраниться.
+        field.maskText = ""
+        field.maskText = "dd"
+
+        XCTAssertEqual(field.visibleTextMask, "##")
+    }
+
     // MARK: - textValue
 
     func testTextValueRoundTrip() {
