@@ -170,7 +170,7 @@ final class MaskTextFieldFieldTests: XCTestCase {
 
         XCTAssertEqual(field.text, "+3 (12)")
 
-        field.textFieldDidEndEditing(field)
+        field.textFieldDidEndEditing(field, reason: .committed)
 
         XCTAssertEqual(field.text, "+3 (••)")
     }

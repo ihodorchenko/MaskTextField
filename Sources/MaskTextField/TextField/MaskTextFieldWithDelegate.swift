@@ -45,12 +45,6 @@ extension MaskTextField: UITextFieldDelegate {
         self._transformer.onGotFocus()
     }
 
-    public func textFieldDidEndEditing(_ textField: UITextField) {
-        self.externalDelegate?.textFieldDidEndEditing?(textField)
-
-        self._transformer.onLostFocus()
-    }
-
     public func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
         return self.externalDelegate?.textFieldShouldBeginEditing?(textField) ?? true
     }
