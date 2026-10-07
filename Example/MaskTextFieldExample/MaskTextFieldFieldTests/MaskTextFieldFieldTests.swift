@@ -158,6 +158,23 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertTrue(delegate.didBeginEditing)
     }
 
+    func testExternalDelegateCanVetoInput() {
+        let delegate = VetoingDelegate()
+        field.delegate = delegate
+        field.maskText = "dd"
+
+        let result = field.textField(
+            field,
+            shouldChangeCharactersIn: NSRange(location: 0, length: 0),
+            replacementString: "1"
+        )
+
+        XCTAssertFalse(result)
+        XCTAssertEqual(delegate.shouldChangeCharactersCalls, 1)
+        XCTAssertEqual(field.text, "__")
+        XCTAssertEqual(field.textValue, "")
+    }
+
     // MARK: - Helpers
 
     /// Симулирует ввод одного символа в позицию текущего курсора.
@@ -197,5 +214,19 @@ private final class RecordingDelegate: NSObject, UITextFieldDelegate {
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
         didBeginEditing = true
+    }
+}
+
+/// Делегат, всегда отклоняющий ввод.
+private final class VetoingDelegate: NSObject, UITextFieldDelegate {
+    var shouldChangeCharactersCalls = 0
+
+    func textField(
+        _ textField: UITextField,
+        shouldChangeCharactersIn range: NSRange,
+        replacementString string: String
+    ) -> Bool {
+        shouldChangeCharactersCalls += 1
+        return false
     }
 }

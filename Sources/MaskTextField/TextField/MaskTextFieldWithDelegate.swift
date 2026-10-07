@@ -2,7 +2,11 @@ import UIKit
 
 extension MaskTextField: UITextFieldDelegate {
     public func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        _ = self.externalDelegate?.textField?(textField, shouldChangeCharactersIn: range, replacementString: string)
+        // Пользовательский делегат может отклонить ввод; в этом случае маска не трогается.
+        if let externalResult = self.externalDelegate?.textField?(textField, shouldChangeCharactersIn: range, replacementString: string),
+           !externalResult {
+            return false
+        }
 
         defer { self.notification() }
 
