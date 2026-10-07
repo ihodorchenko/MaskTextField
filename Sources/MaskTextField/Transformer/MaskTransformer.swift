@@ -154,7 +154,9 @@ public class MaskTransformer: FilterTransformer {
 
     open override func onSelectionChanged() {
         guard !self.isRendering else { return }
-        self.setTextAndCursor()
+        // Сохраняем текущую позицию курсора (пользователь мог переместить его),
+        // а не «отскакиваем» на первую пустую вводимую позицию.
+        self.setTextAndCursor(cursorPosition: self.control?.cursorOffset)
     }
 
     open override func onGotFocus() {
@@ -293,11 +295,10 @@ public class MaskTransformer: FilterTransformer {
             return
         }
 
-        control.text = text
-
         self.isRendering = true
+        defer { self.isRendering = false }
+        control.text = text
         control.setCursorPosition(cursor)
-        self.isRendering = false
     }
 
     private func getTextAndCursor(_ cursor: inout Int, _ text: inout String, cursorPosition: Int? = nil) {

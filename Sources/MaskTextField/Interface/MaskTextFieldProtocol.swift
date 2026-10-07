@@ -15,4 +15,7 @@ public protocol MaskTextFieldProtocol: AnyObject {
 
     /// Устанавливает курсор на позицию `offset` (в символах).
     func setCursorPosition(_ offset: Int)
+
+    /// Текущая позиция курсора (в символах).
+    var cursorOffset: Int { get }
 }

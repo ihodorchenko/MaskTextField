@@ -28,4 +28,10 @@ extension MaskTextField: MaskTextFieldProtocol {
         let position = self.position(from: self.beginningOfDocument, offset: utf16Offset) ?? self.endOfDocument
         self.selectedTextRange = self.textRange(from: position, to: position)
     }
+
+    public var cursorOffset: Int {
+        guard let range = self.selectedTextRange else { return 0 }
+        let utf16Offset = self.offset(from: self.beginningOfDocument, to: range.start)
+        return (self.text ?? "").characterIndex(utf16Offset: utf16Offset)
+    }
 }

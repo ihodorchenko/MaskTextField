@@ -135,6 +135,18 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertEqual(cursorOffset(), 10)
     }
 
+    func testCursorPreservedOnSelectionChange() {
+        field.maskText = "dd-dd"
+        field.textValue = "1234" // "12-34", курсор в конце
+
+        // Перемещаем курсор в позицию 2 (между "2" и "-").
+        field.setCursorPosition(2)
+        // Эмуляция UIKit: изменение выделения не должно отбрасывать курсор в конец.
+        field.textFieldDidChangeSelection(field)
+
+        XCTAssertEqual(cursorOffset(), 2)
+    }
+
     // MARK: - Скрытие при потере фокуса
 
     func testVeilsEnteredCharactersOnLostFocus() {

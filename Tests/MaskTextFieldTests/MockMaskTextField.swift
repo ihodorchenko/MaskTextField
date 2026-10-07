@@ -24,4 +24,6 @@ final class MockMaskTextField: MaskTextFieldProtocol {
     func setCursorPosition(_ offset: Int) {
         cursorPosition = offset
     }
+
+    var cursorOffset: Int { cursorPosition }
 }
