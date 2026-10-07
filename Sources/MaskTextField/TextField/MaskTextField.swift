@@ -4,22 +4,59 @@ import Combine
 
 public class MaskTextField: UITextField {
 
-    private var didSetupWhiteTintColorForClearTextFieldButton = false
-
     // MARK: - property
 
     public var clearButtonColor: UIColor = UIColor.systemGray {
         didSet {
-            self.didSetupWhiteTintColorForClearTextFieldButton = false
-            self.setupTintColorForTextFieldClearButtonIfNeeded()
+            self.customClearButton.tintColor = self.clearButtonColor
         }
     }
 
-    @Published
-    public private(set) var deleteBackwardPublisher: Void = ()
+    private var requestedClearButtonMode: UITextField.ViewMode = .never
+
+    /// Переопределяем системную clear-кнопку собственной (через `rightView`),
+    /// чтобы не обращаться к приватному `_clearButton` и свободно красить её.
+    public override var clearButtonMode: UITextField.ViewMode {
+        get { self.requestedClearButtonMode }
+        set {
+            self.requestedClearButtonMode = newValue
+            // Системную кнопку не показываем — используем свою (rightView).
+            super.clearButtonMode = .never
+            self.updateCustomClearButton()
+        }
+    }
+
+    private lazy var customClearButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
+        button.tintColor = self.clearButtonColor
+        button.addTarget(self, action: #selector(self.clearButtonHandler), for: .touchUpInside)
+        return button
+    }()
+
+    private func updateCustomClearButton() {
+        if self.requestedClearButtonMode == .never {
+            self.rightView = nil
+        } else {
+            self.rightView = self.customClearButton
+            self.rightViewMode = self.requestedClearButtonMode
+        }
+    }
+
+    @objc private func clearButtonHandler() {
+        // Даём внешнему делегату возможность отклонить очистку (как `textFieldShouldClear`).
+        let shouldClear = self.externalDelegate?.textFieldShouldClear?(self) ?? true
+        guard shouldClear else { return }
+
+        self.textValue = ""
+        self.clearButtonPublisher = ()
+    }
 
     @Published
-    public private(set) var clearButtonPublisher: Void = ()
+    public internal(set) var deleteBackwardPublisher: Void = ()
+
+    @Published
+    public internal(set) var clearButtonPublisher: Void = ()
 
     public private(set) lazy var textPublisher: AnyPublisher<String, Never> = NotificationCenter.default
         .publisher(for: UITextField.textDidChangeNotification, object: self)
@@ -49,8 +86,6 @@ public class MaskTextField: UITextField {
         // Внутренний делегат — сам `MaskTextField`; пользовательский делегат
         // задаётся через `delegate` и хранится в `externalDelegate`.
         super.delegate = self
-
-        self._initView()
     }
 
     required public init?(coder aDecoder: NSCoder) {
@@ -59,16 +94,6 @@ public class MaskTextField: UITextField {
         // Внутренний делегат — сам `MaskTextField`; пользовательский делегат
         // задаётся через `delegate` и хранится в `externalDelegate`.
         super.delegate = self
-
-        self._initView()
-    }
-
-    // MARK: - initialisation
-
-    private func _initView() {
-        self.addTarget(self, action: #selector(self.begin), for: .allEditingEvents)
-
-        self.setupTintColorForTextFieldClearButtonIfNeeded()
     }
 
     // MARK: - content insert
@@ -141,32 +166,6 @@ public class MaskTextField: UITextField {
             width: rec.width,
             height: rec.height
         )
-    }
-
-    // MARK: - func for change color in clear button
-
-    @objc private func begin() {
-        self.setupTintColorForTextFieldClearButtonIfNeeded()
-    }
-
-    private func setupTintColorForTextFieldClearButtonIfNeeded() {
-        if self.didSetupWhiteTintColorForClearTextFieldButton { return }
-
-        guard let button = self.value(forKey: "_clearButton") as? UIButton else { return }
-        guard let icon = button.image(for: .normal)?.withRenderingMode(.alwaysTemplate) else { return }
-
-        button.setImage(icon, for: .normal)
-        button.tintColor = self.clearButtonColor
-
-        button.addTarget(self, action: #selector(self.clearButtonHandler), for: .touchUpInside)
-
-        self.didSetupWhiteTintColorForClearTextFieldButton = true
-    }
-
-    @objc private func clearButtonHandler() {
-        self.textValue = ""
-
-        self.clearButtonPublisher = ()
     }
 
     // MARK: - clear text
