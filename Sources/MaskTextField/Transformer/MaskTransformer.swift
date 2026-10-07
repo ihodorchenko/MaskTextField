@@ -56,6 +56,11 @@ public class MaskTransformer: FilterTransformer {
 
     private var _isFocus: Bool = false
 
+    /// Флаг, показывающий, что `setTextAndCursor` сейчас сам меняет текст/курсор.
+    /// Предотвращает рекурсию: `setCursorPosition` → `textFieldDidChangeSelection` →
+    /// `onSelectionChanged` → `setTextAndCursor` → …
+    private var isRendering: Bool = false
+
     // MARK: - Filter Transformer
 
     private var _onlyEnteredCount: Int = 0
@@ -148,6 +153,7 @@ public class MaskTransformer: FilterTransformer {
     }
 
     open override func onSelectionChanged() {
+        guard !self.isRendering else { return }
         self.setTextAndCursor()
     }
 
@@ -289,7 +295,9 @@ public class MaskTransformer: FilterTransformer {
 
         control.text = text
 
+        self.isRendering = true
         control.setCursorPosition(cursor)
+        self.isRendering = false
     }
 
     private func getTextAndCursor(_ cursor: inout Int, _ text: inout String, cursorPosition: Int? = nil) {
