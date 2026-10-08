@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.1
+
+### Fixed
+- In password mode (`hideChars`) the cursor no longer jumps to the first free position when
+  the hide timer fires after the user moved it (`.free` mode).
+
+### Added
+- `deleteBackwardEvents` and `clearButtonEvents`: real event publishers. The existing
+  `@Published` properties `deleteBackwardPublisher` / `clearButtonPublisher` emit
+  immediately on subscription, which is kept for compatibility but documented.
+
 ## 1.1.0
 
 ### Added
