@@ -24,7 +24,7 @@ and customize how the mask is displayed (full or gradual).
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/<your>/MaskTextField.git", from: "1.0.0")
+    .package(url: "https://github.com/ihodorchenko/MaskTextField.git", from: "1.0.0")
 ],
 targets: [
     .target(
@@ -84,6 +84,14 @@ struct MyView: View {
 }
 ```
 
+Optional parameters: `font`, `textColor`, `textAlignment`, `returnKeyType`,
+`clearButtonMode`, `isFocused: Binding<Bool>?` (read and drive focus) and
+`onCommit` (Return key).
+
+```swift
+MaskedTextField(mask: "dd/dd/dddd", isFocused: $isDateFocused, onCommit: { submit() }, textValue: $date)
+```
+
 Add the `MaskTextFieldSwiftUI` product to your target in Xcode, or via
 `.product(name: "MaskTextFieldSwiftUI", package: "MaskTextField")` in `Package.swift`.
 
@@ -92,13 +100,13 @@ Add the `MaskTextFieldSwiftUI` product to your target in Xcode, or via
 A mask is a string where special characters define editable positions and all
 other characters are printed as literals.
 
-| Character | Meaning                                               | Regex                             |
+| Character | Meaning                                               | Accepts                           |
 |-----------|-------------------------------------------------------|-----------------------------------|
-| `d`       | digit                                                 | `[0-9]`                           |
-| `a`       | letter                                                | `[a-zA-Z]`                        |
+| `d`       | digit (ASCII)                                         | `[0-9]`                           |
+| `a`       | Latin letter                                          | `[a-zA-Z]`                        |
 | `A`       | letter or digit                                       | `[a-zA-Z0-9]`                     |
-| `x`       | any character                                         | `[a-zA-Z!@#$%^&*()_\-+={};:<>|./?.]` |
-| `X`       | any character or digit                                | `[a-zA-Z0-9!@#$%^&*()_\-+={};:<>|./?.]` |
+| `x`       | any visible ASCII character except a digit            | letters and punctuation/symbols   |
+| `X`       | any visible ASCII character, digits included          | letters, digits, punctuation      |
 | `z`       | any character (no validation)                         | —                                 |
 | `\c`      | escaped literal (even if `c` is a special character)  | —                                 |
 | `^c`      | editable position veiled on focus loss                | —                                 |
@@ -127,6 +135,11 @@ Examples:
 | `onlyEnteredCount` | `Int` | Number of editable positions |
 | `visibleTextMask` | `String` | The mask being displayed |
 | `charValidator` | `CharValidator?` | Additional input restrictions |
+
+Pasting and editing: pasted text is filtered to the characters the mask accepts.
+Pasting into the middle of a value keeps the surrounding characters (the tail
+shifts right), and typing, pasting or deleting over a selection replaces only the
+selected part.
 
 Combine publishers: `textPublisher`, `deleteBackwardPublisher`,
 `clearButtonPublisher`.
@@ -160,6 +173,10 @@ Input is processed by a chain of transformers (`BaseTransformer` →
 - `FilterTransformer` — character filtering and decimal separator normalization;
 - `MaskTransformer` — mask application, character veiling, display modes.
 
+The mask itself is parsed once into immutable `MaskSlot`s; entered characters and
+veiling flags live in the transformer next to them, with a single hide timer for
+password mode.
+
 The logic works through the `MaskTextFieldProtocol`, so the transformers can be
 tested without a real `UITextField`.
 
@@ -171,7 +188,7 @@ The project already references the local package (`relativePath = ../..`).
 
 ## Tests
 
-Package-level tests (transformer logic, run without a host app):
+Package-level tests (transformer logic and the real `MaskTextField`, no host app needed):
 
 ```sh
 xcodebuild -scheme MaskTextField-Package \
@@ -179,7 +196,7 @@ xcodebuild -scheme MaskTextField-Package \
   test
 ```
 
-Hosted field tests (`MaskTextField` integration, run inside the example app):
+Snapshot tests (run inside the example app, they use `swift-snapshot-testing`):
 
 ```sh
 xcodebuild -project Example/MaskTextFieldExample/MaskTextFieldExample.xcodeproj \
@@ -187,6 +204,8 @@ xcodebuild -project Example/MaskTextFieldExample/MaskTextFieldExample.xcodeproj 
   -destination 'platform=iOS Simulator,name=iPhone 16' \
   test
 ```
+
+CI (`.github/workflows/ci.yml`) runs the package tests on every push and pull request.
 
 Tests cover mask rendering, input/deletion, rejection of invalid characters,
 display modes, character veiling on focus loss, and cursor positioning.
