@@ -364,6 +364,37 @@ final class MaskTransformerTests: XCTestCase {
         wait(for: [expectation], timeout: 2.5)
     }
 
+    func testHideCharsTimerKeepsCursorPositionInFreeMode() {
+        transformer.mask = "dddd"
+        transformer.hideChars = true
+        _ = transformer.onTextInput("1")
+
+        // Пользователь переставил курсор, пока шёл таймер скрытия.
+        mock.setCursorPosition(0)
+
+        let expectation = expectation(description: "timer fired")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+            XCTAssertEqual(self.mock.text, "•___")
+            XCTAssertEqual(self.mock.cursorPosition, 0)
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 2.5)
+    }
+
+    func testHideCharsTimerKeepsCanonicalCursorInSequentialMode() {
+        transformer.mask = "dddd"
+        transformer.cursorBehavior = .sequential
+        transformer.hideChars = true
+        _ = transformer.onTextInput("1")
+
+        let expectation = expectation(description: "timer fired")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+            XCTAssertEqual(self.mock.cursorPosition, 1)
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 2.5)
+    }
+
     func testHideCharsTimerCanceledOnMaskChange() {
         transformer.mask = "dd"
         transformer.hideChars = true

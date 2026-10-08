@@ -373,7 +373,10 @@ public final class MaskTransformer: FilterTransformer {
         }
 
         if changed {
-            self.setTextAndCursor()
+            // Курсор не трогаем: пользователь мог переставить его, пока шёл таймер.
+            // В `.sequential` каноническая позиция вычисляется сама.
+            let keepCursor = self.cursorBehavior == .free ? self.control?.cursorOffset : nil
+            self.setTextAndCursor(cursorPosition: keepCursor)
         }
     }
 

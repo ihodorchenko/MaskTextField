@@ -58,14 +58,31 @@ public class MaskTextField: UITextField {
 
         self.textValue = ""
         self.clearButtonPublisher = ()
+        self.clearButtonSubject.send()
         self.notification()
     }
 
+    /// - Note: `@Published` отдаёт текущее значение при подписке, поэтому подписчик
+    ///   получает «событие» сразу. Для реальных событий используйте `deleteBackwardEvents`.
     @Published
     public internal(set) var deleteBackwardPublisher: Void = ()
 
+    /// - Note: см. `deleteBackwardPublisher`; для реальных событий — `clearButtonEvents`.
     @Published
     public internal(set) var clearButtonPublisher: Void = ()
+
+    private let deleteBackwardSubject = PassthroughSubject<Void, Never>()
+    private let clearButtonSubject = PassthroughSubject<Void, Never>()
+
+    /// Срабатывает при каждом удалении символа назад; при подписке не срабатывает.
+    public var deleteBackwardEvents: AnyPublisher<Void, Never> {
+        self.deleteBackwardSubject.eraseToAnyPublisher()
+    }
+
+    /// Срабатывает при нажатии на кнопку очистки; при подписке не срабатывает.
+    public var clearButtonEvents: AnyPublisher<Void, Never> {
+        self.clearButtonSubject.eraseToAnyPublisher()
+    }
 
     /// Локаль для десятичных разделителей по умолчанию (когда `charValidator` не задан).
     /// Сама маска от локали не зависит: она всегда задаёт формат буквально.
@@ -264,6 +281,7 @@ public class MaskTextField: UITextField {
 
         self._transformer.onDeleteBackward(at: (self.text ?? "").characterIndex(utf16Offset: utf16Offset))
         self.deleteBackwardPublisher = ()
+        self.deleteBackwardSubject.send()
         self.notification()
     }
 

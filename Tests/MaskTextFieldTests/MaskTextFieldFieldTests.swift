@@ -1,5 +1,6 @@
 import XCTest
 import UIKit
+import Combine
 @testable import MaskTextField
 
 /// Тесты реального `MaskTextField` (`UITextField`), покрывающие интеграцию
@@ -327,6 +328,33 @@ final class MaskTextFieldFieldTests: XCTestCase {
         field.textFieldDidChangeSelection(field)
 
         XCTAssertEqual(field.cursorOffset, 2)
+    }
+
+    // MARK: - События
+
+    func testEventPublishersDoNotFireOnSubscription() {
+        var deleteCount = 0
+        var clearCount = 0
+        let cancellables = [
+            field.deleteBackwardEvents.sink { deleteCount += 1 },
+            field.clearButtonEvents.sink { clearCount += 1 }
+        ]
+
+        XCTAssertEqual(deleteCount, 0)
+        XCTAssertEqual(clearCount, 0)
+
+        field.maskText = "dd"
+        field.textValue = "12"
+        field.deleteBackward()
+        XCTAssertEqual(deleteCount, 1)
+
+        field.clearButtonMode = .always
+        // `sendActions` у кнопки вне окна не доставляет действие, поэтому вызываем
+        // обработчик кнопки напрямую.
+        field.perform(NSSelectorFromString("clearButtonHandler"))
+        XCTAssertEqual(clearCount, 1)
+
+        cancellables.forEach { $0.cancel() }
     }
 
     // MARK: - Accessibility
