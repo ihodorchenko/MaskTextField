@@ -380,6 +380,8 @@ public class MaskTextField: UITextField {
             } else {
                 self._transformer = BaseTransformer(textField: self)
             }
+
+            self.refreshCompletion(userInitiated: false)
         }
     }
 
@@ -420,6 +422,37 @@ public class MaskTextField: UITextField {
         }
         set {
             self._transformer.text = newValue
+            self.refreshCompletion(userInitiated: false)
+        }
+    }
+
+    // MARK: - completion
+
+    /// Заполнены ли все вводимые позиции маски. Для поля без маски всегда `false`.
+    public var isComplete: Bool {
+        self._transformer.isComplete
+    }
+
+    private let isCompleteSubject = CurrentValueSubject<Bool, Never>(false)
+
+    /// Состояние заполнения: при подписке отдаёт текущее значение, затем только изменения
+    /// (и от действий пользователя, и от программной установки значения или маски).
+    public var isCompletePublisher: AnyPublisher<Bool, Never> {
+        self.isCompleteSubject.removeDuplicates().eraseToAnyPublisher()
+    }
+
+    /// Вызывается, когда **пользователь** своим вводом заполнил маску (переход «не заполнено» →
+    /// «заполнено»). Не вызывается при программной установке значения и не повторяется,
+    /// пока маска остаётся заполненной.
+    public var onComplete: (() -> Void)?
+
+    func refreshCompletion(userInitiated: Bool) {
+        let complete = self.isComplete
+        guard complete != self.isCompleteSubject.value else { return }
+
+        self.isCompleteSubject.send(complete)
+        if complete && userInitiated {
+            self.onComplete?()
         }
     }
 

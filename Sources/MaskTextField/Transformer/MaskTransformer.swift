@@ -62,6 +62,12 @@ public final class MaskTransformer: FilterTransformer {
         self._onlyEnteredCount
     }
 
+    /// Заполнены ли все вводимые позиции маски (маска без вводимых позиций не бывает заполненной).
+    public override var isComplete: Bool {
+        self._onlyEnteredCount > 0
+            && self.slots.indices.allSatisfy { !self.slots[$0].canEntered || self.entered[$0] != nil }
+    }
+
     /// Нормализует вставляемую строку: оставляет только символы, допустимые
     /// на вводимых позициях, и обрезает до их количества (при вставке
     /// используются последние символы).

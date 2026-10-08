@@ -88,6 +88,12 @@ public struct MaskedTextField: UIViewRepresentable {
     /// Вызывается по нажатию Return.
     private var onCommit: (() -> Void)?
 
+    /// Необязательная привязка к состоянию «маска заполнена».
+    private var isComplete: Binding<Bool>?
+
+    /// Вызывается, когда пользователь своим вводом заполнил маску.
+    private var onComplete: (() -> Void)?
+
     /// Создаёт маскированное поле.
     ///
     /// - Parameters:
@@ -113,6 +119,8 @@ public struct MaskedTextField: UIViewRepresentable {
     ///   - accessibilityHintText: подсказка для VoiceOver.
     ///   - isFocused: привязка к состоянию фокуса (чтение и управление).
     ///   - onCommit: обработчик нажатия Return.
+    ///   - isComplete: привязка к состоянию «маска заполнена».
+    ///   - onComplete: обработчик заполнения маски пользователем.
     ///   - textValue: привязка к сырому значению.
     public init(
         mask: String,
@@ -137,6 +145,8 @@ public struct MaskedTextField: UIViewRepresentable {
         accessibilityHintText: String? = nil,
         isFocused: Binding<Bool>? = nil,
         onCommit: (() -> Void)? = nil,
+        isComplete: Binding<Bool>? = nil,
+        onComplete: (() -> Void)? = nil,
         textValue: Binding<String>
     ) {
         self.mask = mask
@@ -161,6 +171,8 @@ public struct MaskedTextField: UIViewRepresentable {
         self.accessibilityHintText = accessibilityHintText
         self.isFocused = isFocused
         self.onCommit = onCommit
+        self.isComplete = isComplete
+        self.onComplete = onComplete
         self._textValue = textValue
     }
 
@@ -172,6 +184,9 @@ public struct MaskedTextField: UIViewRepresentable {
         let field = MaskTextField()
         apply(to: field)
         field.delegate = context.coordinator
+        field.onComplete = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.onComplete?()
+        }
         // `.editingChanged` приходит только от действий пользователя (ввод, вставка,
         // удаление, очистка), а не от программной установки значения из SwiftUI.
         field.addTarget(
@@ -193,6 +208,17 @@ public struct MaskedTextField: UIViewRepresentable {
         }
 
         syncFocus(of: field)
+        syncCompletion(of: field)
+    }
+
+    /// Обновляет привязку `isComplete` после программных изменений значения.
+    private func syncCompletion(of field: MaskTextField) {
+        guard let binding = isComplete, binding.wrappedValue != field.isComplete else { return }
+
+        // Запись состояния внутри цикла обновления SwiftUI недопустима.
+        DispatchQueue.main.async {
+            binding.wrappedValue = field.isComplete
+        }
     }
 
     /// Приводит фокус поля в соответствие с привязкой `isFocused`.
@@ -247,6 +273,9 @@ public struct MaskedTextField: UIViewRepresentable {
             let value = sender.textValue ?? ""
             if parent.textValue != value {
                 parent.textValue = value
+            }
+            if let binding = parent.isComplete, binding.wrappedValue != sender.isComplete {
+                binding.wrappedValue = sender.isComplete
             }
         }
 

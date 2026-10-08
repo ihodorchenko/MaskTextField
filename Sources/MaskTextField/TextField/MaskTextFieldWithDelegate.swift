@@ -79,6 +79,8 @@ extension MaskTextField: UITextFieldDelegate {
     }
 
     func notification() {
+        self.refreshCompletion(userInitiated: true)
+
         NotificationCenter.default.post(name: UITextField.textDidChangeNotification, object: self, userInfo: nil)
 
         self.sendActions(for: .valueChanged)

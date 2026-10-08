@@ -35,6 +35,11 @@ open class BaseTransformer {
         return 0
     }
 
+    /// Заполнены ли все вводимые позиции. Для поля без маски всегда `false`.
+    open var isComplete: Bool {
+        return false
+    }
+
     /// Нормализует строку для вставки. Для поля без маски возвращает строку
     /// без изменений; подклассы могут переопределить (например, снять маску).
     open func normalizedValue(from value: String) -> String {

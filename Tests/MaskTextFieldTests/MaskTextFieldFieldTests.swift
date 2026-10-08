@@ -346,6 +346,70 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertEqual(field.cursorOffset, 2)
     }
 
+    // MARK: - Заполненность
+
+    func testPlainFieldIsNeverComplete() {
+        field.text = "abc"
+        XCTAssertFalse(field.isComplete)
+    }
+
+    func testOnCompleteFiresOnceWhenUserFillsMask() {
+        field.maskText = "dd"
+        var completions = 0
+        field.onComplete = { completions += 1 }
+
+        type("1")
+        XCTAssertEqual(completions, 0)
+
+        type("2")
+        XCTAssertEqual(completions, 1)
+        XCTAssertTrue(field.isComplete)
+
+        // Маска заполнена: отклонённый ввод не повторяет событие.
+        type("3")
+        XCTAssertEqual(completions, 1)
+    }
+
+    func testOnCompleteFiresAgainAfterEditingAndRefilling() {
+        field.maskText = "dd"
+        var completions = 0
+        field.onComplete = { completions += 1 }
+
+        type("1")
+        type("2")
+        field.deleteBackward()
+        XCTAssertFalse(field.isComplete)
+
+        type("3")
+        XCTAssertEqual(completions, 2)
+    }
+
+    func testOnCompleteDoesNotFireOnProgrammaticValue() {
+        field.maskText = "dd"
+        var completions = 0
+        field.onComplete = { completions += 1 }
+
+        field.textValue = "12"
+
+        XCTAssertTrue(field.isComplete)
+        XCTAssertEqual(completions, 0)
+    }
+
+    func testIsCompletePublisherEmitsCurrentValueThenChanges() {
+        field.maskText = "dd"
+        var values: [Bool] = []
+        let cancellable = field.isCompletePublisher.sink { values.append($0) }
+
+        field.textValue = "12"
+        field.textValue = "12" // повтор — без дубля
+        field.textValue = "1"
+        field.maskText = "d"   // смена маски сбрасывает значение — не заполнена
+        field.textValue = "1"
+
+        XCTAssertEqual(values, [false, true, false, true])
+        cancellable.cancel()
+    }
+
     // MARK: - События
 
     func testEventPublishersDoNotFireOnSubscription() {

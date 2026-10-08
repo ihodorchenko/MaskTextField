@@ -373,6 +373,38 @@ final class MaskTransformerTests: XCTestCase {
         XCTAssertEqual(transformer.text, "13")
     }
 
+    // MARK: - Заполненность
+
+    func testIsCompleteReflectsAllEnteredPositions() {
+        transformer.mask = "dd-dd"
+        XCTAssertFalse(transformer.isComplete)
+
+        transformer.text = "123"
+        XCTAssertFalse(transformer.isComplete)
+
+        transformer.text = "1234"
+        XCTAssertTrue(transformer.isComplete)
+
+        transformer.onDeleteBackward()
+        XCTAssertFalse(transformer.isComplete)
+    }
+
+    func testMaskWithoutEnteredPositionsIsNeverComplete() {
+        transformer.mask = "+375"
+        XCTAssertFalse(transformer.isComplete)
+
+        transformer.mask = ""
+        XCTAssertFalse(transformer.isComplete)
+    }
+
+    func testIsCompleteWithGapsInFreeMode() {
+        transformer.mask = "dddd"
+        _ = transformer.onTextInput("1", at: 0)
+        _ = transformer.onTextInput("9", at: 3) // позиция 2 остаётся пустой
+
+        XCTAssertFalse(transformer.isComplete)
+    }
+
     // MARK: - Режимы отображения
 
     func testGradualMaskShowsOnlyEnteredPrefix() {
