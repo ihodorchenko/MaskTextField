@@ -4,11 +4,14 @@
 //
 
 import SwiftUI
+import MaskTextField
 import MaskTextFieldSwiftUI
 
 struct ContentView: View {
     @State private var phone = ""
     @State private var date = ""
+    @State private var freeCard = ""
+    @State private var sequentialCard = ""
 
     var body: some View {
         NavigationStack {
@@ -44,6 +47,44 @@ struct ContentView: View {
                     }
                 } header: {
                     Text("Дата")
+                }
+
+                Section {
+                    MaskedTextField(
+                        mask: "dddd dddd dddd dddd",
+                        cursorBehavior: .free,
+                        placeholder: "0000 0000 0000 0000",
+                        keyboardType: .numberPad,
+                        clearButtonMode: .whileEditing,
+                        textValue: $freeCard
+                    )
+                    LabeledContent("Значение без маски") {
+                        Text(freeCard.isEmpty ? "—" : freeCard)
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Курсор: free")
+                } footer: {
+                    Text("Курсор можно поставить в любое место; ввод и удаление происходят в позиции курсора.")
+                }
+
+                Section {
+                    MaskedTextField(
+                        mask: "dddd dddd dddd dddd",
+                        cursorBehavior: .sequential,
+                        placeholder: "0000 0000 0000 0000",
+                        keyboardType: .numberPad,
+                        clearButtonMode: .whileEditing,
+                        textValue: $sequentialCard
+                    )
+                    LabeledContent("Значение без маски") {
+                        Text(sequentialCard.isEmpty ? "—" : sequentialCard)
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Курсор: sequential")
+                } footer: {
+                    Text("Курсор всегда на первой свободной позиции: ввод и стирание только последовательные, переставить курсор нельзя.")
                 }
             }
             .navigationTitle("MaskTextField")
