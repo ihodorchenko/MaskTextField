@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.4.1
 
 ### Added
 - Verified that the package builds for Mac Catalyst and for the visionOS simulator SDK; the package
