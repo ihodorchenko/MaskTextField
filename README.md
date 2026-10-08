@@ -86,7 +86,8 @@ struct MyView: View {
 
 Optional parameters: `font`, `textColor`, `textAlignment`, `returnKeyType`,
 `clearButtonMode`, `isFocused: Binding<Bool>?` (read and drive focus) and
-`onCommit` (Return key).
+`onCommit` (Return key), `forcesLeftToRight`, `locale`, `announcesInputEvents`,
+`accessibilityLabelText` and `accessibilityHintText`.
 
 ```swift
 MaskedTextField(mask: "dd/dd/dddd", isFocused: $isDateFocused, onCommit: { submit() }, textValue: $date)
@@ -143,6 +144,26 @@ selected part.
 
 Combine publishers: `textPublisher`, `deleteBackwardPublisher`,
 `clearButtonPublisher`.
+
+## Accessibility, locale and RTL
+
+- **VoiceOver.** `accessibilityValue` returns a meaningful value instead of the
+  displayed mask: `Empty` for an empty field, the entered characters without mask
+  placeholders (`2 9 1 2 3`), and only the count (`3 of 9 characters entered`)
+  when characters are hidden (`hideChars`, or `^` positions while unfocused).
+  Set `accessibilityValue` yourself to override it. Use the standard
+  `accessibilityLabel` / `accessibilityHint` (e.g. a hint with the expected format).
+- **Announcements.** `announcesInputEvents = true` makes VoiceOver announce rejected
+  characters and a completed mask (off by default).
+- **Dynamic Type.** The default font is `preferredFont(.body)` with
+  `adjustsFontForContentSizeCategory` enabled; a custom font must scale itself.
+- **Locale.** `locale` (default `.current`) drives decimal and grouping separators
+  when no `charValidator` is set. Masks never depend on the locale: the format is literal.
+- **RTL.** `forcesLeftToRight` (default `true`) keeps masked values (phones, cards,
+  dates) left-to-right in right-to-left interfaces; with `.natural` alignment the
+  text is right-aligned there. Set it to `false` for fully mirrored layout. The
+  clear button always sits at the end of the line (left in RTL).
+- Library strings are localized in English and Russian.
 
 ## Custom character validator
 
