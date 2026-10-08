@@ -440,16 +440,16 @@ public final class MaskTransformer: FilterTransformer {
         self.hideTimerGeneration += 1
         let generation = self.hideTimerGeneration
 
-        // The Timer block is `@Sendable`, so it captures a weak box instead of `self` and hops
-        // back to the main actor to touch the transformer.
-        let box = WeakTransformerBox(self)
-        let timer = Timer(timeInterval: MaskTransformer.hideCharDelay, repeats: false) { _ in
-            Task { @MainActor in
-                guard let transformer = box.transformer,
-                      transformer.hideTimerGeneration == generation else { return }
-                transformer.hideTimerFired()
-            }
-        }
+        // A target/selector timer calls back synchronously on the main thread (no `@Sendable`
+        // block and no hop through the actor executor), and its target holds the transformer weakly.
+        let target = HideTimerTarget(self, generation: generation)
+        let timer = Timer(
+            timeInterval: MaskTransformer.hideCharDelay,
+            target: target,
+            selector: #selector(HideTimerTarget.fire),
+            userInfo: nil,
+            repeats: false
+        )
         // `.common` — чтобы таймер срабатывал и во время скролла/трекинга.
         RunLoop.main.add(timer, forMode: .common)
         self.hideTimer = timer
@@ -461,7 +461,10 @@ public final class MaskTransformer: FilterTransformer {
         self.hideTimer = nil
     }
 
-    private func hideTimerFired() {
+    fileprivate func hideTimerFired(generation: Int) {
+        // A firing from an outdated timer (restarted or cancelled since) is ignored.
+        guard generation == self.hideTimerGeneration else { return }
+
         self.hideTimer = nil
         guard self.hideChars else { return }
 
@@ -567,13 +570,20 @@ public final class MaskTransformer: FilterTransformer {
     }
 }
 
-/// A weak reference to a transformer for the hide-timer block. The reference is only ever
-/// dereferenced on the main actor (the block hops there first).
-private final class WeakTransformerBox: @unchecked Sendable {
-    weak var transformer: MaskTransformer?
+/// The target of the hide timer: a selector-based callback runs synchronously on the main
+/// thread, where the timer is scheduled, and holds the transformer weakly.
+@MainActor
+private final class HideTimerTarget: NSObject {
+    private weak var transformer: MaskTransformer?
+    private let generation: Int
 
-    init(_ transformer: MaskTransformer) {
+    init(_ transformer: MaskTransformer, generation: Int) {
         self.transformer = transformer
+        self.generation = generation
+    }
+
+    @objc func fire() {
+        self.transformer?.hideTimerFired(generation: self.generation)
     }
 }
 

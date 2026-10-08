@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- The password-mode (`hideChars`) timer now calls back synchronously through a target/selector
+  instead of hopping to the main actor with a `Task`, so hiding no longer depends on the actor
+  executor being free (a hide-timer test failed on a GitHub runner with 1.4.1).
+
 ## 1.4.1
 
 ### Added
