@@ -2,7 +2,14 @@
 
 ## Unreleased
 
+### Changed
+- `MaskedTextField` now observes `textDidChangeNotification` instead of the control's
+  `.editingChanged` target-action, so the binding no longer depends on UIControl event
+  delivery (which does not work without a running `UIApplication`).
+
 ### Added
+- SwiftUI wrapper test coverage (binding in both directions, focus, Return, completion,
+  configuration updates).
 - `isComplete`, `isCompletePublisher` and `onComplete`: the mask is filled. `onComplete`
   fires once when the user fills the mask and not for programmatic values; SwiftUI
   `MaskedTextField` gets `isComplete: Binding<Bool>?` and `onComplete`.

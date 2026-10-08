@@ -187,13 +187,10 @@ public struct MaskedTextField: UIViewRepresentable {
         field.onComplete = { [weak coordinator = context.coordinator] in
             coordinator?.parent.onComplete?()
         }
-        // `.editingChanged` приходит только от действий пользователя (ввод, вставка,
-        // удаление, очистка), а не от программной установки значения из SwiftUI.
-        field.addTarget(
-            context.coordinator,
-            action: #selector(Coordinator.editingChanged(_:)),
-            for: .editingChanged
-        )
+        // Уведомление приходит только от действий пользователя (ввод, вставка, удаление,
+        // очистка), а не от программной установки значения из SwiftUI, и не зависит от
+        // доставки target-action.
+        context.coordinator.observeEdits(of: field)
         field.setContentHuggingPriority(.defaultHigh, for: .vertical)
         return field
     }
@@ -269,13 +266,31 @@ public struct MaskedTextField: UIViewRepresentable {
             self.parent = parent
         }
 
-        @objc func editingChanged(_ sender: MaskTextField) {
-            let value = sender.textValue ?? ""
+        private var observer: NSObjectProtocol?
+
+        deinit {
+            if let observer { NotificationCenter.default.removeObserver(observer) }
+        }
+
+        func observeEdits(of field: MaskTextField) {
+            // `queue: nil` — обработчик выполняется синхронно в потоке публикации (главном).
+            observer = NotificationCenter.default.addObserver(
+                forName: UITextField.textDidChangeNotification,
+                object: field,
+                queue: nil
+            ) { [weak self, weak field] _ in
+                guard let self, let field else { return }
+                self.fieldDidChange(field)
+            }
+        }
+
+        private func fieldDidChange(_ field: MaskTextField) {
+            let value = field.textValue ?? ""
             if parent.textValue != value {
                 parent.textValue = value
             }
-            if let binding = parent.isComplete, binding.wrappedValue != sender.isComplete {
-                binding.wrappedValue = sender.isComplete
+            if let binding = parent.isComplete, binding.wrappedValue != field.isComplete {
+                binding.wrappedValue = field.isComplete
             }
         }
 

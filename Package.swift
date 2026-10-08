@@ -30,7 +30,7 @@ let package = Package(
         ),
         .testTarget(
             name: "MaskTextFieldTests",
-            dependencies: ["MaskTextField"],
+            dependencies: ["MaskTextField", "MaskTextFieldSwiftUI"],
             path: "Tests/MaskTextFieldTests"
         )
     ]
