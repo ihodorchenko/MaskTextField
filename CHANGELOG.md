@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.4.0
 
 ### Changed
 - **Source-breaking for off-main-thread callers:** `MaskTextFieldProtocol`, `BaseTransformer`,
