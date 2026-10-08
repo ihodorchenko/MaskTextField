@@ -32,6 +32,14 @@ whole). Input that passes unchanged is handled natively by UIKit; if the filter 
 filtered text is inserted at the selection. During IME composition the field does not
 intervene. In a masked field only `check(char:)` and `correct(string:)` are used.
 
+### Limitations of masked fields
+
+A masked field rewrites its text itself and rejects the native change, so system undo/redo
+(shake to undo, keyboard undo) does nothing there; plain fields keep native undo. A masked field
+does not handle IME composition (marked text), so composing input such as Chinese, Japanese or
+Korean is not supported: use a plain field with a ``CharValidator`` for it. A non-empty selection
+is collapsed to a cursor when it changes; typing or pasting over a selection still replaces it.
+
 ### Keyboard suggestions
 
 Masked fields disable autocorrection and smart substitutions by default

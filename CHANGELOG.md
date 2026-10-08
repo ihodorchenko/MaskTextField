@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- `deleteBackward()` removes the whole selected fragment instead of one character before the
+  selection.
+- Assigning `maskChar`, `hideChars` and other mask settings on a field with no mask no longer
+  installs an empty mask that blocks all input.
+- `maskLostFocus = ""` now reaches the transformer.
+
+### Documentation
+- Documented the limitations of masked fields: no system undo/redo, no IME composition.
+
 ## 2.0.0
 
 See [MIGRATION.md](MIGRATION.md) for before/after snippets.

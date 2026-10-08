@@ -289,6 +289,17 @@ changed it, the filtered text is inserted at the selection. While an IME composi
 in progress (marked text) the field does not intervene. In a masked field only
 `check(char:)` and `correct(string:)` are used.
 
+## Limitations of masked fields
+
+- **Undo/redo.** A masked field rewrites its text itself and rejects the native change
+  (`shouldChangeCharactersIn` returns `false`), so UIKit registers nothing in the undo
+  stack: shake-to-undo and the keyboard undo/redo do nothing. Plain fields (no mask) keep
+  native undo.
+- **IME composition.** In a masked field there is no marked-text handling: composing input
+  (Chinese, Japanese, Korean) is not supported; use a plain field with a `charValidator`.
+- **Selection.** A non-empty selection is collapsed to a cursor when it changes; editing a
+  range goes through the paste path (typing or pasting over a selection works).
+
 ## Architecture
 
 Input is processed by a transformer (`BaseTransformer` → `MaskTransformer`), both `@MainActor`:
