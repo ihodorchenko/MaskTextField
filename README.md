@@ -262,6 +262,8 @@ xcodebuild -project Example/MaskTextFieldExample/MaskTextFieldExample.xcodeproj 
 ```
 
 CI (`.github/workflows/ci.yml`) runs the package tests on every push and pull request.
+Pushing a version tag (`1.2.0`) triggers `.github/workflows/release.yml`, which creates a GitHub
+Release with the matching `CHANGELOG.md` section (or generated notes if there is none).
 
 Tests cover mask rendering, input/deletion, rejection of invalid characters,
 display modes, character veiling on focus loss, and cursor positioning.
