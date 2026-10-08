@@ -61,6 +61,21 @@ public struct MaskedTextField: UIViewRepresentable {
     /// Режим кнопки очистки.
     public var clearButtonMode: UITextField.ViewMode
 
+    /// Принудительно выводить значение слева направо, в том числе в RTL-интерфейсе.
+    public var forcesLeftToRight: Bool
+
+    /// Локаль для десятичных разделителей (маска от неё не зависит).
+    public var locale: Locale
+
+    /// Озвучивать VoiceOver отклонённые символы и заполнение маски.
+    public var announcesInputEvents: Bool
+
+    /// Подпись поля для VoiceOver.
+    public var accessibilityLabelText: String?
+
+    /// Подсказка поля для VoiceOver (например, формат ввода).
+    public var accessibilityHintText: String?
+
     /// Сырое значение без маски (двусторонняя привязка к SwiftUI-состоянию).
     @Binding public var textValue: String
 
@@ -87,6 +102,11 @@ public struct MaskedTextField: UIViewRepresentable {
     ///   - textAlignment: выравнивание текста.
     ///   - returnKeyType: вид клавиши Return.
     ///   - clearButtonMode: режим кнопки очистки.
+    ///   - forcesLeftToRight: выводить значение слева направо и в RTL.
+    ///   - locale: локаль для десятичных разделителей.
+    ///   - announcesInputEvents: озвучивать отклонённые символы и заполнение.
+    ///   - accessibilityLabelText: подпись для VoiceOver.
+    ///   - accessibilityHintText: подсказка для VoiceOver.
     ///   - isFocused: привязка к состоянию фокуса (чтение и управление).
     ///   - onCommit: обработчик нажатия Return.
     ///   - textValue: привязка к сырому значению.
@@ -105,6 +125,11 @@ public struct MaskedTextField: UIViewRepresentable {
         textAlignment: NSTextAlignment = .natural,
         returnKeyType: UIReturnKeyType = .default,
         clearButtonMode: UITextField.ViewMode = .never,
+        forcesLeftToRight: Bool = true,
+        locale: Locale = .current,
+        announcesInputEvents: Bool = false,
+        accessibilityLabelText: String? = nil,
+        accessibilityHintText: String? = nil,
         isFocused: Binding<Bool>? = nil,
         onCommit: (() -> Void)? = nil,
         textValue: Binding<String>
@@ -123,6 +148,11 @@ public struct MaskedTextField: UIViewRepresentable {
         self.textAlignment = textAlignment
         self.returnKeyType = returnKeyType
         self.clearButtonMode = clearButtonMode
+        self.forcesLeftToRight = forcesLeftToRight
+        self.locale = locale
+        self.announcesInputEvents = announcesInputEvents
+        self.accessibilityLabelText = accessibilityLabelText
+        self.accessibilityHintText = accessibilityHintText
         self.isFocused = isFocused
         self.onCommit = onCommit
         self._textValue = textValue
@@ -190,6 +220,11 @@ public struct MaskedTextField: UIViewRepresentable {
         if field.textAlignment != textAlignment { field.textAlignment = textAlignment }
         if field.returnKeyType != returnKeyType { field.returnKeyType = returnKeyType }
         if field.clearButtonMode != clearButtonMode { field.clearButtonMode = clearButtonMode }
+        if field.forcesLeftToRight != forcesLeftToRight { field.forcesLeftToRight = forcesLeftToRight }
+        if field.locale != locale { field.locale = locale }
+        if field.announcesInputEvents != announcesInputEvents { field.announcesInputEvents = announcesInputEvents }
+        if field.accessibilityLabel != accessibilityLabelText { field.accessibilityLabel = accessibilityLabelText }
+        if field.accessibilityHint != accessibilityHintText { field.accessibilityHint = accessibilityHintText }
     }
 
     /// Связывает `MaskTextField` со SwiftUI-состоянием и пробрасывает
