@@ -1,0 +1,5 @@
+"a11y.empty" = "Empty";
+"a11y.entered_count" = "%1$d of %2$d characters entered";
+"a11y.char_rejected" = "Character not allowed";
+"a11y.complete" = "Complete";
+"a11y.clear" = "Clear text";

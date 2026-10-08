@@ -274,6 +274,100 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertEqual(field.textValue, "")
     }
 
+    // MARK: - Accessibility
+
+    func testAccessibilityValueIsEmptyDescriptionForEmptyField() {
+        field.maskText = "+375 (dd) ddd-dd-dd"
+
+        // Вместо «подчёркивание ×9» — осмысленное «Пусто».
+        XCTAssertEqual(field.accessibilityValue, L10n.string("a11y.empty"))
+    }
+
+    func testAccessibilityValueReadsEnteredCharactersWithoutMask() {
+        field.maskText = "+375 (dd) ddd-dd-dd"
+        field.textValue = "29123"
+
+        XCTAssertEqual(field.accessibilityValue, "2 9 1 2 3")
+    }
+
+    func testAccessibilityValueHidesVeiledCharacters() {
+        field.maskText = "+3 (^d^d)"
+        field.textValue = "12"
+
+        field.textFieldDidBeginEditing(field)
+        XCTAssertEqual(field.accessibilityValue, "1 2")
+
+        field.textFieldDidEndEditing(field, reason: .committed)
+        XCTAssertEqual(field.accessibilityValue, L10n.enteredCount(2, of: 2))
+    }
+
+    func testAccessibilityValueHidesCharactersInPasswordMode() {
+        field.maskText = "dddd"
+        field.hideChars = true
+        field.textValue = "123"
+
+        XCTAssertEqual(field.accessibilityValue, L10n.enteredCount(3, of: 4))
+    }
+
+    func testExplicitAccessibilityValueWins() {
+        field.maskText = "dd"
+        field.accessibilityValue = "custom"
+
+        XCTAssertEqual(field.accessibilityValue, "custom")
+    }
+
+    func testClearButtonHasAccessibilityLabel() {
+        field.clearButtonMode = .always
+
+        XCTAssertEqual(field.rightView?.accessibilityLabel, L10n.string("a11y.clear"))
+    }
+
+    // MARK: - RTL
+
+    func testForcesLeftToRightByDefault() {
+        XCTAssertTrue(field.forcesLeftToRight)
+        XCTAssertEqual(field.semanticContentAttribute, .forceLeftToRight)
+
+        field.forcesLeftToRight = false
+        XCTAssertEqual(field.semanticContentAttribute, .unspecified)
+    }
+
+    func testTextAlignmentIsPreservedWhenSet() {
+        field.textAlignment = .center
+        XCTAssertEqual(field.textAlignment, .center)
+
+        // Принудительное LTR не подменяет заданное пользователем значение при чтении.
+        field.textAlignment = .natural
+        XCTAssertEqual(field.textAlignment, .natural)
+    }
+
+    func testClearButtonMovesToLeadingSideInRTL() {
+        field.forcesLeftToRight = false
+        field.semanticContentAttribute = .forceRightToLeft
+        field.clearButtonMode = .always
+
+        XCTAssertNotNil(field.leftView)
+        XCTAssertNil(field.rightView)
+
+        field.semanticContentAttribute = .forceLeftToRight
+        XCTAssertNil(field.leftView)
+        XCTAssertNotNil(field.rightView)
+    }
+
+    // MARK: - Locale and Dynamic Type
+
+    func testLocaleControlsDefaultDecimalSeparator() {
+        field.locale = Locale(identifier: "de_DE")
+        XCTAssertEqual(field.culture.decimalSeparator, ",")
+
+        field.locale = Locale(identifier: "en_US")
+        XCTAssertEqual(field.culture.decimalSeparator, ".")
+    }
+
+    func testAdjustsFontForContentSizeCategory() {
+        XCTAssertTrue(field.adjustsFontForContentSizeCategory)
+    }
+
     // MARK: - Edit actions
 
     func testResetEditActionsClearsFilter() {

@@ -24,6 +24,7 @@ extension MaskTextField: UITextFieldDelegate {
             let upper = current.characterIndex(utf16Offset: range.location + range.length)
 
             self._transformer.onPaste(self.correct(string: string), in: lower..<max(lower, upper))
+            self.announceInputResult(accepted: true)
             return false
         }
 
@@ -32,7 +33,8 @@ extension MaskTextField: UITextFieldDelegate {
             return false
         }
 
-        self._transformer.onTextInput(string, at: (self.text ?? "").characterIndex(utf16Offset: range.location))
+        let accepted = self._transformer.onTextInput(string, at: (self.text ?? "").characterIndex(utf16Offset: range.location))
+        self.announceInputResult(accepted: accepted)
         return false
     }
 

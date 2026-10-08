@@ -30,13 +30,21 @@ public class MaskTextField: UITextField {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
         button.tintColor = self.clearButtonColor
+        button.accessibilityLabel = L10n.string("a11y.clear")
         button.addTarget(self, action: #selector(self.clearButtonHandler), for: .touchUpInside)
         return button
     }()
 
+    /// Кнопка очистки стоит на конце строки: справа в LTR и слева в RTL.
     private func updateCustomClearButton() {
-        if self.requestedClearButtonMode == .never {
-            self.rightView = nil
+        self.leftView = nil
+        self.rightView = nil
+
+        guard self.requestedClearButtonMode != .never else { return }
+
+        if self.effectiveUserInterfaceLayoutDirection == .rightToLeft {
+            self.leftView = self.customClearButton
+            self.leftViewMode = self.requestedClearButtonMode
         } else {
             self.rightView = self.customClearButton
             self.rightViewMode = self.requestedClearButtonMode
@@ -59,13 +67,30 @@ public class MaskTextField: UITextField {
     @Published
     public internal(set) var clearButtonPublisher: Void = ()
 
-    /// Кэш `NumberFormatter` по умолчанию (используется, когда `charValidator` не задан).
-    lazy var defaultCulture: NumberFormatter = NumberFormatter() => {
-        $0.groupingSeparator = Locale.current.groupingSeparator
-        $0.decimalSeparator = Locale.current.decimalSeparator
-        $0.usesGroupingSeparator = true
-        $0.formatterBehavior = .behavior10_4
-        $0.numberStyle = .decimal
+    /// Локаль для десятичных разделителей по умолчанию (когда `charValidator` не задан).
+    /// Сама маска от локали не зависит: она всегда задаёт формат буквально.
+    public var locale: Locale = .current {
+        didSet {
+            self.cachedDefaultCulture = nil
+        }
+    }
+
+    private var cachedDefaultCulture: NumberFormatter?
+
+    /// `NumberFormatter` по умолчанию (используется, когда `charValidator` не задан).
+    var defaultCulture: NumberFormatter {
+        if let cached = self.cachedDefaultCulture { return cached }
+
+        let formatter = NumberFormatter() => {
+            $0.locale = self.locale
+            $0.groupingSeparator = self.locale.groupingSeparator
+            $0.decimalSeparator = self.locale.decimalSeparator
+            $0.usesGroupingSeparator = true
+            $0.formatterBehavior = .behavior10_4
+            $0.numberStyle = .decimal
+        }
+        self.cachedDefaultCulture = formatter
+        return formatter
     }
 
     public private(set) lazy var textPublisher: AnyPublisher<String, Never> = NotificationCenter.default
@@ -96,6 +121,7 @@ public class MaskTextField: UITextField {
         // Внутренний делегат — сам `MaskTextField`; пользовательский делегат
         // задаётся через `delegate` и хранится в `externalDelegate`.
         super.delegate = self
+        self.commonInit()
     }
 
     required public init?(coder aDecoder: NSCoder) {
@@ -104,6 +130,58 @@ public class MaskTextField: UITextField {
         // Внутренний делегат — сам `MaskTextField`; пользовательский делегат
         // задаётся через `delegate` и хранится в `externalDelegate`.
         super.delegate = self
+        self.commonInit()
+    }
+
+    private func commonInit() {
+        // Dynamic Type: масштабируется шрифт, заданный через `preferredFont`.
+        self.font = UIFont.preferredFont(forTextStyle: .body)
+        self.adjustsFontForContentSizeCategory = true
+
+        self.updateLayoutDirection()
+    }
+
+    // MARK: - layout direction (RTL)
+
+    /// Принудительно выводить значение слева направо (по умолчанию `true`).
+    ///
+    /// Маскированные значения (телефон, карта, дата) читаются слева направо и в
+    /// RTL-интерфейсах. При `.natural`-выравнивании текст в RTL прижимается к правому краю.
+    public var forcesLeftToRight: Bool = true {
+        didSet {
+            self.updateLayoutDirection()
+        }
+    }
+
+    private var requestedTextAlignment: NSTextAlignment = .natural
+
+    public override var textAlignment: NSTextAlignment {
+        get { self.requestedTextAlignment }
+        set {
+            self.requestedTextAlignment = newValue
+            self.applyTextAlignment()
+        }
+    }
+
+    public override var semanticContentAttribute: UISemanticContentAttribute {
+        didSet {
+            self.updateCustomClearButton()
+        }
+    }
+
+    private func updateLayoutDirection() {
+        self.semanticContentAttribute = self.forcesLeftToRight ? .forceLeftToRight : .unspecified
+        self.applyTextAlignment()
+    }
+
+    private func applyTextAlignment() {
+        let isRTLInterface = UIView.userInterfaceLayoutDirection(for: .unspecified) == .rightToLeft
+
+        if self.forcesLeftToRight, self.requestedTextAlignment == .natural, isRTLInterface {
+            super.textAlignment = .right
+        } else {
+            super.textAlignment = self.requestedTextAlignment
+        }
     }
 
     // MARK: - content insert
@@ -124,22 +202,54 @@ public class MaskTextField: UITextField {
 
     override open func rightViewRect(forBounds bounds: CGRect) -> CGRect {
         let rec = super.rightViewRect(forBounds: bounds)
-        return CGRect(
-            x: rec.minX - self.textContainerInset.right,
-            y: rec.minY,
-            width: rec.width,
-            height: rec.height
-        )
+        return rec.offsetBy(dx: -self.textContainerInset.right, dy: 0)
     }
 
+    override open func leftViewRect(forBounds bounds: CGRect) -> CGRect {
+        let rec = super.leftViewRect(forBounds: bounds)
+        return rec.offsetBy(dx: self.textContainerInset.left, dy: 0)
+    }
+
+    /// Системная clear-кнопка стоит на конце строки: слева в RTL, справа в LTR.
     override open func clearButtonRect(forBounds bounds: CGRect) -> CGRect {
         let rec = super.clearButtonRect(forBounds: bounds)
-        return CGRect(
-            x: rec.minX - self.textContainerInset.right,
-            y: rec.minY,
-            width: rec.width,
-            height: rec.height
-        )
+        let isRTL = self.effectiveUserInterfaceLayoutDirection == .rightToLeft
+        return rec.offsetBy(dx: isRTL ? self.textContainerInset.left : -self.textContainerInset.right, dy: 0)
+    }
+
+    // MARK: - accessibility
+
+    /// Озвучивать VoiceOver отклонённые символы и заполнение маски (по умолчанию выключено).
+    public var announcesInputEvents: Bool = false
+
+    private var explicitAccessibilityValue: String?
+
+    /// Значение для VoiceOver: без заглушек маски и без скрытых символов.
+    /// Явно заданное значение имеет приоритет.
+    public override var accessibilityValue: String? {
+        get {
+            if let explicit = self.explicitAccessibilityValue { return explicit }
+            if let mt = self._transformer as? MaskTransformer, mt.onlyEnteredCount > 0 {
+                return mt.accessibilityDescription
+            }
+            return super.accessibilityValue
+        }
+        set {
+            self.explicitAccessibilityValue = newValue
+        }
+    }
+
+    func announceInputResult(accepted: Bool) {
+        guard self.announcesInputEvents else { return }
+
+        let total = self.onlyEnteredCount
+        let isComplete = total > 0 && (self.textValue?.count ?? 0) == total
+
+        if !accepted {
+            UIAccessibility.post(notification: .announcement, argument: L10n.string("a11y.char_rejected"))
+        } else if isComplete {
+            UIAccessibility.post(notification: .announcement, argument: L10n.string("a11y.complete"))
+        }
     }
 
     // MARK: - clear text

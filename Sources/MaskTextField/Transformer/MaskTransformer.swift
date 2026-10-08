@@ -118,6 +118,22 @@ public final class MaskTransformer: FilterTransformer {
         String(self.lostFocusSlots.map { self.placeholder(for: $0) })
     }
 
+    /// Описание значения для VoiceOver: без заглушек маски и без скрытых символов.
+    ///
+    /// Пустое поле — «Пусто»; если символы скрыты (`hideChars` или `^` без фокуса),
+    /// озвучивается только количество введённых символов.
+    public var accessibilityDescription: String {
+        let chars = self.entered.compactMap { $0 }
+        guard !chars.isEmpty else { return L10n.string("a11y.empty") }
+
+        let hasVeiled = !self._isFocus && zip(self.slots, self.entered).contains { $0.veiled && $1 != nil }
+        if self.hideChars || hasVeiled {
+            return L10n.enteredCount(chars.count, of: self.onlyEnteredCount)
+        }
+
+        return chars.map { String($0) }.joined(separator: " ")
+    }
+
     // MARK: - override func
 
     public override func onDeleteBackward(at offset: Int = Int.max) {

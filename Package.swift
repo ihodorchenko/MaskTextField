@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "MaskTextField",
+    defaultLocalization: "en",
     platforms: [
         .iOS(.v15)
     ],
@@ -19,7 +20,8 @@ let package = Package(
     targets: [
         .target(
             name: "MaskTextField",
-            path: "Sources/MaskTextField"
+            path: "Sources/MaskTextField",
+            resources: [.process("Resources")]
         ),
         .target(
             name: "MaskTextFieldSwiftUI",
