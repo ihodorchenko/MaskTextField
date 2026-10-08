@@ -1,0 +1,64 @@
+name: Docs
+
+# Собирает DocC-документацию обоих модулей и публикует её на GitHub Pages.
+# Требуется один раз включить Pages: Settings ▸ Pages ▸ Source: GitHub Actions.
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build documentation archives
+        run: |
+          xcodebuild docbuild \
+            -scheme MaskTextField-Package \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath .build/docs
+
+      - name: Transform archives for static hosting
+        run: |
+          PRODUCTS=$(dirname "$(find .build/docs -name MaskTextField.doccarchive | head -1)")
+          xcrun docc process-archive transform-for-static-hosting \
+            "$PRODUCTS/MaskTextField.doccarchive" \
+            --hosting-base-path MaskTextField \
+            --output-path _site
+          xcrun docc process-archive transform-for-static-hosting \
+            "$PRODUCTS/MaskTextFieldSwiftUI.doccarchive" \
+            --hosting-base-path MaskTextField/swiftui \
+            --output-path _site/swiftui
+          # The site root has no page of its own: send visitors to the module documentation.
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8">
+          <meta http-equiv="refresh" content="0; url=documentation/masktextfield/">
+          <a href="documentation/masktextfield/">MaskTextField documentation</a>
+          HTML
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

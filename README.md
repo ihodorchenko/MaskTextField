@@ -6,6 +6,20 @@ The library lets you apply an input mask (phone, date, card number, etc.),
 read the raw value without the mask, veil entered characters on focus loss,
 and customize how the mask is displayed (full or gradual).
 
+## Documentation
+
+API reference and guides (mask syntax, dynamic masks, cursor behavior, input restrictions,
+accessibility) are built with DocC and published on GitHub Pages for every release tag:
+<https://ihodorchenko.github.io/MaskTextField/documentation/masktextfield/> (the SwiftUI module:
+`/swiftui/documentation/masktextfieldswiftui/`).
+
+Build it locally with Xcode: **Product ▸ Build Documentation**, or
+
+```sh
+xcodebuild docbuild -scheme MaskTextField-Package \
+  -destination 'generic/platform=iOS Simulator' -derivedDataPath .build/docs
+```
+
 ## Requirements
 
 - iOS 15.0+

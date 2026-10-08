@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- DocC documentation for both modules (guides: getting started, mask syntax, dynamic masks,
+  cursor behavior, input restrictions, accessibility) and a workflow that publishes it to
+  GitHub Pages on every release tag.
+
+### Changed
+- API documentation comments are now in English.
+
 ## 1.3.0
 
 ### Added
