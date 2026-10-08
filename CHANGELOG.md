@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- `charValidator` now works: it restricts typed, pasted and programmatic input in plain
+  fields and acts as an extra restriction in masked fields. Built-in validators:
+  `EmojiFreeValidator`, `AllowedCharactersValidator`, `MaxLengthValidator`,
+  `CompositeValidator`; `Character.isEmojiCharacter` detects emoji clusters as a whole.
+- All `CharValidator` methods have default implementations.
+
+### Changed
+- `charValidator` is held by a strong reference (it was `weak`, so an inline assignment
+  was released immediately).
+- Plain (unmasked) fields no longer re-implement typing: edits are native unless a
+  validator is set and changes the input. Typing and deleting in the middle of a plain
+  field now works at the cursor instead of appending/removing at the end.
+
 ## 1.1.1
 
 ### Fixed

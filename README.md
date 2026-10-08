@@ -172,25 +172,36 @@ Combine publishers: `textPublisher`, `deleteBackwardPublisher`,
   clear button always sits at the end of the line (left in RTL).
 - Library strings are localized in English and Russian.
 
-## Custom character validator
+## Restricting input (`charValidator`)
+
+`charValidator` restricts which characters can be typed, pasted or set via `textValue`,
+in a plain field (no mask) and in a masked one (as an extra restriction on top of the
+mask character types). The field keeps a strong reference to the validator, so it can be
+created inline.
 
 ```swift
-final class DecimalValidator: CharValidator {
-    var culture: NumberFormatter = {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal
-        return f
-    }()
-
-    func check(char: Character) -> Bool { char.isNumber || char == "." || char == "," }
-    func check(string: String) -> Bool { true }
-    func correct(string: String) -> String { string }
-}
-
 let field = MaskTextField()
-field.charValidator = DecimalValidator()
-field.maskText = "d.dd"
+field.charValidator = EmojiFreeValidator()          // no emoji (ZWJ sequences, flags, keycaps included)
 ```
+
+Built-in validators: `EmojiFreeValidator`, `AllowedCharactersValidator(allowed:)`,
+`MaxLengthValidator(maxLength:)` and `CompositeValidator([...])`.
+
+A custom validator overrides only what it needs (all methods have defaults):
+
+```swift
+final class NoDigitsValidator: CharValidator {
+    func check(char: Character) -> Bool { !char.isNumber }
+}
+```
+
+How the methods are applied in a plain field: typed or pasted characters go through
+`check(char:)`, the remaining string through `correct(string:)`, and the resulting
+text through `check(string:)` (for example a length limit; a failing change is rejected
+as a whole). Input that passes unchanged is handled natively by UIKit; if the filter
+changed it, the filtered text is inserted at the selection. While an IME composition is
+in progress (marked text) the field does not intervene. In a masked field only
+`check(char:)` and `correct(string:)` are used.
 
 ## Architecture
 
