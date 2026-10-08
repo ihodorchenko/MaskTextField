@@ -28,13 +28,16 @@ struct ContentView: View {
                         isComplete: $phoneComplete,
                         textValue: $phone
                     )
+                    .accessibilityIdentifier("phone")
                     LabeledContent("Значение без маски") {
                         Text(phone.isEmpty ? "—" : phone)
                             .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("phoneValue")
                     }
                     LabeledContent("Маска заполнена") {
                         Text(phoneComplete ? "да" : "нет")
                             .foregroundStyle(phoneComplete ? .green : .secondary)
+                            .accessibilityIdentifier("phoneComplete")
                     }
                 } header: {
                     Text("Телефон")
@@ -49,9 +52,11 @@ struct ContentView: View {
                         keyboardType: .numberPad,
                         textValue: $date
                     )
+                    .accessibilityIdentifier("date")
                     LabeledContent("Значение без маски") {
                         Text(date.isEmpty ? "—" : date)
                             .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("dateValue")
                     }
                 } header: {
                     Text("Дата")
@@ -64,9 +69,11 @@ struct ContentView: View {
                         keyboardType: .numberPad,
                         textValue: $dynamicCard
                     )
+                    .accessibilityIdentifier("dynamicCard")
                     LabeledContent("Значение без маски") {
                         Text(dynamicCard.isEmpty ? "—" : dynamicCard)
                             .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("dynamicCardValue")
                     }
                 } header: {
                     Text("Динамическая маска")
@@ -83,9 +90,11 @@ struct ContentView: View {
                         clearButtonMode: .whileEditing,
                         textValue: $freeCard
                     )
+                    .accessibilityIdentifier("freeCard")
                     LabeledContent("Значение без маски") {
                         Text(freeCard.isEmpty ? "—" : freeCard)
                             .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("freeCardValue")
                     }
                 } header: {
                     Text("Курсор: free")
@@ -102,9 +111,11 @@ struct ContentView: View {
                         clearButtonMode: .whileEditing,
                         textValue: $snapCard
                     )
+                    .accessibilityIdentifier("snapCard")
                     LabeledContent("Значение без маски") {
                         Text(snapCard.isEmpty ? "—" : snapCard)
                             .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("snapCardValue")
                     }
                 } header: {
                     Text("Курсор: snapOnFocus")
@@ -121,9 +132,11 @@ struct ContentView: View {
                         clearButtonMode: .whileEditing,
                         textValue: $sequentialCard
                     )
+                    .accessibilityIdentifier("sequentialCard")
                     LabeledContent("Значение без маски") {
                         Text(sequentialCard.isEmpty ? "—" : sequentialCard)
                             .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("sequentialCardValue")
                     }
                 } header: {
                     Text("Курсор: sequential")

@@ -313,14 +313,27 @@ xcodebuild -scheme MaskTextField-Package \
   test
 ```
 
-Snapshot tests (run inside the example app, they use `swift-snapshot-testing`):
+Snapshot tests and UI tests live in the example app (`Example/MaskTextFieldExample`). The default
+scheme runs all of its test targets, so select one:
 
 ```sh
+# Snapshot tests (swift-snapshot-testing)
 xcodebuild -project Example/MaskTextFieldExample/MaskTextFieldExample.xcodeproj \
   -scheme MaskTextFieldExample \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
-  test
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
+  test -only-testing:MaskTextFieldFieldTests
+
+# UI tests: real keyboard, taps and the UIKit editing cycle (about 2 minutes)
+xcodebuild -project Example/MaskTextFieldExample/MaskTextFieldExample.xcodeproj \
+  -scheme MaskTextFieldExample \
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
+  test -only-testing:MaskTextFieldUITests \
+  -parallel-testing-enabled NO -disable-concurrent-destination-testing
 ```
+
+The UI tests cover typing and completion, backspace, rejected overflow, the free / sequential /
+snap-on-focus cursor behaviors and dynamic card masks. Run them with parallel testing disabled:
+Xcode otherwise clones the simulator, which can stall for minutes.
 
 CI (`.github/workflows/ci.yml`) runs the package tests on every push and pull request.
 Pushing a version tag (`1.2.0`) triggers `.github/workflows/release.yml`, which creates a GitHub

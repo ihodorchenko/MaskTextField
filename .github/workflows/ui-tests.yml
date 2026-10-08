@@ -1,0 +1,21 @@
+name: UI tests
+
+# Ручной запуск: UI-тесты долгие (≈2 минуты на симуляторе) и чувствительны к раннеру,
+# поэтому они не входят в обязательный CI.
+on:
+  workflow_dispatch:
+
+jobs:
+  ui-tests:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run UI tests
+        run: |
+          DEVICE=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [^(]+' | sed 's/ *$//')
+          xcodebuild -project Example/MaskTextFieldExample/MaskTextFieldExample.xcodeproj \
+            -scheme MaskTextFieldExample \
+            -destination "platform=iOS Simulator,name=$DEVICE" \
+            test -only-testing:MaskTextFieldUITests \
+            -parallel-testing-enabled NO -disable-concurrent-destination-testing
