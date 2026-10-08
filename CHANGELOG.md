@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3.1
 
 ### Added
 - DocC documentation for both modules (guides: getting started, mask syntax, dynamic masks,
