@@ -1,5 +1,6 @@
 import UIKit
 import SwiftUI
+import Combine
 import MaskTextField
 
 /// A SwiftUI wrapper around `MaskTextField`.
@@ -289,22 +290,17 @@ public struct MaskedTextField: UIViewRepresentable {
             self.parent = parent
         }
 
-        private var observer: NSObjectProtocol?
-
-        deinit {
-            if let observer { NotificationCenter.default.removeObserver(observer) }
-        }
+        // The subscription cancels itself when the coordinator is released.
+        private var editsSubscription: AnyCancellable?
 
         func observeEdits(of field: MaskTextField) {
-            // `queue: nil` — обработчик выполняется синхронно в потоке публикации (главном).
-            observer = NotificationCenter.default.addObserver(
-                forName: UITextField.textDidChangeNotification,
-                object: field,
-                queue: nil
-            ) { [weak self, weak field] _ in
-                guard let self, let field else { return }
-                self.fieldDidChange(field)
-            }
+            // Without `receive(on:)` the handler runs synchronously on the posting (main) thread.
+            editsSubscription = NotificationCenter.default
+                .publisher(for: UITextField.textDidChangeNotification, object: field)
+                .sink { [weak self, weak field] _ in
+                    guard let self, let field else { return }
+                    self.fieldDidChange(field)
+                }
         }
 
         private func fieldDidChange(_ field: MaskTextField) {

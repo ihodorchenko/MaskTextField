@@ -1,7 +1,7 @@
 import Foundation
 
 /// One mask variant for dynamic masks: the input mask and (optionally) the unfocused mask.
-public struct MaskVariant: Equatable {
+public struct MaskVariant: Equatable, Sendable {
     public var mask: String
     public var maskLostFocus: String
 

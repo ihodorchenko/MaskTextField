@@ -38,7 +38,7 @@ public final class MaskTransformer: FilterTransformer {
     /// The time during which the first selection after gaining focus is treated as the
     /// cursor placed by a tap and is replaced with a jump to the first free position
     /// (`.snapOnFocus`).
-    static var focusSnapWindow: TimeInterval = 0.5
+    var focusSnapWindow: TimeInterval = 0.5
 
     /// The moment (`systemUptime`) until which cursor snapping after focus is active.
     private var focusSnapDeadline: TimeInterval?
@@ -257,7 +257,7 @@ public final class MaskTransformer: FilterTransformer {
     public override func onGotFocus() {
         self._isFocus = true
         self.focusSnapDeadline = self.cursorBehavior == .snapOnFocus
-            ? ProcessInfo.processInfo.systemUptime + MaskTransformer.focusSnapWindow
+            ? ProcessInfo.processInfo.systemUptime + self.focusSnapWindow
             : nil
         self.setTextAndCursor()
     }
@@ -429,8 +429,10 @@ public final class MaskTransformer: FilterTransformer {
     private func restartHideTimer() {
         self.hideTimer?.invalidate()
 
-        let timer = Timer(timeInterval: MaskTransformer.hideCharDelay, repeats: false) { [weak self] _ in
-            self?.hideTimerFired()
+        // The Timer block is `@Sendable`, so it captures a weak box instead of `self`.
+        let box = WeakTransformerBox(self)
+        let timer = Timer(timeInterval: MaskTransformer.hideCharDelay, repeats: false) { _ in
+            box.transformer?.hideTimerFired()
         }
         // `.common` — чтобы таймер срабатывал и во время скролла/трекинга.
         RunLoop.main.add(timer, forMode: .common)
@@ -442,7 +444,7 @@ public final class MaskTransformer: FilterTransformer {
         self.hideTimer = nil
     }
 
-    private func hideTimerFired() {
+    fileprivate func hideTimerFired() {
         self.hideTimer = nil
         guard self.hideChars else { return }
 
@@ -545,6 +547,18 @@ public final class MaskTransformer: FilterTransformer {
         }
 
         return (text, cursor)
+    }
+}
+
+/// A weak reference to a transformer for the hide-timer block.
+///
+/// The timer is scheduled on the main run loop and fires on the main thread, which is also where
+/// the transformer is used, so sharing the reference with the `@Sendable` block is safe.
+private final class WeakTransformerBox: @unchecked Sendable {
+    weak var transformer: MaskTransformer?
+
+    init(_ transformer: MaskTransformer) {
+        self.transformer = transformer
     }
 }
 

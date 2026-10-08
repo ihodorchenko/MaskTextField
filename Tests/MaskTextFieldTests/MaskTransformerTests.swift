@@ -9,9 +9,9 @@ final class MaskTransformerTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mock = MockMaskTextField()
-        // Широкое окно привязки курсора: тесты не должны зависеть от скорости раннера.
-        MaskTransformer.focusSnapWindow = 60
         transformer = MaskTransformer(textField: mock)
+        // Широкое окно привязки курсора: тесты не должны зависеть от скорости раннера.
+        transformer.focusSnapWindow = 60
     }
 
     /// Крутит main run loop, пока условие не выполнится или не истечёт `timeout`.
@@ -35,7 +35,6 @@ final class MaskTransformerTests: XCTestCase {
     }
 
     override func tearDown() {
-        MaskTransformer.focusSnapWindow = 0.5
         transformer = nil
         mock = nil
         super.tearDown()
@@ -391,7 +390,7 @@ final class MaskTransformerTests: XCTestCase {
         transformer.cursorBehavior = .snapOnFocus
         transformer.text = "29"
 
-        MaskTransformer.focusSnapWindow = 0
+        transformer.focusSnapWindow = 0
 
         transformer.onGotFocus()
         Thread.sleep(forTimeInterval: 0.01)

@@ -15,11 +15,9 @@ final class MaskTextFieldFieldTests: XCTestCase {
     override func setUp() {
         super.setUp()
         field = MaskTextField()
-        MaskTransformer.focusSnapWindow = 60
     }
 
     override func tearDown() {
-        MaskTransformer.focusSnapWindow = 0.5
         field = nil
         super.tearDown()
     }
@@ -323,6 +321,8 @@ final class MaskTextFieldFieldTests: XCTestCase {
         field.maskText = "dd-dd"
         field.cursorBehavior = .snapOnFocus
         field.textValue = "12" // первая свободная позиция — индекс 3
+        // Широкое окно привязки: тест не должен зависеть от скорости раннера.
+        (field._transformer as? MaskTransformer)?.focusSnapWindow = 60
 
         field.textFieldDidBeginEditing(field)
         field.setCursorPosition(0)

@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- Fewer Swift strict-concurrency warnings (`-strict-concurrency=complete`): the hide timer no
+  longer captures the transformer in a `@Sendable` block, `MaskPreset.cardProvider` is
+  `@Sendable` and `MaskVariant` is `Sendable`, and `MaskedTextField` observes edits through a
+  self-cancelling Combine subscription. `swift-tools-version` and the Swift 5 language mode are
+  unchanged, so Swift 5.9 toolchains keep working.
+
 ## 1.3.1
 
 ### Added

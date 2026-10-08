@@ -27,7 +27,7 @@ public enum MaskPreset {
     /// ```swift
     /// field.maskProvider = MaskPreset.cardProvider
     /// ```
-    public static let cardProvider: (String) -> MaskVariant = { raw in
+    public static let cardProvider: @Sendable (String) -> MaskVariant = { raw in
         raw.hasPrefix("34") || raw.hasPrefix("37") ? MaskVariant(cardAmex) : MaskVariant(card16)
     }
 }
