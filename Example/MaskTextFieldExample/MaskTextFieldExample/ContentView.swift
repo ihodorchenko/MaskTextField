@@ -9,6 +9,7 @@ import MaskTextFieldSwiftUI
 
 struct ContentView: View {
     @State private var phone = ""
+    @State private var phoneComplete = false
     @State private var date = ""
     @State private var freeCard = ""
     @State private var sequentialCard = ""
@@ -23,11 +24,16 @@ struct ContentView: View {
                         maskLostFocus: "+375 (^d^d) ^d^d^d-^d^d-^d^d",
                         placeholder: "+375 (__) ___-__-__",
                         keyboardType: .numberPad,
+                        isComplete: $phoneComplete,
                         textValue: $phone
                     )
                     LabeledContent("Значение без маски") {
                         Text(phone.isEmpty ? "—" : phone)
                             .foregroundStyle(.secondary)
+                    }
+                    LabeledContent("Маска заполнена") {
+                        Text(phoneComplete ? "да" : "нет")
+                            .foregroundStyle(phoneComplete ? .green : .secondary)
                     }
                 } header: {
                     Text("Телефон")

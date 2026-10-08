@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Added
+- `isComplete`, `isCompletePublisher` and `onComplete`: the mask is filled. `onComplete`
+  fires once when the user fills the mask and not for programmatic values; SwiftUI
+  `MaskedTextField` gets `isComplete: Binding<Bool>?` and `onComplete`.
 - `CursorBehavior.snapOnFocus`: on focus the cursor snaps to the first free position, then
   can be moved freely. Verified on the iOS simulator with real taps.
 - `charValidator` now works: it restricts typed, pasted and programmatic input in plain

@@ -86,7 +86,7 @@ struct MyView: View {
 
 Optional parameters: `font`, `textColor`, `textAlignment`, `returnKeyType`,
 `clearButtonMode`, `isFocused: Binding<Bool>?` (read and drive focus) and
-`onCommit` (Return key), `forcesLeftToRight`, `locale`, `announcesInputEvents`,
+`onCommit` (Return key), `isComplete: Binding<Bool>?`, `onComplete`, `forcesLeftToRight`, `locale`, `announcesInputEvents`,
 `accessibilityLabelText` and `accessibilityHintText`.
 
 ```swift
@@ -135,6 +135,9 @@ Examples:
 | `hiddenMaskIfEnteredTextEmpty` | `Bool` | Hide the mask when the value is empty and the field is not focused |
 | `textValue` | `String?` | Raw value without the mask (read/write) |
 | `onlyEnteredCount` | `Int` | Number of editable positions |
+| `isComplete` | `Bool` | All editable positions are filled (always `false` without a mask) |
+| `isCompletePublisher` | `AnyPublisher<Bool, Never>` | Current completion state, then changes (no duplicates) |
+| `onComplete` | `(() -> Void)?` | Fires once when the **user** fills the mask (not for programmatic values) |
 | `visibleTextMask` | `String` | The mask being displayed |
 | `charValidator` | `CharValidator?` | Additional input restrictions |
 
