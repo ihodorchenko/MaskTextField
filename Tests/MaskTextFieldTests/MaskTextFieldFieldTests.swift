@@ -200,6 +200,52 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertEqual(field.text, "12-3_")
     }
 
+    func testDeleteBackwardWithSelectionRemovesSelectedFragment() {
+        // Маска сама схлопывает выделение через `textFieldDidChangeSelection`,
+        // поэтому непустое выделение подставляем напрямую.
+        let field = SelectionStubField()
+        field.maskText = "dd-dd"
+        field.textValue = "1234" // "12-34"
+
+        // Выделено "2-3" (utf16 1..<4).
+        let from = field.position(from: field.beginningOfDocument, offset: 1)!
+        let to = field.position(from: field.beginningOfDocument, offset: 4)!
+        field.stubbedSelection = field.textRange(from: from, to: to)
+
+        field.deleteBackward()
+
+        XCTAssertEqual(field.textValue, "14")
+    }
+
+    func testMaskSettingsAssignedBeforeMaskTextDoNotBlockInput() {
+        field.maskChar = "#"
+        field.hideChars = false
+        field.maskLostFocus = ""
+        field.cursorBehavior = .sequential
+        field.maskText = "dd-dd"
+
+        XCTAssertEqual(field.text, "##-##")
+        type("1")
+        XCTAssertEqual(field.textValue, "1")
+    }
+
+    func testMaskSettingWithoutMaskKeepsPlainFieldEditable() {
+        field.maskChar = "#"
+
+        XCTAssertTrue(field.textField(field, shouldChangeCharactersIn: NSRange(location: 0, length: 0), replacementString: "a"))
+    }
+
+    func testClearingMaskLostFocusReachesTransformer() {
+        field.maskText = "dd-dd"
+        field.maskLostFocus = "^d^d-^d^d"
+        field.textValue = "1234"
+        field.maskLostFocus = ""
+
+        XCTAssertEqual(field.configuration.maskLostFocus, "")
+        _ = field.resignFirstResponder()
+        XCTAssertEqual(field.text, "12-34")
+    }
+
     // MARK: - Курсор
 
     func testCursorAdvancesAfterTyping() {
@@ -625,6 +671,16 @@ final class MaskTextFieldFieldTests: XCTestCase {
     private func cursorOffset() -> Int {
         guard let range = field.selectedTextRange else { return 0 }
         return field.offset(from: field.beginningOfDocument, to: range.start)
+    }
+}
+
+/// Поле с подменяемым выделением (реальное выделение маска схлопывает сама).
+private final class SelectionStubField: MaskTextField {
+    var stubbedSelection: UITextRange?
+
+    override var selectedTextRange: UITextRange? {
+        get { self.stubbedSelection ?? super.selectedTextRange }
+        set { super.selectedTextRange = newValue }
     }
 }
 

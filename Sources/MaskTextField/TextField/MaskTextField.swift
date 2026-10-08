@@ -288,11 +288,23 @@ public class MaskTextField: UITextField {
         // Удаление обязано идти через трансформер: `super.deleteBackward()`
         // удаляет символ из отображаемого текста напрямую, разсинхронизируя
         // состояние маски (`_maskInfo`).
-        let start = self.selectedTextRange?.start ?? self.endOfDocument
+        let current = self.text ?? ""
+        let selection = self.selectedTextRange ?? self.textRange(from: self.endOfDocument, to: self.endOfDocument)
+        let start = selection?.start ?? self.endOfDocument
+        let end = selection?.end ?? start
         let utf16Offset = self.offset(from: self.beginningOfDocument, to: start)
-        guard utf16Offset > 0 else { return }
 
-        self._transformer.onDeleteBackward(at: (self.text ?? "").characterIndex(utf16Offset: utf16Offset))
+        if start != end {
+            // Выделенный фрагмент удаляется целиком, как в `shouldChangeCharactersIn`.
+            let utf16End = self.offset(from: self.beginningOfDocument, to: end)
+            let lower = current.characterIndex(utf16Offset: utf16Offset)
+            let upper = current.characterIndex(utf16Offset: utf16End)
+            self._transformer.onPaste("", in: lower..<max(lower, upper))
+        } else {
+            guard utf16Offset > 0 else { return }
+
+            self._transformer.onDeleteBackward(at: current.characterIndex(utf16Offset: utf16Offset))
+        }
         self.deleteBackwardSubject.send()
         self.notification()
     }
@@ -381,9 +393,11 @@ public class MaskTextField: UITextField {
 
         if let transformer = self._transformer as? MaskTransformer {
             configure(transformer)
-        } else {
+        } else if !self.maskText.isEmpty || self.maskProvider != nil {
             self._transformer = self.makeMaskTransformer()
         }
+        // Иначе маски нет: значение остаётся в свойстве поля и попадёт в трансформер
+        // при включении маски (`makeMaskTransformer`).
     }
 
     /// The editing mask, e.g. `+375 (dd) ddd-dd-dd`; see <doc:MaskSyntax> for the syntax.
@@ -434,8 +448,6 @@ public class MaskTextField: UITextField {
     /// The mask shown while the field is not focused, e.g. `+375 (^d^d) ^d^d^d-^d^d-^d^d`.
     public var maskLostFocus: String = "" {
         didSet {
-            guard !self.maskLostFocus.isEmpty else { return }
-
             self.configureMask { $0.maskLostFocus = self.maskLostFocus }
         }
     }
