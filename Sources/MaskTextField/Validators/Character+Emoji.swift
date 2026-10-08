@@ -13,7 +13,7 @@ extension Character {
             return scalars.contains {
                 $0.properties.isEmojiPresentation
                     || $0.properties.isEmojiModifier
-                    || $0.value == 0xFE0F   // селектор эмодзи
+                    || $0.value == 0xFE0F   // emoji variation selector
                     || $0.value == 0x200D   // ZWJ
                     || $0.value == 0x20E3   // keycap
             }

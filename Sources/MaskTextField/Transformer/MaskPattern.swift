@@ -33,7 +33,7 @@ enum MaskCharType {
     func accepts(_ char: Character) -> Bool {
         if self == .any { return true }
 
-        // Все проверки — по ASCII: без регулярных выражений и аллокаций.
+        // All checks are ASCII-based: no regular expressions, no allocations.
         guard let ascii = char.asciiValue else { return false }
 
         let isDigit = (0x30...0x39).contains(ascii)

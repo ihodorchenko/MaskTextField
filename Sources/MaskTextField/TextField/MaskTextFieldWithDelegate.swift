@@ -2,13 +2,13 @@ import UIKit
 
 extension MaskTextField: UITextFieldDelegate {
     public func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        // Пользовательский делегат может отклонить ввод; в этом случае маска не трогается.
+        // A custom delegate may reject the input; the mask is left untouched then.
         if let externalResult = self.externalDelegate?.textField?(textField, shouldChangeCharactersIn: range, replacementString: string),
            !externalResult {
             return false
         }
 
-        // Поле без маски: ограничения `charValidator`, остальное делает UIKit.
+        // A field without a mask: only the `charValidator` restrictions, UIKit does the rest.
         if !(self._transformer is MaskTransformer) {
             return self.shouldChangePlainText(in: range, with: string)
         }
@@ -20,8 +20,8 @@ extension MaskTextField: UITextFieldDelegate {
             return true
         }
 
-        // Вставка, замена выделения и удаление выделенного фрагмента: трансформер
-        // получает диапазон и сохраняет остальное значение.
+        // Paste, selection replacement and deleting a selected fragment: the transformer
+        // gets the range and keeps the rest of the value.
         let isSingleBackspace = range.length == 1 && string.isEmpty
         if string.count > 1 || (range.length > 0 && !isSingleBackspace) {
             let current = self.text ?? ""

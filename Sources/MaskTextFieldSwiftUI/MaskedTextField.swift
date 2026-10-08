@@ -140,8 +140,8 @@ public struct MaskedTextField: UIViewRepresentable {
         maskProvider: ((String) -> MaskVariant)? = nil,
         maskMode: MaskMode = .fullMask,
         cursorBehavior: CursorBehavior = .free,
-        maskChar: Character = "_",
-        veiledMaskChar: Character = "•",
+        maskChar: Character = MaskConfiguration.defaultMaskChar,
+        veiledMaskChar: Character = MaskConfiguration.defaultVeiledMaskChar,
         hideChars: Bool = false,
         hiddenMaskIfEnteredTextEmpty: Bool = false,
         placeholder: String? = nil,
@@ -203,9 +203,9 @@ public struct MaskedTextField: UIViewRepresentable {
         field.onComplete = { [weak coordinator = context.coordinator] in
             coordinator?.parent.onComplete?()
         }
-        // Уведомление приходит только от действий пользователя (ввод, вставка, удаление,
-        // очистка), а не от программной установки значения из SwiftUI, и не зависит от
-        // доставки target-action.
+        // The notification comes only from user actions (typing, pasting, deleting,
+        // clearing), not from SwiftUI setting the value programmatically, and does not depend
+        // on target-action delivery.
         context.coordinator.observeEdits(of: field)
         field.setContentHuggingPriority(.defaultHigh, for: .vertical)
         return field
@@ -215,7 +215,7 @@ public struct MaskedTextField: UIViewRepresentable {
         context.coordinator.parent = self
         apply(to: field)
 
-        // Синхронизируем значение только при расхождении, чтобы не зациклить обновления.
+        // Sync the value only when it differs, to avoid an update loop.
         if field.textValue != textValue {
             field.textValue = textValue
         }
@@ -228,7 +228,7 @@ public struct MaskedTextField: UIViewRepresentable {
     private func syncCompletion(of field: MaskTextField) {
         guard let binding = isComplete, binding.wrappedValue != field.isComplete else { return }
 
-        // Запись состояния внутри цикла обновления SwiftUI недопустима.
+        // Writing state inside a SwiftUI update cycle is not allowed.
         DispatchQueue.main.async {
             binding.wrappedValue = field.isComplete
         }
@@ -238,7 +238,7 @@ public struct MaskedTextField: UIViewRepresentable {
     private func syncFocus(of field: MaskTextField) {
         guard let wantsFocus = isFocused?.wrappedValue else { return }
 
-        // Смена первого ответчика внутри цикла обновления SwiftUI нестабильна.
+        // Changing the first responder inside a SwiftUI update cycle is unstable.
         DispatchQueue.main.async {
             if wantsFocus, !field.isFirstResponder {
                 field.becomeFirstResponder()

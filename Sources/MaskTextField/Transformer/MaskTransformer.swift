@@ -19,20 +19,20 @@ import Foundation
 
 @MainActor
 public final class MaskTransformer: BaseTransformer {
-    public static let hideChar: Character = "•"
-    public static let defaultMaskChar: Character = "_"
+    public static let hideChar: Character = MaskConfiguration.defaultVeiledMaskChar
+    public static let defaultMaskChar: Character = MaskConfiguration.defaultMaskChar
 
     /// The delay before the last entered character is veiled in `hideChars` mode.
     public static let hideCharDelay: TimeInterval = 1.5
 
-    private var slots: [MaskSlot] = []
-    private var lostFocusSlots: [MaskSlot] = []
+    var slots: [MaskSlot] = []
+    var lostFocusSlots: [MaskSlot] = []
 
     /// Entered values by `slots` index; `nil` means the position is empty (or a literal).
-    private var entered: [Character?] = []
+    var entered: [Character?] = []
 
     /// The "hidden" flag by `slots` index (`hideChars` mode).
-    private var hidden: [Bool] = []
+    var hidden: [Bool] = []
 
     /// Owns the hide timer and invalidates it when the transformer is released (a nonisolated
     /// `deinit` cannot touch the main-actor state of the transformer itself).
@@ -64,7 +64,7 @@ public final class MaskTransformer: BaseTransformer {
 
     // MARK: - Filter Transformer
 
-    private var _capacity: Int = 0
+    var _capacity: Int = 0
 
     public override var capacity: Int {
         self._capacity
@@ -114,7 +114,7 @@ public final class MaskTransformer: BaseTransformer {
     /// unsuitable characters are skipped. If no suitable characters are left,
     /// the position stays empty. Returns the indices of the filled positions in order.
     @discardableResult
-    private func fill(with value: String) -> [Int] {
+    func fill(with value: String) -> [Int] {
         let chars = Array(value)
         var valueIndex = 0
         var filled: [Int] = []
@@ -184,7 +184,7 @@ public final class MaskTransformer: BaseTransformer {
         let start = self.cursorBehavior == .sequential ? 0 : offset
         guard let index = self.insert(char: f, at: start) else { return false }
 
-        // Курсор — на следующей пустой вводимой позиции, литералы пропускаются.
+        // The cursor goes to the next empty editable position; literals are skipped.
         let cursor = self.nextEmptyEnteredIndex(after: index) ?? self.slots.count
         self.setTextAndCursor(cursorPosition: cursor)
 
@@ -206,7 +206,7 @@ public final class MaskTransformer: BaseTransformer {
         var upper = min(max(range.upperBound, lower), self.slots.count)
 
         if self.cursorBehavior == .sequential {
-            // Только в конец: пустой диапазон — добавление, выделение — «до конца».
+            // Appends only: an empty range is an append, a selection means "to the end".
             lower = range.isEmpty ? self.slots.count : lower
             upper = self.slots.count
         }
@@ -226,7 +226,7 @@ public final class MaskTransformer: BaseTransformer {
         let combined = String((prefix + pasted + suffix).prefix(self.capacity))
         let filled = self.fill(with: combined)
 
-        // Курсор — сразу за последним вставленным символом (литералы пропускаются).
+        // The cursor goes right after the last inserted character (literals are skipped).
         let insertedCount = prefix.count + pasted.count
         let anchor: Int
         if insertedCount > 0, insertedCount <= filled.count {
@@ -243,7 +243,7 @@ public final class MaskTransformer: BaseTransformer {
         guard !self.isRendering else { return }
 
         if self.cursorBehavior == .snapOnFocus, let deadline = self.focusSnapDeadline {
-            // Один раз: выделение, которое UIKit ставит по тапу сразу после фокуса.
+            // Once: the selection UIKit sets on the tap right after focus.
             self.focusSnapDeadline = nil
             if ProcessInfo.processInfo.systemUptime <= deadline {
                 self.setTextAndCursor()
@@ -252,13 +252,13 @@ public final class MaskTransformer: BaseTransformer {
         }
 
         if self.cursorBehavior == .sequential {
-            // Произвольный курсор запрещён: возвращаем его на первую свободную позицию.
+            // An arbitrary cursor is not allowed: return it to the first free position.
             self.setTextAndCursor()
             return
         }
 
-        // Сохраняем текущую позицию курсора (пользователь мог переместить его),
-        // а не «отскакиваем» на первую пустую вводимую позицию.
+        // Keep the current cursor position (the user may have moved it)
+        // instead of bouncing to the first empty editable position.
         self.setTextAndCursor(cursorPosition: self.control?.cursorOffset)
     }
 
@@ -365,7 +365,7 @@ public final class MaskTransformer: BaseTransformer {
     // MARK: - entered state
 
     /// The character fits the position by its type and passes the field's `CharValidator` (if set).
-    private func accepts(_ char: Character, in slot: MaskSlot) -> Bool {
+    func accepts(_ char: Character, in slot: MaskSlot) -> Bool {
         slot.accepts(char) && (self.control?.check(char: char) ?? true)
     }
 
@@ -409,7 +409,7 @@ public final class MaskTransformer: BaseTransformer {
     }
 
     /// The index of the first editable position starting at `index` (inclusive).
-    private func firstEnteredIndex(from index: Int) -> Int? {
+    func firstEnteredIndex(from index: Int) -> Int? {
         guard index < self.slots.count else { return nil }
 
         return (max(index, 0)..<self.slots.count).first { self.slots[$0].canEntered }
@@ -450,12 +450,12 @@ public final class MaskTransformer: BaseTransformer {
             userInfo: nil,
             repeats: false
         )
-        // `.common` — чтобы таймер срабатывал и во время скролла/трекинга.
+        // `.common` so the timer also fires during scrolling/tracking.
         RunLoop.main.add(timer, forMode: .common)
         self.hideTimer = timer
     }
 
-    private func cancelHideTimer() {
+    func cancelHideTimer() {
         self.hideTimerGeneration += 1
         self.hideTimer?.invalidate()
         self.hideTimer = nil
@@ -475,8 +475,8 @@ public final class MaskTransformer: BaseTransformer {
         }
 
         if changed {
-            // Курсор не трогаем: пользователь мог переставить его, пока шёл таймер.
-            // В `.sequential` каноническая позиция вычисляется сама.
+            // Leave the cursor alone: the user may have moved it while the timer ran.
+            // In `.sequential` the canonical position is computed anyway.
             let keepCursor = self.cursorBehavior == .sequential ? nil : self.control?.cursorOffset
             self.setTextAndCursor(cursorPosition: keepCursor)
         }
@@ -510,7 +510,7 @@ public final class MaskTransformer: BaseTransformer {
         }
     }
 
-    private func setTextAndCursor(cursorPosition: Int? = nil) {
+    func setTextAndCursor(cursorPosition: Int? = nil) {
         let (text, cursor) = self.renderedTextAndCursor(cursorPosition: cursorPosition)
 
         guard let control = self.control else { return }
@@ -536,7 +536,7 @@ public final class MaskTransformer: BaseTransformer {
                 self.displayChar(at: index) ?? self.placeholder(for: self.slots[index])
             })
         } else {
-            // Введённые символы последовательно раскладываются по позициям маски «без фокуса».
+            // Entered characters are laid out in order over the positions of the lost-focus mask.
             var enteredChars = self.slots.indices.compactMap { self.displayChar(at: $0) }.makeIterator()
 
             text = String(self.lostFocusSlots.map { slot in
@@ -557,7 +557,7 @@ public final class MaskTransformer: BaseTransformer {
             cursor = first
         }
 
-        // Явная позиция курсора после редактирования (вставка/удаление).
+        // An explicit cursor position after editing (paste/delete).
         if let position = cursorPosition {
             cursor = min(max(position, 0), self.slots.count)
         }
@@ -594,166 +594,5 @@ private final class HideTimerHolder: @unchecked Sendable {
 
     deinit {
         self.timer?.invalidate()
-    }
-}
-
-// MARK: - Динамические маски
-
-/// The dynamic mode stores the value as a sequence of characters (the "raw" value):
-/// after every edit the provider picks a mask for the new value, and the characters
-/// are laid out over its positions again, in order (without gaps).
-extension MaskTransformer {
-    private struct Snapshot {
-        let slots: [MaskSlot]
-        let lostFocusSlots: [MaskSlot]
-        let entered: [Character?]
-        let hidden: [Bool]
-        let capacity: Int
-        let variant: MaskVariant?
-    }
-
-    private func snapshot() -> Snapshot {
-        Snapshot(
-            slots: self.slots,
-            lostFocusSlots: self.lostFocusSlots,
-            entered: self.entered,
-            hidden: self.hidden,
-            capacity: self._capacity,
-            variant: self.activeVariant
-        )
-    }
-
-    private func restore(_ snapshot: Snapshot) {
-        self.slots = snapshot.slots
-        self.lostFocusSlots = snapshot.lostFocusSlots
-        self.entered = snapshot.entered
-        self.hidden = snapshot.hidden
-        self._capacity = snapshot.capacity
-        self.activeVariant = snapshot.variant
-    }
-
-    private var rawChars: [Character] {
-        self.entered.compactMap { $0 }
-    }
-
-    /// How many characters are entered in the positions before `slotIndex` (not including it).
-    private func enteredCount(before slotIndex: Int) -> Int {
-        self.entered.prefix(max(slotIndex, 0)).reduce(0) { $0 + ($1 == nil ? 0 : 1) }
-    }
-
-    /// Picks a mask for `raw` and lays the characters out over its positions. Returns the indices
-    /// of the filled positions in order (characters that do not fit a position are skipped).
-    @discardableResult
-    private func resolve(_ raw: [Character]) -> [Int] {
-        guard let provider = self.maskProvider else { return [] }
-
-        let variant = provider(String(raw))
-        if self.activeVariant != variant {
-            self.slots = MaskSlot.parse(variant.mask)
-            self.lostFocusSlots = MaskSlot.parse(variant.maskLostFocus)
-            self.entered = Array(repeating: nil, count: self.slots.count)
-            self.hidden = Array(repeating: false, count: self.slots.count)
-            self._capacity = self.slots.filter { $0.canEntered }.count
-            self.cancelHideTimer()
-            self.activeVariant = variant
-        }
-
-        return self.fill(with: String(raw))
-    }
-
-    /// The characters that together form a value that fits the chosen mask.
-    private func acceptedChars(of raw: [Character]) -> [Character] {
-        let filled = self.resolve(raw)
-        return filled.compactMap { self.entered[$0] }
-    }
-
-    func dynamicSetText(_ value: String) {
-        // Два прохода: первый выбирает маску по длине, второй — по реально подошедшим символам.
-        let accepted = self.acceptedChars(of: Array(value))
-        self.resolve(accepted)
-    }
-
-    func dynamicInsert(_ char: Character, at offset: Int) -> Bool {
-        let before = self.snapshot()
-        let raw = self.rawChars
-
-        let rawIndex: Int
-        if self.cursorBehavior == .sequential {
-            rawIndex = raw.count
-        } else {
-            rawIndex = self.enteredCount(before: min(max(offset, 0), self.slots.count))
-        }
-
-        var newRaw = raw
-        newRaw.insert(char, at: rawIndex)
-
-        let filled = self.resolve(newRaw)
-        guard filled.count == newRaw.count else {
-            self.restore(before)
-            return false
-        }
-
-        let cursor = self.firstEnteredIndex(from: filled[rawIndex] + 1) ?? self.slots.count
-        self.setTextAndCursor(cursorPosition: cursor)
-        return true
-    }
-
-    func dynamicDelete(at offset: Int) {
-        let raw = self.rawChars
-        guard !raw.isEmpty else { return }
-
-        let rawIndex: Int
-        if self.cursorBehavior == .sequential {
-            rawIndex = raw.count - 1
-        } else {
-            var index = min(offset, self.slots.count - 1)
-            while index >= 0, self.entered[index] == nil { index -= 1 }
-            guard index >= 0 else { return }
-            rawIndex = self.enteredCount(before: index)
-        }
-
-        var newRaw = raw
-        newRaw.remove(at: rawIndex)
-
-        let filled = self.resolve(newRaw)
-        let anchor = rawIndex > 0 && rawIndex <= filled.count ? filled[rawIndex - 1] + 1 : 0
-        let cursor = self.firstEnteredIndex(from: anchor) ?? self.slots.count
-        self.setTextAndCursor(cursorPosition: cursor)
-    }
-
-    func dynamicPaste(_ text: String, in range: Range<Int>) {
-        var lower = min(max(range.lowerBound, 0), self.slots.count)
-        var upper = min(max(range.upperBound, lower), self.slots.count)
-
-        if self.cursorBehavior == .sequential {
-            lower = range.isEmpty ? self.slots.count : lower
-            upper = self.slots.count
-        }
-
-        let raw = self.rawChars
-        let rawLower = self.enteredCount(before: lower)
-        let rawUpper = self.enteredCount(before: upper)
-        let prefix = Array(raw[..<rawLower])
-        let suffix = Array(raw[rawUpper...])
-        let pasted = Array(text)
-
-        // Проход 1: маска под полную длину; из вставки остаются только подходящие символы.
-        self.resolve(prefix + pasted + suffix)
-        var accepted = pasted.filter { char in
-            self.slots.contains { $0.canEntered && self.accepts(char, in: $0) }
-        }
-
-        // Как и без динамики: вставка, не помещающаяся в пустое поле, — последние символы.
-        if prefix.isEmpty, suffix.isEmpty, accepted.count > self.capacity {
-            accepted = Array(accepted.suffix(self.capacity))
-        }
-
-        // Проход 2: окончательная маска и раскладка.
-        let filled = self.resolve(prefix + accepted + suffix)
-
-        let insertedCount = prefix.count + accepted.count
-        let anchor = insertedCount > 0 && insertedCount <= filled.count ? filled[insertedCount - 1] + 1 : 0
-        let cursor = self.firstEnteredIndex(from: anchor) ?? self.slots.count
-        self.setTextAndCursor(cursorPosition: cursor)
     }
 }

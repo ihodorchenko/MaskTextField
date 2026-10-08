@@ -20,7 +20,7 @@ public class MaskTextField: UITextField {
         get { self.requestedClearButtonMode }
         set {
             self.requestedClearButtonMode = newValue
-            // Системную кнопку не показываем — используем свою (rightView).
+            // The system clear button is not shown; our own one (rightView) is used.
             super.clearButtonMode = .never
             self.updateCustomClearButton()
         }
@@ -52,7 +52,7 @@ public class MaskTextField: UITextField {
     }
 
     @objc private func clearButtonHandler() {
-        // Даём внешнему делегату возможность отклонить очистку (как `textFieldShouldClear`).
+        // Let the external delegate reject clearing (like `textFieldShouldClear`).
         let shouldClear = self.externalDelegate?.textFieldShouldClear?(self) ?? true
         guard shouldClear else { return }
 
@@ -99,8 +99,8 @@ public class MaskTextField: UITextField {
     public init() {
         super.init(frame: .zero)
 
-        // Внутренний делегат — сам `MaskTextField`; пользовательский делегат
-        // задаётся через `delegate` и хранится в `externalDelegate`.
+        // The internal delegate is the `MaskTextField` itself; a custom delegate
+        // is set through `delegate` and stored in `externalDelegate`.
         super.delegate = self
         self.commonInit()
     }
@@ -108,14 +108,14 @@ public class MaskTextField: UITextField {
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
 
-        // Внутренний делегат — сам `MaskTextField`; пользовательский делегат
-        // задаётся через `delegate` и хранится в `externalDelegate`.
+        // The internal delegate is the `MaskTextField` itself; a custom delegate
+        // is set through `delegate` and stored in `externalDelegate`.
         super.delegate = self
         self.commonInit()
     }
 
     private func commonInit() {
-        // Dynamic Type: масштабируется шрифт, заданный через `preferredFont`.
+        // Dynamic Type: scales the font set through `preferredFont`.
         self.font = UIFont.preferredFont(forTextStyle: .body)
         self.adjustsFontForContentSizeCategory = true
 
@@ -285,9 +285,8 @@ public class MaskTextField: UITextField {
     // MARK: - clear text
 
     public override func deleteBackward() {
-        // Удаление обязано идти через трансформер: `super.deleteBackward()`
-        // удаляет символ из отображаемого текста напрямую, разсинхронизируя
-        // состояние маски (`_maskInfo`).
+        // Deletion must go through the transformer: `super.deleteBackward()` removes a
+        // character from the displayed text directly and desyncs the mask state.
         let current = self.text ?? ""
         let selection = self.selectedTextRange ?? self.textRange(from: self.endOfDocument, to: self.endOfDocument)
         let start = selection?.start ?? self.endOfDocument
@@ -295,7 +294,7 @@ public class MaskTextField: UITextField {
         let utf16Offset = self.offset(from: self.beginningOfDocument, to: start)
 
         if start != end {
-            // Выделенный фрагмент удаляется целиком, как в `shouldChangeCharactersIn`.
+            // A selected fragment is deleted as a whole, like in `shouldChangeCharactersIn`.
             let utf16End = self.offset(from: self.beginningOfDocument, to: end)
             let lower = current.characterIndex(utf16Offset: utf16Offset)
             let upper = current.characterIndex(utf16Offset: utf16End)
@@ -396,8 +395,8 @@ public class MaskTextField: UITextField {
         } else if !self.maskText.isEmpty || self.maskProvider != nil {
             self._transformer = self.makeMaskTransformer()
         }
-        // Иначе маски нет: значение остаётся в свойстве поля и попадёт в трансформер
-        // при включении маски (`makeMaskTransformer`).
+        // Otherwise there is no mask: the value stays in the field's property and reaches
+        // the transformer when the mask is enabled (`makeMaskTransformer`).
     }
 
     /// The editing mask, e.g. `+375 (dd) ddd-dd-dd`; see <doc:MaskSyntax> for the syntax.
@@ -453,14 +452,14 @@ public class MaskTextField: UITextField {
     }
 
     /// The placeholder character for editable positions (`+375 (__) ___-__-__`).
-    public var maskChar: Character = "_" {
+    public var maskChar: Character = MaskConfiguration.defaultMaskChar {
         didSet {
             self.configureMask { $0.maskChar = self.maskChar }
         }
     }
 
     /// The character that replaces entered characters when the field loses focus (`+375 (XX) XXX-XX-XX`).
-    public var veiledMaskChar: Character = "•" {
+    public var veiledMaskChar: Character = MaskConfiguration.defaultVeiledMaskChar {
         didSet {
             self.configureMask { $0.veiledMaskChar = self.veiledMaskChar }
         }
@@ -494,7 +493,7 @@ public class MaskTextField: UITextField {
             $0.mask = self.maskText
             $0.maskLostFocus = self.maskLostFocus
             $0.maskVariants = self.maskVariants
-            // Провайдер из `maskVariants` восстанавливается из них самих.
+            // A provider built from `maskVariants` is restored from the variants themselves.
             $0.maskProvider = self.maskVariants.isEmpty ? self.maskProvider : nil
             $0.maskChar = self.maskChar
             $0.veiledMaskChar = self.veiledMaskChar
