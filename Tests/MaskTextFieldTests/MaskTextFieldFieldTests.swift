@@ -317,6 +317,22 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertEqual(field.cursorOffset, 3)
     }
 
+    func testSnapOnFocusSnapsFirstSelectionAfterBeginEditing() {
+        field.maskText = "dd-dd"
+        field.cursorBehavior = .snapOnFocus
+        field.textValue = "12" // первая свободная позиция — индекс 3
+
+        field.textFieldDidBeginEditing(field)
+        field.setCursorPosition(0)
+        field.textFieldDidChangeSelection(field)
+        XCTAssertEqual(field.cursorOffset, 3)
+
+        // Дальше курсор свободен.
+        field.setCursorPosition(1)
+        field.textFieldDidChangeSelection(field)
+        XCTAssertEqual(field.cursorOffset, 1)
+    }
+
     func testCursorBehaviorSurvivesMaskToggle() {
         field.cursorBehavior = .sequential
         field.maskText = "dd"

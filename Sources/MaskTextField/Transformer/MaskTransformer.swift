@@ -35,6 +35,14 @@ public final class MaskTransformer: FilterTransformer {
 
     private var hideTimer: Timer?
 
+    /// Время ожидания, в течение которого первое выделение после получения фокуса
+    /// трактуется как установка курсора тапом и заменяется переходом на первую
+    /// свободную позицию (`.snapOnFocus`).
+    static var focusSnapWindow: TimeInterval = 0.5
+
+    /// Момент (`systemUptime`), до которого действует привязка курсора после фокуса.
+    private var focusSnapDeadline: TimeInterval?
+
     private var _isFocus: Bool = false
 
     /// Флаг, показывающий, что `setTextAndCursor` сейчас сам меняет текст/курсор.
@@ -202,6 +210,15 @@ public final class MaskTransformer: FilterTransformer {
     public override func onSelectionChanged() {
         guard !self.isRendering else { return }
 
+        if self.cursorBehavior == .snapOnFocus, let deadline = self.focusSnapDeadline {
+            // Один раз: выделение, которое UIKit ставит по тапу сразу после фокуса.
+            self.focusSnapDeadline = nil
+            if ProcessInfo.processInfo.systemUptime <= deadline {
+                self.setTextAndCursor()
+                return
+            }
+        }
+
         if self.cursorBehavior == .sequential {
             // Произвольный курсор запрещён: возвращаем его на первую свободную позицию.
             self.setTextAndCursor()
@@ -215,11 +232,15 @@ public final class MaskTransformer: FilterTransformer {
 
     public override func onGotFocus() {
         self._isFocus = true
+        self.focusSnapDeadline = self.cursorBehavior == .snapOnFocus
+            ? ProcessInfo.processInfo.systemUptime + MaskTransformer.focusSnapWindow
+            : nil
         self.setTextAndCursor()
     }
 
     public override func onLostFocus() {
         self._isFocus = false
+        self.focusSnapDeadline = nil
         self.setTextAndCursor()
     }
 
@@ -380,7 +401,7 @@ public final class MaskTransformer: FilterTransformer {
         if changed {
             // Курсор не трогаем: пользователь мог переставить его, пока шёл таймер.
             // В `.sequential` каноническая позиция вычисляется сама.
-            let keepCursor = self.cursorBehavior == .free ? self.control?.cursorOffset : nil
+            let keepCursor = self.cursorBehavior == .sequential ? nil : self.control?.cursorOffset
             self.setTextAndCursor(cursorPosition: keepCursor)
         }
     }

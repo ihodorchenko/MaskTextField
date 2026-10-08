@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var date = ""
     @State private var freeCard = ""
     @State private var sequentialCard = ""
+    @State private var snapCard = ""
 
     var body: some View {
         NavigationStack {
@@ -66,6 +67,25 @@ struct ContentView: View {
                     Text("Курсор: free")
                 } footer: {
                     Text("Курсор можно поставить в любое место; ввод и удаление происходят в позиции курсора.")
+                }
+
+                Section {
+                    MaskedTextField(
+                        mask: "dddd dddd dddd dddd",
+                        cursorBehavior: .snapOnFocus,
+                        placeholder: "0000 0000 0000 0000",
+                        keyboardType: .numberPad,
+                        clearButtonMode: .whileEditing,
+                        textValue: $snapCard
+                    )
+                    LabeledContent("Значение без маски") {
+                        Text(snapCard.isEmpty ? "—" : snapCard)
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Курсор: snapOnFocus")
+                } footer: {
+                    Text("При фокусе курсор встаёт на первую свободную позицию, затем его можно переставить.")
                 }
 
                 Section {

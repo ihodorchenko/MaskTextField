@@ -300,6 +300,79 @@ final class MaskTransformerTests: XCTestCase {
         XCTAssertEqual(transformer.text, "19")
     }
 
+    // MARK: - Курсор: привязка при фокусе
+
+    func testSnapOnFocusMovesFirstSelectionToFirstFreePosition() {
+        transformer.mask = "+375 (dd) ddd"
+        transformer.cursorBehavior = .snapOnFocus
+        transformer.text = "29"
+
+        transformer.onGotFocus()
+        // UIKit ставит курсор по тапу сразу после получения фокуса.
+        mock.setCursorPosition(2)
+        transformer.onSelectionChanged()
+
+        XCTAssertEqual(mock.cursorPosition, 10)
+    }
+
+    func testSnapOnFocusAllowsMovingCursorAfterwards() {
+        transformer.mask = "+375 (dd) ddd"
+        transformer.cursorBehavior = .snapOnFocus
+        transformer.text = "29"
+
+        transformer.onGotFocus()
+        mock.setCursorPosition(2)
+        transformer.onSelectionChanged() // привязка к первой свободной позиции
+
+        mock.setCursorPosition(7)
+        transformer.onSelectionChanged()
+
+        XCTAssertEqual(mock.cursorPosition, 7)
+    }
+
+    func testSnapOnFocusDoesNotInterfereAfterWindowExpires() {
+        transformer.mask = "+375 (dd) ddd"
+        transformer.cursorBehavior = .snapOnFocus
+        transformer.text = "29"
+
+        MaskTransformer.focusSnapWindow = 0
+        defer { MaskTransformer.focusSnapWindow = 0.5 }
+
+        transformer.onGotFocus()
+        Thread.sleep(forTimeInterval: 0.01)
+        mock.setCursorPosition(2)
+        transformer.onSelectionChanged()
+
+        XCTAssertEqual(mock.cursorPosition, 2)
+    }
+
+    func testSnapOnFocusIsRearmedOnEachFocus() {
+        transformer.mask = "dddd"
+        transformer.cursorBehavior = .snapOnFocus
+        transformer.text = "12"
+
+        transformer.onGotFocus()
+        mock.setCursorPosition(0)
+        transformer.onSelectionChanged()
+        XCTAssertEqual(mock.cursorPosition, 2)
+
+        transformer.onLostFocus()
+        transformer.onGotFocus()
+        mock.setCursorPosition(0)
+        transformer.onSelectionChanged()
+        XCTAssertEqual(mock.cursorPosition, 2)
+    }
+
+    func testSnapOnFocusKeepsInputAtCursorLikeFree() {
+        transformer.mask = "dddd"
+        transformer.cursorBehavior = .snapOnFocus
+        transformer.text = "123"
+
+        transformer.onDeleteBackward(at: 1)
+
+        XCTAssertEqual(transformer.text, "13")
+    }
+
     // MARK: - Режимы отображения
 
     func testGradualMaskShowsOnlyEnteredPrefix() {
