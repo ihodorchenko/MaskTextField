@@ -130,12 +130,19 @@ Examples:
 | `maskChar` | `Character` | Placeholder character (`_` by default) |
 | `veiledMaskChar` | `Character` | Character that veils entered characters (`•` by default) |
 | `maskMode` | `MaskMode` | `.fullMask` or `.gradualMask` |
+| `cursorBehavior` | `CursorBehavior` | `.free` (default) or `.sequential` |
 | `hideChars` | `Bool` | Password mode (characters are veiled after a delay) |
 | `hiddenMaskIfEnteredTextEmpty` | `Bool` | Hide the mask when the value is empty and the field is not focused |
 | `textValue` | `String?` | Raw value without the mask (read/write) |
 | `onlyEnteredCount` | `Int` | Number of editable positions |
 | `visibleTextMask` | `String` | The mask being displayed |
 | `charValidator` | `CharValidator?` | Additional input restrictions |
+
+Cursor behavior: with `.free` (default) the cursor can be placed anywhere and
+edits happen at the cursor. With `.sequential` the cursor always sits on the first
+free position, input and deletion go strictly in order (append / erase from the
+end) and the cursor cannot be moved. A selection is treated as "from its start to
+the end", so pasting over it drops the value after the selection start.
 
 Pasting and editing: pasted text is filtered to the characters the mask accepts.
 Pasting into the middle of a value keeps the surrounding characters (the tail
