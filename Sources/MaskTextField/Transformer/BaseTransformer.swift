@@ -53,6 +53,19 @@ open class BaseTransformer {
         return true
     }
 
+    /// Заменяет диапазон `range` (в символах текущего текста) строкой `text`
+    /// и ставит курсор за вставленным фрагментом. Используется для вставки из
+    /// буфера обмена и замены выделения.
+    open func onPaste(_ text: String, in range: Range<Int>) {
+        var chars = Array(self.text ?? "")
+        let lower = min(max(range.lowerBound, 0), chars.count)
+        let upper = min(max(range.upperBound, lower), chars.count)
+
+        chars.replaceSubrange(lower..<upper, with: Array(text))
+        self.text = String(chars)
+        self.control?.setCursorPosition(lower + text.count)
+    }
+
     open func onDeleteBackward(at offset: Int = Int.max) {
         // virtual
         guard !(self.text ?? "").isEmpty else { return }

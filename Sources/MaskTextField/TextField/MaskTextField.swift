@@ -50,6 +50,7 @@ public class MaskTextField: UITextField {
 
         self.textValue = ""
         self.clearButtonPublisher = ()
+        self.notification()
     }
 
     @Published
@@ -228,16 +229,22 @@ public class MaskTextField: UITextField {
         }
     }
 
+    /// Применяет настройку к текущему `MaskTransformer`; если трансформер ещё не
+    /// маскирующий (например, `maskText` пуст), создаёт его со всеми настройками.
+    private func configureMask(_ configure: (MaskTransformer) -> Void) {
+        if let transformer = self._transformer as? MaskTransformer {
+            configure(transformer)
+        } else {
+            self._transformer = self.makeMaskTransformer()
+        }
+    }
+
     /// Настраиваемая маска (+375 (dd) ddd-dd-dd).
     /// Маска со скрытыми введёнными символами (+375 (^d^d) ^d^d^d-^d^d-^d^d) — при потере фокуса.
     public var maskText: String = "" {
         didSet {
             if !self.maskText.isEmpty {
-                if let mt = self._transformer as? MaskTransformer {
-                    mt.mask = self.maskText
-                } else {
-                    self._transformer = self.makeMaskTransformer()
-                }
+                self.configureMask { $0.mask = self.maskText }
             } else {
                 self._transformer = BaseTransformer(textField: self)
             }
@@ -249,44 +256,28 @@ public class MaskTextField: UITextField {
         didSet {
             guard !self.maskLostFocus.isEmpty else { return }
 
-            if let mt = self._transformer as? MaskTransformer {
-                mt.maskLostFocus = self.maskLostFocus
-            } else {
-                self._transformer = self.makeMaskTransformer()
-            }
+            self.configureMask { $0.maskLostFocus = self.maskLostFocus }
         }
     }
 
     /// Символ маски, на котором происходит ввод (+375 (__) ___-__-__).
     public var maskChar: Character = "_" {
         didSet {
-            if let mt = self._transformer as? MaskTransformer {
-                mt.maskChar = self.maskChar
-            } else {
-                self._transformer = self.makeMaskTransformer()
-            }
+            self.configureMask { $0.maskChar = self.maskChar }
         }
     }
 
     /// Символ, который при потере фокуса заменяет отредактированные символы в маске (+375 (XX) XXX-XX-XX).
     public var veiledMaskChar: Character = "•" {
         didSet {
-            if let mt = self._transformer as? MaskTransformer {
-                mt.veiledMaskChar = self.veiledMaskChar
-            } else {
-                self._transformer = self.makeMaskTransformer()
-            }
+            self.configureMask { $0.veiledMaskChar = self.veiledMaskChar }
         }
     }
 
     /// Включает режим пароля.
     public var hideChars: Bool = false {
         didSet {
-            if let mt = self._transformer as? MaskTransformer {
-                mt.hideChars = self.hideChars
-            } else {
-                self._transformer = self.makeMaskTransformer()
-            }
+            self.configureMask { $0.hideChars = self.hideChars }
         }
     }
 
@@ -303,22 +294,14 @@ public class MaskTextField: UITextField {
     /// Режим отображения маски.
     public var maskMode: MaskMode = .fullMask {
         didSet {
-            if let mt = self._transformer as? MaskTransformer {
-                mt.maskMode = self.maskMode
-            } else {
-                self._transformer = self.makeMaskTransformer()
-            }
+            self.configureMask { $0.maskMode = self.maskMode }
         }
     }
 
     /// Не отображать маску, если значение пустое, когда поле не в фокусе.
     public var hiddenMaskIfEnteredTextEmpty: Bool = false {
         didSet {
-            if let mt = self._transformer as? MaskTransformer {
-                mt.hiddenMaskIfEnteredTextEmpty = self.hiddenMaskIfEnteredTextEmpty
-            } else {
-                self._transformer = self.makeMaskTransformer()
-            }
+            self.configureMask { $0.hiddenMaskIfEnteredTextEmpty = self.hiddenMaskIfEnteredTextEmpty }
         }
     }
 

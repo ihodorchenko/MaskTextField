@@ -159,6 +159,72 @@ final class MaskTransformerTests: XCTestCase {
         XCTAssertEqual(mock.text, "a1")
     }
 
+    func testAnySymbolMasksValidateAscii() {
+        transformer.mask = "xX"
+
+        // `x` — видимый символ, но не цифра; `X` — видимый символ, включая цифру.
+        XCTAssertFalse(transformer.onTextInput("5"))
+        XCTAssertFalse(transformer.onTextInput(" "))
+        XCTAssertTrue(transformer.onTextInput(","))
+        XCTAssertTrue(transformer.onTextInput("5"))
+        XCTAssertFalse(transformer.onTextInput("я"))
+
+        XCTAssertEqual(transformer.text, ",5")
+    }
+
+    func testDigitAndLetterMasksAreAscii() {
+        transformer.mask = "da"
+
+        XCTAssertFalse(transformer.onTextInput("٣")) // арабско-индийская цифра
+        XCTAssertTrue(transformer.onTextInput("3"))
+        XCTAssertFalse(transformer.onTextInput("я"))
+        XCTAssertTrue(transformer.onTextInput("q"))
+        XCTAssertEqual(transformer.text, "3q")
+    }
+
+    // MARK: - Вставка по диапазону
+
+    func testPasteInMiddleShiftsTrailingValue() {
+        transformer.mask = "dd-dd"
+        transformer.text = "14"
+
+        transformer.onPaste("23", in: 1..<1)
+
+        XCTAssertEqual(transformer.text, "1234")
+        XCTAssertEqual(mock.text, "12-34")
+        // Курсор — сразу за вставленным "3" (индекс 3), перед сдвинутым "4".
+        XCTAssertEqual(mock.cursorPosition, 4)
+    }
+
+    func testPasteReplacesRange() {
+        transformer.mask = "dd-dd"
+        transformer.text = "1234"
+
+        transformer.onPaste("9", in: 0..<2)
+
+        XCTAssertEqual(transformer.text, "934")
+        XCTAssertEqual(mock.text, "93-4_")
+    }
+
+    func testPasteWithEmptyStringDeletesRange() {
+        transformer.mask = "dd-dd"
+        transformer.text = "1234"
+
+        transformer.onPaste("", in: 1..<4)
+
+        XCTAssertEqual(transformer.text, "14")
+        XCTAssertEqual(mock.cursorPosition, 1)
+    }
+
+    func testPasteOverflowDropsTrailingValue() {
+        transformer.mask = "dd-dd"
+        transformer.text = "1234"
+
+        transformer.onPaste("99", in: 0..<0)
+
+        XCTAssertEqual(transformer.text, "9912")
+    }
+
     // MARK: - Режимы отображения
 
     func testGradualMaskShowsOnlyEnteredPrefix() {
@@ -238,6 +304,24 @@ final class MaskTransformerTests: XCTestCase {
         let expectation = expectation(description: "stale timer")
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
             XCTAssertEqual(self.mock.text, "___")
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 2.5)
+    }
+
+    func testHideCharsKeepsOnlyLastEnteredVisibleThenVeilsAll() {
+        transformer.mask = "ddd"
+        transformer.hideChars = true
+
+        _ = transformer.onTextInput("1")
+        _ = transformer.onTextInput("2")
+
+        // Предыдущие символы скрываются сразу, последний — виден.
+        XCTAssertEqual(mock.text, "•2_")
+
+        let expectation = expectation(description: "all hidden")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+            XCTAssertEqual(self.mock.text, "••_")
             expectation.fulfill()
         }
         wait(for: [expectation], timeout: 2.5)

@@ -4,55 +4,36 @@ import Foundation
 ///
 /// Маска описывается строкой, в которой спецсимволы задают вводимые позиции:
 /// - `d` — цифра `[0-9]`
-/// - `a` — буква `[a-zA-Z]`
-/// - `A` — буква или цифра `[a-zA-Z0-9]`
-/// - `x` — произвольный символ
-/// - `X` — произвольный символ или цифра
+/// - `a` — латинская буква `[a-zA-Z]`
+/// - `A` — латинская буква или цифра
+/// - `x` — любой видимый ASCII-символ, кроме цифр
+/// - `X` — любой видимый ASCII-символ, включая цифры
 /// - `z` — произвольный символ без проверки
 /// - `\c` — экранированный символ (литерал, даже если совпадает со спецсимволом)
 /// - `^c` — вводимая позиция, значение которой скрывается при потере фокуса
 ///
 /// Остальные символы — литералы, выводимые как есть.
-fileprivate enum MaskCharType {
-    case digit
-    case letter
-    case letterOrDigit
-    case anySymbol
-    case anySymbolOrDigit
-    case any
+///
+/// Шаблон маски (`MaskSlot`) неизменяем; введённые значения и флаги скрытия
+/// хранятся отдельно, в массивах, индексированных так же, как позиции маски.
 
-    /// Возвращает тип по символу маски, либо `nil` для литерала.
-    static func type(for char: Character) -> MaskCharType? {
-        switch char {
-        case "d": return .digit
-        case "a": return .letter
-        case "A": return .letterOrDigit
-        case "x": return .anySymbol
-        case "X": return .anySymbolOrDigit
-        case "z": return .any
-        default: return nil
-        }
-    }
-
-    /// Регулярное выражение для валидации, либо `nil`, если проверка не нужна (`z`).
-    var regex: String? {
-        switch self {
-        case .digit: return "[0-9]"
-        case .letter: return "[a-zA-Z]"
-        case .letterOrDigit: return "[a-zA-Z0-9]"
-        case .anySymbol: return "[a-zA-Z!@#$%^&*()_\\-+={};:<>|./?.]"
-        case .anySymbolOrDigit: return "[a-zA-Z0-9!@#$%^&*()_\\-+={};:<>|./?.]"
-        case .any: return nil
-        }
-    }
-}
-
-public class MaskTransformer: FilterTransformer {
+public final class MaskTransformer: FilterTransformer {
     public static let hideChar: Character = "•"
     public static let defaultMaskChar: Character = "_"
 
-    private var _maskInfo: [CharInfo] = []
-    private var _maskLostFocusInfo: [CharInfo] = []
+    /// Задержка перед скрытием последнего введённого символа в режиме `hideChars`.
+    public static let hideCharDelay: TimeInterval = 1.5
+
+    private var slots: [MaskSlot] = []
+    private var lostFocusSlots: [MaskSlot] = []
+
+    /// Введённые значения по индексам `slots`; `nil` — позиция пуста (или литерал).
+    private var entered: [Character?] = []
+
+    /// Признак «скрыто» по индексам `slots` (режим `hideChars`).
+    private var hidden: [Bool] = []
+
+    private var hideTimer: Timer?
 
     private var _isFocus: Bool = false
 
@@ -61,23 +42,27 @@ public class MaskTransformer: FilterTransformer {
     /// `onSelectionChanged` → `setTextAndCursor` → …
     private var isRendering: Bool = false
 
+    deinit {
+        self.hideTimer?.invalidate()
+    }
+
     // MARK: - Filter Transformer
 
     private var _onlyEnteredCount: Int = 0
 
-    open override var onlyEnteredCount: Int {
+    public override var onlyEnteredCount: Int {
         self._onlyEnteredCount
     }
 
     /// Нормализует вставляемую строку: оставляет только символы, допустимые
     /// на вводимых позициях, и обрезает до их количества (при вставке
     /// используются последние символы).
-    open override func normalizedValue(from value: String) -> String {
-        let entered = self._maskInfo.filter { $0.canEntered }
-        guard !entered.isEmpty else { return "" }
+    public override func normalizedValue(from value: String) -> String {
+        let enteredSlots = self.slots.filter { $0.canEntered }
+        guard !enteredSlots.isEmpty else { return "" }
 
         let filtered = value.filter { char in
-            entered.contains { $0.isValid(char: char) }
+            enteredSlots.contains { $0.accepts(char) }
         }
 
         let count = self.onlyEnteredCount
@@ -87,84 +72,122 @@ public class MaskTransformer: FilterTransformer {
         return filtered
     }
 
-    override open var text: String? {
+    override public var text: String? {
         get {
-            self._maskInfo.reduce(into: "") { result, info in
-                if info.enteredChar != CharInfo.nilChar {
-                    result.append(info.enteredChar)
-                }
-            }
+            String(self.entered.compactMap { $0 })
         }
         set {
-            self.distributeRawValue(newValue ?? "")
+            self.fill(with: newValue ?? "")
+            self.setTextAndCursor()
         }
     }
 
     /// Раскладывает «сырое» значение (без маски) по вводимым позициям.
     ///
-    /// Для каждой позиции берётся следующий подходящий по `isValid` символ;
+    /// Для каждой позиции берётся следующий подходящий по `accepts` символ;
     /// неподходящие символы пропускаются. Если подходящих символов не осталось,
-    /// позиция остаётся пустой.
-    private func distributeRawValue(_ value: String) {
+    /// позиция остаётся пустой. Возвращает индексы заполненных позиций по порядку.
+    @discardableResult
+    private func fill(with value: String) -> [Int] {
+        let chars = Array(value)
         var valueIndex = 0
+        var filled: [Int] = []
 
-        for info in self._maskInfo where info.canEntered {
-            while valueIndex < value.count, !info.isValid(char: value[valueIndex]) {
+        for (index, slot) in self.slots.enumerated() where slot.canEntered {
+            while valueIndex < chars.count, !slot.accepts(chars[valueIndex]) {
                 valueIndex += 1
             }
 
-            if valueIndex < value.count {
-                info.enteredChar = value[valueIndex]
+            if valueIndex < chars.count {
+                self.setEntered(chars[valueIndex], at: index)
+                filled.append(index)
                 valueIndex += 1
             } else {
-                info.enteredChar = CharInfo.nilChar
+                self.setEntered(nil, at: index)
             }
         }
 
-        self.setTextAndCursor()
+        return filled
     }
 
-    open var visibleTextMask: String {
-        return self._maskInfo.reduce("", { result, info in result + "\(info.maskChar)" })
+    public var visibleTextMask: String {
+        String(self.slots.map { self.placeholder(for: $0) })
     }
 
-    open var visibleTextMaskLostFocus: String {
-        return self._maskLostFocusInfo.reduce("", { result, info in result + "\(info.maskChar)" })
+    public var visibleTextMaskLostFocus: String {
+        String(self.lostFocusSlots.map { self.placeholder(for: $0) })
     }
 
     // MARK: - override func
 
-    open override func onDeleteBackward(at offset: Int = Int.max) {
+    public override func onDeleteBackward(at offset: Int = Int.max) {
         guard let index = self.removeLastEntered(before: offset) else { return }
 
         self.setTextAndCursor(cursorPosition: index)
     }
 
-    open override func onTextInput(_ text: String, at offset: Int = 0) -> Bool {
+    public override func onTextInput(_ text: String, at offset: Int = 0) -> Bool {
         guard let f = text.first else { return false }
 
         guard let index = self.insert(char: f, at: offset) else { return false }
 
         // Курсор — на следующей пустой вводимой позиции, литералы пропускаются.
-        let cursor = self.nextEmptyEnteredIndex(after: index) ?? self._maskInfo.count
+        let cursor = self.nextEmptyEnteredIndex(after: index) ?? self.slots.count
         self.setTextAndCursor(cursorPosition: cursor)
 
         return true
     }
 
-    open override func onSelectionChanged() {
+    /// Заменяет диапазон `range` (в позициях маски) строкой `text`.
+    ///
+    /// Символы вне диапазона сохраняются и сдвигаются, так что вставка в середину
+    /// не затирает остальное значение, а замена выделения убирает выделенное.
+    /// Строка `text` предварительно нормализуется (`normalizedValue(from:)`).
+    public override func onPaste(_ text: String, in range: Range<Int>) {
+        let lower = min(max(range.lowerBound, 0), self.slots.count)
+        let upper = min(max(range.upperBound, lower), self.slots.count)
+
+        var prefix = ""
+        var suffix = ""
+        for (index, char) in self.entered.enumerated() {
+            guard let char else { continue }
+            if index < lower {
+                prefix.append(char)
+            } else if index >= upper {
+                suffix.append(char)
+            }
+        }
+
+        let pasted = self.normalizedValue(from: text)
+        let combined = String((prefix + pasted + suffix).prefix(self.onlyEnteredCount))
+        let filled = self.fill(with: combined)
+
+        // Курсор — сразу за последним вставленным символом (литералы пропускаются).
+        let insertedCount = prefix.count + pasted.count
+        let anchor: Int
+        if insertedCount > 0, insertedCount <= filled.count {
+            anchor = filled[insertedCount - 1] + 1
+        } else {
+            anchor = lower
+        }
+
+        let cursor = self.firstEnteredIndex(from: anchor) ?? self.slots.count
+        self.setTextAndCursor(cursorPosition: cursor)
+    }
+
+    public override func onSelectionChanged() {
         guard !self.isRendering else { return }
         // Сохраняем текущую позицию курсора (пользователь мог переместить его),
         // а не «отскакиваем» на первую пустую вводимую позицию.
         self.setTextAndCursor(cursorPosition: self.control?.cursorOffset)
     }
 
-    open override func onGotFocus() {
+    public override func onGotFocus() {
         self._isFocus = true
         self.setTextAndCursor()
     }
 
-    open override func onLostFocus() {
+    public override func onLostFocus() {
         self._isFocus = false
         self.setTextAndCursor()
     }
@@ -173,42 +196,39 @@ public class MaskTransformer: FilterTransformer {
 
     public var veiledMaskChar: Character = MaskTransformer.hideChar {
         didSet {
-            self._maskInfo.forEach {
-                if $0.canEntered {
-                    $0.veiledMaskChar = self.veiledMaskChar
-                }
-            }
             self.setTextAndCursor()
         }
     }
 
     public var maskChar: Character = MaskTransformer.defaultMaskChar {
         didSet {
-            self._maskInfo.forEach {
-                if $0.canEntered {
-                    $0.maskChar = self.maskChar
-                }
-            }
             self.setTextAndCursor()
         }
     }
 
     public var hideChars: Bool = false {
         didSet {
+            if !self.hideChars {
+                self.cancelHideTimer()
+            }
             self.setTextAndCursor()
         }
     }
 
     public var mask: String = "" {
         didSet {
-            self.createMaskInformation()
+            self.slots = MaskSlot.parse(self.mask)
+            self.entered = Array(repeating: nil, count: self.slots.count)
+            self.hidden = Array(repeating: false, count: self.slots.count)
+            self._onlyEnteredCount = self.slots.filter { $0.canEntered }.count
+            self.cancelHideTimer()
             self.setTextAndCursor()
         }
     }
 
     public var maskLostFocus: String = "" {
         didSet {
-            self.createMaskLostFocusInformation()
+            self.lostFocusSlots = MaskSlot.parse(self.maskLostFocus)
             self.setTextAndCursor()
         }
     }
@@ -225,24 +245,28 @@ public class MaskTransformer: FilterTransformer {
         }
     }
 
-    // MARK: - private func
+    // MARK: - entered state
 
-    private func charStateChanged() {
-        self.setTextAndCursor()
+    private func setEntered(_ char: Character?, at index: Int) {
+        self.entered[index] = char
+        self.hidden[index] = false
+
+        if char != nil && self.hideChars {
+            self.restartHideTimer()
+        }
     }
 
     /// Вставляет символ в первую пустую вводимую позицию, начиная с `offset`.
     /// Возвращает индекс позиции либо `nil`, если позиции нет или символ не подходит.
     private func insert(char: Character, at offset: Int) -> Int? {
-        let start = min(max(offset, 0), self._maskInfo.count)
-        guard start < self._maskInfo.count else { return nil }
+        let start = min(max(offset, 0), self.slots.count)
+        guard start < self.slots.count else { return nil }
 
-        for index in start..<self._maskInfo.count {
-            let info = self._maskInfo[index]
-            guard info.canEntered, info.isNilChar else { continue }
+        for index in start..<self.slots.count {
+            guard self.slots[index].canEntered, self.entered[index] == nil else { continue }
 
-            guard info.isValid(char: char) else { return nil }
-            info.enteredChar = char
+            guard self.slots[index].accepts(char) else { return nil }
+            self.setEntered(char, at: index)
             return index
         }
 
@@ -252,28 +276,29 @@ public class MaskTransformer: FilterTransformer {
     /// Индекс первой пустой вводимой позиции после `index` (литералы пропускаются).
     /// Возвращает `nil`, если таких позиций нет.
     private func nextEmptyEnteredIndex(after index: Int) -> Int? {
-        guard index + 1 < self._maskInfo.count else { return nil }
+        guard index + 1 < self.slots.count else { return nil }
 
-        for i in (index + 1)..<self._maskInfo.count {
-            let info = self._maskInfo[i]
-            if info.canEntered && info.isNilChar {
-                return i
-            }
+        return ((index + 1)..<self.slots.count).first {
+            self.slots[$0].canEntered && self.entered[$0] == nil
         }
+    }
 
-        return nil
+    /// Индекс первой вводимой позиции начиная с `index` (включительно).
+    private func firstEnteredIndex(from index: Int) -> Int? {
+        guard index < self.slots.count else { return nil }
+
+        return (max(index, 0)..<self.slots.count).first { self.slots[$0].canEntered }
     }
 
     /// Удаляет последнюю заполненную позицию с индексом не больше `offset`.
     /// Возвращает индекс удалённой позиции либо `nil`, если удалять нечего.
     private func removeLastEntered(before offset: Int) -> Int? {
-        var index = min(offset, self._maskInfo.count - 1)
+        var index = min(offset, self.slots.count - 1)
         guard index >= 0 else { return nil }
 
         while index >= 0 {
-            let info = self._maskInfo[index]
-            if info.canEntered, !info.isNilChar {
-                info.enteredChar = CharInfo.nilChar
+            if self.slots[index].canEntered, self.entered[index] != nil {
+                self.setEntered(nil, at: index)
                 return index
             }
             index -= 1
@@ -282,15 +307,73 @@ public class MaskTransformer: FilterTransformer {
         return nil
     }
 
-    private func setTextAndCursor(cursorPosition: Int? = nil) {
-        var text: String = ""
-        var cursor: Int = 0
+    // MARK: - hide timer
 
-        self.getTextAndCursor(&cursor, &text, cursorPosition: cursorPosition)
+    private func restartHideTimer() {
+        self.hideTimer?.invalidate()
+
+        let timer = Timer(timeInterval: MaskTransformer.hideCharDelay, repeats: false) { [weak self] _ in
+            self?.hideTimerFired()
+        }
+        // `.common` — чтобы таймер срабатывал и во время скролла/трекинга.
+        RunLoop.main.add(timer, forMode: .common)
+        self.hideTimer = timer
+    }
+
+    private func cancelHideTimer() {
+        self.hideTimer?.invalidate()
+        self.hideTimer = nil
+    }
+
+    private func hideTimerFired() {
+        self.hideTimer = nil
+        guard self.hideChars else { return }
+
+        var changed = false
+        for index in self.slots.indices where self.entered[index] != nil && !self.hidden[index] {
+            self.hidden[index] = true
+            changed = true
+        }
+
+        if changed {
+            self.setTextAndCursor()
+        }
+    }
+
+    // MARK: - rendering
+
+    /// Символ-заглушка для позиции: `maskChar` для вводимой, сам литерал — иначе.
+    private func placeholder(for slot: MaskSlot) -> Character {
+        slot.canEntered ? self.maskChar : slot.char
+    }
+
+    /// Символ, который нужно показать на заполненной позиции, либо `nil`, если она пуста.
+    private func displayChar(at index: Int) -> Character? {
+        guard let char = self.entered[index] else { return nil }
+
+        if self.hideChars {
+            return self.hidden[index] ? self.veiledMaskChar : char
+        }
+
+        return (!self.slots[index].veiled || self._isFocus) ? char : self.veiledMaskChar
+    }
+
+    /// В режиме пароля скрывает все введённые символы, кроме последнего.
+    private func applyHideCharsPolicy() {
+        guard self.hideChars,
+              let last = self.entered.lastIndex(where: { $0 != nil }) else { return }
+
+        for index in self.slots.indices where self.slots[index].canEntered && index != last {
+            self.hidden[index] = true
+        }
+    }
+
+    private func setTextAndCursor(cursorPosition: Int? = nil) {
+        let (text, cursor) = self.renderedTextAndCursor(cursorPosition: cursorPosition)
 
         guard let control = self.control else { return }
 
-        if self.hiddenMaskIfEnteredTextEmpty && !self._isFocus && (self.text ?? "").isEmpty {
+        if self.hiddenMaskIfEnteredTextEmpty && !self._isFocus && self.entered.allSatisfy({ $0 == nil }) {
             control.text = ""
             return
         }
@@ -301,247 +384,46 @@ public class MaskTransformer: FilterTransformer {
         control.setCursorPosition(cursor)
     }
 
-    private func getTextAndCursor(_ cursor: inout Int, _ text: inout String, cursorPosition: Int? = nil) {
-        if self.hideChars {
-            if let lastEnteredChar = self._maskInfo.last(where: { $0.enteredChar != CharInfo.nilChar }) {
-                self._maskInfo.forEach {
-                    if $0.canEntered && $0 !== lastEnteredChar {
-                        $0.hiddenChar = true
-                    }
-                }
-            }
-        }
+    private func renderedTextAndCursor(cursorPosition: Int?) -> (text: String, cursor: Int) {
+        self.applyHideCharsPolicy()
 
-        if self._isFocus || self._maskLostFocusInfo.isEmpty {
-            text = self._maskInfo.reduce("", { current, charInfo in
-                if charInfo.enteredChar != CharInfo.nilChar {
-                    if self.hideChars {
-                        return current + "\(charInfo.hiddenChar ? charInfo.veiledMaskChar : charInfo.enteredChar)"
-                    } else {
-                        return current + "\(!charInfo.veiledChar ? charInfo.enteredChar : self._isFocus ? charInfo.enteredChar : self.veiledMaskChar)"
-                    }
-                } else {
-                    return current + "\(charInfo.maskChar)"
-                }
+        var text: String
+
+        if self._isFocus || self.lostFocusSlots.isEmpty {
+            text = String(self.slots.indices.map { index in
+                self.displayChar(at: index) ?? self.placeholder(for: self.slots[index])
             })
         } else {
-            var realText = self._maskInfo.reduce("", { current, charInfo in
-                if charInfo.enteredChar != CharInfo.nilChar {
-                    if self.hideChars {
-                        return current + "\(charInfo.hiddenChar ? charInfo.veiledMaskChar : charInfo.enteredChar)"
-                    } else {
-                        return current + "\(!charInfo.veiledChar ? charInfo.enteredChar : self._isFocus ? charInfo.enteredChar : self.veiledMaskChar)"
-                    }
-                }
+            // Введённые символы последовательно раскладываются по позициям маски «без фокуса».
+            var enteredChars = self.slots.indices.compactMap { self.displayChar(at: $0) }.makeIterator()
 
-                return current
-            })
-
-            text = self._maskLostFocusInfo.reduce("", { current, charInfo in
-                if charInfo.canEntered && !realText.isEmpty {
-                    let char = realText.removeFirst()
-                    return current + "\(char)"
-                } else {
-                    return current + "\(charInfo.maskChar)"
+            text = String(self.lostFocusSlots.map { slot in
+                if slot.canEntered, let char = enteredChars.next() {
+                    return char
                 }
+                return self.placeholder(for: slot)
             })
         }
 
-        cursor = self._maskInfo.count
+        var cursor = self.slots.count
 
-        if let last = self._maskInfo.lastIndex(where: { $0.canEntered }) {
+        if let last = self.slots.lastIndex(where: { $0.canEntered }) {
             cursor = last + 1
         }
 
-        if let first = self._maskInfo.firstIndex(where: { $0.canEntered && $0.isNilChar }) {
+        if let first = self.slots.indices.first(where: { self.slots[$0].canEntered && self.entered[$0] == nil }) {
             cursor = first
         }
 
         // Явная позиция курсора после редактирования (вставка/удаление).
         if let position = cursorPosition {
-            cursor = min(max(position, 0), self._maskInfo.count)
+            cursor = min(max(position, 0), self.slots.count)
         }
 
         if self.maskMode == .gradualMask {
             text = text.substring(start: 0, length: cursor)
         }
-    }
 
-    private func createMaskInformation() {
-        self._maskInfo.removeAll()
-
-        var index: Int = 0
-        while index < self.mask.count {
-            var c = self.mask[index]
-
-            let ci: CharInfo
-            if c == "\\" && index + 1 < self.mask.count {
-                index += 1
-                c = self.mask[index]
-                ci = CharInfo(char: c, maskChar: self.maskChar, transformer: self, escaped: true)
-            } else if c == "^" && index + 1 < self.mask.count {
-                index += 1
-                c = self.mask[index]
-                ci = CharInfo(char: c, maskChar: self.maskChar, transformer: self, escaped: false) => {
-                    $0.veiledChar = true
-                }
-            } else {
-                ci = CharInfo(char: c, maskChar: self.maskChar, transformer: self, escaped: false)
-            }
-
-            index += 1
-
-            if ci.canEntered {
-                ci.maskChar = self.maskChar
-                ci.veiledMaskChar = self.veiledMaskChar
-            }
-
-            self._maskInfo.append(ci)
-        }
-
-        self._onlyEnteredCount = self._maskInfo.filter { $0.canEntered }.count
-    }
-
-    private func createMaskLostFocusInformation() {
-        self._maskLostFocusInfo.removeAll()
-
-        var index: Int = 0
-        while index < self.maskLostFocus.count {
-            var c = self.maskLostFocus[index]
-
-            let ci: CharInfo
-            if c == "\\" && index + 1 < self.maskLostFocus.count {
-                index += 1
-                c = self.maskLostFocus[index]
-                ci = CharInfo(char: c, maskChar: self.maskChar, transformer: self, escaped: true)
-            } else if c == "^" && index + 1 < self.maskLostFocus.count {
-                index += 1
-                c = self.maskLostFocus[index]
-                ci = CharInfo(char: c, maskChar: self.maskChar, transformer: self, escaped: false) => {
-                    $0.veiledChar = true
-                }
-            } else {
-                ci = CharInfo(char: c, maskChar: self.maskChar, transformer: self, escaped: false)
-            }
-
-            index += 1
-
-            if ci.canEntered {
-                ci.maskChar = self.maskChar
-                ci.veiledMaskChar = self.veiledMaskChar
-            }
-
-            self._maskLostFocusInfo.append(ci)
-        }
-    }
-}
-
-extension MaskTransformer {
-    class CharInfo {
-        public static let nilChar: Character = "\0"
-        public static let hideCharDelay: TimeInterval = 1.5
-
-        // MARK: - variable
-
-        private let _escaped: Bool
-        private let _char: Character
-        private let _maskChar: Character
-        private let _type: MaskCharType?
-
-        private var _timer: Timer? = nil
-        private weak var _transformer: MaskTransformer? = nil
-
-        private lazy var _regex: NSPredicate? = {
-            guard let pattern = self._type?.regex else { return nil }
-            return NSPredicate(format: "SELF MATCHES %@", pattern)
-        }()
-
-        // MARK: - property
-
-        public var canEntered: Bool {
-            return !self._escaped && self._type != nil
-        }
-
-        private var _maskCharValue: Character?
-        public var maskChar: Character {
-            get {
-                self._maskCharValue ?? (self.canEntered ? self._maskChar : self._char)
-            }
-            set {
-                self._maskCharValue = newValue
-            }
-        }
-
-        public var veiledMaskChar: Character = MaskTransformer.hideChar
-        public var hiddenChar: Bool = false
-        public var veiledChar: Bool = false
-
-        // MARK: - init
-
-        init(char: Character, maskChar: Character, transformer: MaskTransformer, escaped: Bool) {
-            self._char = char
-            self._maskChar = maskChar
-            self._transformer = transformer
-            self._escaped = escaped
-            self._type = MaskCharType.type(for: char)
-        }
-
-        // MARK: - Entered Char
-
-        public var enteredChar: Character = CharInfo.nilChar {
-            didSet {
-                if self._transformer?.hideChars ?? false {
-                    self.hiddenChar = false
-                    if self.enteredChar != CharInfo.nilChar {
-                        self.startHideTimer()
-                    }
-                }
-            }
-        }
-
-        public var isNilChar: Bool {
-            return self.enteredChar == CharInfo.nilChar
-        }
-
-        // MARK: - valid
-
-        public func isValid(char: Character) -> Bool {
-            if let regex = self._regex {
-                return regex.evaluate(with: "\(char)")
-            }
-
-            // Нет регулярного выражения: литерал — false, `z` — принимает любой символ.
-            return self._type == .any
-        }
-
-        // MARK: - timer
-
-        private func startHideTimer() {
-            self._timer?.invalidate()
-            self._timer = nil
-
-            let timer = Timer(timeInterval: CharInfo.hideCharDelay, repeats: false) { [weak self] _ in
-                self?.hideTimerFired()
-            }
-            // `.common` — чтобы таймер срабатывал и во время скролла/трекинга.
-            RunLoop.main.add(timer, forMode: .common)
-            self._timer = timer
-        }
-
-        private func hideTimerFired() {
-            self._timer?.invalidate()
-            self._timer = nil
-
-            if self.hiddenChar {
-                return
-            }
-
-            self.hiddenChar = true
-            self._transformer?.charStateChanged()
-        }
-
-        deinit {
-            self._timer?.invalidate()
-        }
+        return (text, cursor)
     }
 }

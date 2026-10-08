@@ -10,15 +10,21 @@ extension MaskTextField: UITextFieldDelegate {
 
         defer { self.notification() }
 
-        if string.count > 1 {
-            self.textValue = self._transformer.normalizedValue(from: self.correct(string: string))
-
-            return false
-        }
-
         if range.location == 0 && range.length == 0 && string.isEmpty {
             self.textValue = ""
             return true
+        }
+
+        // Вставка, замена выделения и удаление выделенного фрагмента: трансформер
+        // получает диапазон и сохраняет остальное значение.
+        let isSingleBackspace = range.length == 1 && string.isEmpty
+        if string.count > 1 || (range.length > 0 && !isSingleBackspace) {
+            let current = self.text ?? ""
+            let lower = current.characterIndex(utf16Offset: range.location)
+            let upper = current.characterIndex(utf16Offset: range.location + range.length)
+
+            self._transformer.onPaste(self.correct(string: string), in: lower..<max(lower, upper))
+            return false
         }
 
         if range.length == 1 && string.isEmpty {

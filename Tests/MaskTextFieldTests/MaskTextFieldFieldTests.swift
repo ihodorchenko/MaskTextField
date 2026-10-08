@@ -1,19 +1,12 @@
-//
-//  MaskTextFieldFieldTests.swift
-//  MaskTextFieldFieldTests
-//
-
 import XCTest
 import UIKit
-import MaskTextField
+@testable import MaskTextField
 
 /// Тесты реального `MaskTextField` (`UITextField`), покрывающие интеграцию
 /// UIKit-слоя: ввод/удаление через делегат, вставку, курсор, скрытие символов
 /// и проброс событий внешнему делегату.
 ///
-/// Запускаются внутри host-приложения (`MaskTextFieldExample`), поэтому здесь
-/// доступен `UIApplication` и контрольные события (`sendActions`) работают без
-/// assert-шума, в отличие от UIKit-free тестов пакета.
+/// Запускаются как обычные тесты пакета на симуляторе iOS (host-приложение не нужно).
 final class MaskTextFieldFieldTests: XCTestCase {
 
     private var field: MaskTextField!
@@ -116,7 +109,65 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertEqual(field.text, "12-34")
     }
 
+    func testPasteInMiddleKeepsSurroundingValue() {
+        field.maskText = "dd-dd"
+        field.textValue = "14" // "14-__"
+
+        // Вставляем "23" между "1" и "4": остаток сдвигается вправо.
+        _ = field.textField(
+            field,
+            shouldChangeCharactersIn: NSRange(location: 1, length: 0),
+            replacementString: "23"
+        )
+
+        XCTAssertEqual(field.textValue, "1234")
+        XCTAssertEqual(field.text, "12-34")
+    }
+
+    func testPasteReplacesSelection() {
+        field.maskText = "dd-dd"
+        field.textValue = "1234" // "12-34"
+
+        // Выделено "2-3" (индексы 1..<4), вставляем "99".
+        _ = field.textField(
+            field,
+            shouldChangeCharactersIn: NSRange(location: 1, length: 3),
+            replacementString: "99"
+        )
+
+        XCTAssertEqual(field.textValue, "1994")
+        XCTAssertEqual(field.text, "19-94")
+    }
+
+    func testTypingOverSelectionReplacesIt() {
+        field.maskText = "dd-dd"
+        field.textValue = "1234" // "12-34"
+
+        _ = field.textField(
+            field,
+            shouldChangeCharactersIn: NSRange(location: 0, length: 2),
+            replacementString: "9"
+        )
+
+        XCTAssertEqual(field.textValue, "934")
+        XCTAssertEqual(field.text, "93-4_")
+    }
+
     // MARK: - Удаление
+
+    func testDeletingSelectionRemovesAllSelectedCharacters() {
+        field.maskText = "dd-dd"
+        field.textValue = "1234" // "12-34"
+
+        _ = field.textField(
+            field,
+            shouldChangeCharactersIn: NSRange(location: 1, length: 3),
+            replacementString: ""
+        )
+
+        XCTAssertEqual(field.textValue, "14")
+        XCTAssertEqual(field.text, "14-__")
+    }
 
     func testBackspaceAtCursorRemovesPrecedingCharacter() {
         field.maskText = "dd-dd"
