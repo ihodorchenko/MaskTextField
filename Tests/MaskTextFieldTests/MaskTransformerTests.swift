@@ -139,6 +139,39 @@ final class MaskTransformerTests: XCTestCase {
         XCTAssertEqual(mock.cursorPosition, 4)
     }
 
+    func testInputAtEndFillsFreePositionsOnTheLeftInOrder() {
+        transformer.mask = "+375 (dd) ddd"
+        transformer.text = "29123" // "+375 (29) 123" заполнена; освободим две позиции слева
+        transformer.onDeleteBackward(at: 7)
+        transformer.onDeleteBackward(at: 6)
+        XCTAssertEqual(transformer.text, "123")
+
+        // Курсор в конце: свободных позиций справа нет — заполняются слева, по порядку.
+        _ = transformer.onTextInput("7", at: 13)
+        _ = transformer.onTextInput("8", at: 13)
+
+        XCTAssertEqual(mock.text, "+375 (78) 123")
+        XCTAssertEqual(transformer.text, "78123")
+        XCTAssertTrue(transformer.isComplete)
+    }
+
+    func testInputIsStillRejectedWhenMaskIsFull() {
+        transformer.mask = "dd"
+        transformer.text = "12"
+
+        XCTAssertFalse(transformer.onTextInput("3", at: 0))
+        XCTAssertFalse(transformer.onTextInput("3", at: 2))
+    }
+
+    func testInvalidCharacterIsRejectedInLeftFallbackToo() {
+        transformer.mask = "dd"
+        transformer.text = "1"
+        _ = transformer.onTextInput("2", at: 0)
+        transformer.onDeleteBackward(at: 0)
+
+        XCTAssertFalse(transformer.onTextInput("a", at: 2))
+    }
+
     // MARK: - Количество вводимых позиций
 
     func testOnlyEnteredCount() {

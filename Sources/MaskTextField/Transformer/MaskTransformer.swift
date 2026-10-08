@@ -325,21 +325,24 @@ public final class MaskTransformer: FilterTransformer {
         }
     }
 
-    /// Вставляет символ в первую пустую вводимую позицию, начиная с `offset`.
-    /// Возвращает индекс позиции либо `nil`, если позиции нет или символ не подходит.
+    /// Вставляет символ в первую пустую вводимую позицию, начиная с `offset`; если справа
+    /// от `offset` свободных позиций нет — в первую пустую позицию слева (так маску можно
+    /// добить вводом с конца). Возвращает индекс позиции либо `nil`, если позиции нет
+    /// или символ ей не подходит.
     private func insert(char: Character, at offset: Int) -> Int? {
         let start = min(max(offset, 0), self.slots.count)
-        guard start < self.slots.count else { return nil }
 
-        for index in start..<self.slots.count {
-            guard self.slots[index].canEntered, self.entered[index] == nil else { continue }
+        let target = self.firstFreeIndex(in: start..<self.slots.count)
+            ?? self.firstFreeIndex(in: 0..<start)
 
-            guard self.accepts(char, in: self.slots[index]) else { return nil }
-            self.setEntered(char, at: index)
-            return index
-        }
+        guard let index = target, self.accepts(char, in: self.slots[index]) else { return nil }
 
-        return nil
+        self.setEntered(char, at: index)
+        return index
+    }
+
+    private func firstFreeIndex(in range: Range<Int>) -> Int? {
+        range.first { self.slots[$0].canEntered && self.entered[$0] == nil }
     }
 
     /// Индекс первой пустой вводимой позиции после `index` (литералы пропускаются).

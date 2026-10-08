@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Changed
+- In `.free` (and `.snapOnFocus`) typing at a cursor with no free position to its right now
+  fills the first free position on the left, so a mask can be completed by typing at the
+  end. Before, such input was rejected.
 - `MaskedTextField` now observes `textDidChangeNotification` instead of the control's
   `.editingChanged` target-action, so the binding no longer depends on UIControl event
   delivery (which does not work without a running `UIApplication`).
