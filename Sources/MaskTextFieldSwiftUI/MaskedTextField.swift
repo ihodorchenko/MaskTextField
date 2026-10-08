@@ -46,8 +46,29 @@ public struct MaskedTextField: UIViewRepresentable {
     /// Тип клавиатуры.
     public var keyboardType: UIKeyboardType
 
+    /// Шрифт текста; `nil` — не переопределять.
+    public var font: UIFont?
+
+    /// Цвет текста; `nil` — не переопределять.
+    public var textColor: UIColor?
+
+    /// Выравнивание текста.
+    public var textAlignment: NSTextAlignment
+
+    /// Вид клавиши Return.
+    public var returnKeyType: UIReturnKeyType
+
+    /// Режим кнопки очистки.
+    public var clearButtonMode: UITextField.ViewMode
+
     /// Сырое значение без маски (двусторонняя привязка к SwiftUI-состоянию).
     @Binding public var textValue: String
+
+    /// Необязательная привязка к состоянию фокуса (`true` — поле в фокусе).
+    private var isFocused: Binding<Bool>?
+
+    /// Вызывается по нажатию Return.
+    private var onCommit: (() -> Void)?
 
     /// Создаёт маскированное поле.
     ///
@@ -61,6 +82,13 @@ public struct MaskedTextField: UIViewRepresentable {
     ///   - hiddenMaskIfEnteredTextEmpty: скрывать пустую маску.
     ///   - placeholder: подсказка.
     ///   - keyboardType: тип клавиатуры.
+    ///   - font: шрифт текста.
+    ///   - textColor: цвет текста.
+    ///   - textAlignment: выравнивание текста.
+    ///   - returnKeyType: вид клавиши Return.
+    ///   - clearButtonMode: режим кнопки очистки.
+    ///   - isFocused: привязка к состоянию фокуса (чтение и управление).
+    ///   - onCommit: обработчик нажатия Return.
     ///   - textValue: привязка к сырому значению.
     public init(
         mask: String,
@@ -72,6 +100,13 @@ public struct MaskedTextField: UIViewRepresentable {
         hiddenMaskIfEnteredTextEmpty: Bool = false,
         placeholder: String? = nil,
         keyboardType: UIKeyboardType = .default,
+        font: UIFont? = nil,
+        textColor: UIColor? = nil,
+        textAlignment: NSTextAlignment = .natural,
+        returnKeyType: UIReturnKeyType = .default,
+        clearButtonMode: UITextField.ViewMode = .never,
+        isFocused: Binding<Bool>? = nil,
+        onCommit: (() -> Void)? = nil,
         textValue: Binding<String>
     ) {
         self.mask = mask
@@ -83,6 +118,13 @@ public struct MaskedTextField: UIViewRepresentable {
         self.hiddenMaskIfEnteredTextEmpty = hiddenMaskIfEnteredTextEmpty
         self.placeholder = placeholder
         self.keyboardType = keyboardType
+        self.font = font
+        self.textColor = textColor
+        self.textAlignment = textAlignment
+        self.returnKeyType = returnKeyType
+        self.clearButtonMode = clearButtonMode
+        self.isFocused = isFocused
+        self.onCommit = onCommit
         self._textValue = textValue
     }
 
@@ -94,16 +136,40 @@ public struct MaskedTextField: UIViewRepresentable {
         let field = MaskTextField()
         apply(to: field)
         field.delegate = context.coordinator
+        // `.editingChanged` приходит только от действий пользователя (ввод, вставка,
+        // удаление, очистка), а не от программной установки значения из SwiftUI.
+        field.addTarget(
+            context.coordinator,
+            action: #selector(Coordinator.editingChanged(_:)),
+            for: .editingChanged
+        )
         field.setContentHuggingPriority(.defaultHigh, for: .vertical)
         return field
     }
 
     public func updateUIView(_ field: MaskTextField, context: Context) {
+        context.coordinator.parent = self
         apply(to: field)
 
         // Синхронизируем значение только при расхождении, чтобы не зациклить обновления.
         if field.textValue != textValue {
             field.textValue = textValue
+        }
+
+        syncFocus(of: field)
+    }
+
+    /// Приводит фокус поля в соответствие с привязкой `isFocused`.
+    private func syncFocus(of field: MaskTextField) {
+        guard let wantsFocus = isFocused?.wrappedValue else { return }
+
+        // Смена первого ответчика внутри цикла обновления SwiftUI нестабильна.
+        DispatchQueue.main.async {
+            if wantsFocus, !field.isFirstResponder {
+                field.becomeFirstResponder()
+            } else if !wantsFocus, field.isFirstResponder {
+                field.resignFirstResponder()
+            }
         }
     }
 
@@ -119,10 +185,15 @@ public struct MaskedTextField: UIViewRepresentable {
         if field.hiddenMaskIfEnteredTextEmpty != hiddenMaskIfEnteredTextEmpty { field.hiddenMaskIfEnteredTextEmpty = hiddenMaskIfEnteredTextEmpty }
         if field.placeholder != placeholder { field.placeholder = placeholder }
         if field.keyboardType != keyboardType { field.keyboardType = keyboardType }
+        if let font, field.font != font { field.font = font }
+        if let textColor, field.textColor != textColor { field.textColor = textColor }
+        if field.textAlignment != textAlignment { field.textAlignment = textAlignment }
+        if field.returnKeyType != returnKeyType { field.returnKeyType = returnKeyType }
+        if field.clearButtonMode != clearButtonMode { field.clearButtonMode = clearButtonMode }
     }
 
     /// Связывает `MaskTextField` со SwiftUI-состоянием и пробрасывает
-    /// изменения сырого значения обратно в привязку `textValue`.
+    /// изменения сырого значения и фокуса обратно в привязки.
     public final class Coordinator: NSObject, UITextFieldDelegate {
         var parent: MaskedTextField
 
@@ -130,14 +201,28 @@ public struct MaskedTextField: UIViewRepresentable {
             self.parent = parent
         }
 
-        public func textFieldDidChangeSelection(_ textField: UITextField) {
-            guard let field = textField as? MaskTextField else { return }
-            let value = field.textValue ?? ""
+        @objc func editingChanged(_ sender: MaskTextField) {
+            let value = sender.textValue ?? ""
             if parent.textValue != value {
-                DispatchQueue.main.async {
-                    self.parent.textValue = value
-                }
+                parent.textValue = value
             }
+        }
+
+        public func textFieldDidBeginEditing(_ textField: UITextField) {
+            if parent.isFocused?.wrappedValue == false {
+                parent.isFocused?.wrappedValue = true
+            }
+        }
+
+        public func textFieldDidEndEditing(_ textField: UITextField, reason: UITextField.DidEndEditingReason) {
+            if parent.isFocused?.wrappedValue == true {
+                parent.isFocused?.wrappedValue = false
+            }
+        }
+
+        public func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+            parent.onCommit?()
+            return true
         }
     }
 }
