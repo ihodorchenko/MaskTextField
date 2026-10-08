@@ -62,7 +62,7 @@ public final class MaskTransformer: FilterTransformer {
         guard !enteredSlots.isEmpty else { return "" }
 
         let filtered = value.filter { char in
-            enteredSlots.contains { $0.accepts(char) }
+            enteredSlots.contains { self.accepts(char, in: $0) }
         }
 
         let count = self.onlyEnteredCount
@@ -94,7 +94,7 @@ public final class MaskTransformer: FilterTransformer {
         var filled: [Int] = []
 
         for (index, slot) in self.slots.enumerated() where slot.canEntered {
-            while valueIndex < chars.count, !slot.accepts(chars[valueIndex]) {
+            while valueIndex < chars.count, !self.accepts(chars[valueIndex], in: slot) {
                 valueIndex += 1
             }
 
@@ -284,6 +284,11 @@ public final class MaskTransformer: FilterTransformer {
 
     // MARK: - entered state
 
+    /// Символ подходит позиции по её типу и проходит `CharValidator` поля (если задан).
+    private func accepts(_ char: Character, in slot: MaskSlot) -> Bool {
+        slot.accepts(char) && (self.control?.check(char: char) ?? true)
+    }
+
     private func setEntered(_ char: Character?, at index: Int) {
         self.entered[index] = char
         self.hidden[index] = false
@@ -302,7 +307,7 @@ public final class MaskTransformer: FilterTransformer {
         for index in start..<self.slots.count {
             guard self.slots[index].canEntered, self.entered[index] == nil else { continue }
 
-            guard self.slots[index].accepts(char) else { return nil }
+            guard self.accepts(char, in: self.slots[index]) else { return nil }
             self.setEntered(char, at: index)
             return index
         }

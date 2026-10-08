@@ -8,6 +8,11 @@ extension MaskTextField: UITextFieldDelegate {
             return false
         }
 
+        // Поле без маски: ограничения `charValidator`, остальное делает UIKit.
+        if !(self._transformer is MaskTransformer) {
+            return self.shouldChangePlainText(in: range, with: string)
+        }
+
         defer { self.notification() }
 
         if range.location == 0 && range.length == 0 && string.isEmpty {
@@ -35,6 +40,41 @@ extension MaskTextField: UITextFieldDelegate {
 
         let accepted = self._transformer.onTextInput(string, at: (self.text ?? "").characterIndex(utf16Offset: range.location))
         self.announceInputResult(accepted: accepted)
+        return false
+    }
+
+    /// Обработка изменения в поле без маски.
+    ///
+    /// Без валидатора, при удалении и во время композиции IME изменение остаётся
+    /// нативным (`true`): сохраняются курсор, автокоррекция и undo. Если строка прошла
+    /// фильтр без изменений — тоже нативно; если фильтр её изменил — текст
+    /// подставляется вручную, если ничего не осталось — изменение отклоняется.
+    private func shouldChangePlainText(in range: NSRange, with string: String) -> Bool {
+        guard self.charValidator != nil, !string.isEmpty, self.markedTextRange == nil else {
+            return true
+        }
+
+        let candidate = self.correct(string: string.filter { self.check(char: $0) })
+        guard !candidate.isEmpty else {
+            self.announceInputResult(accepted: false)
+            return false
+        }
+
+        let current = self.text ?? ""
+        let proposed = (current as NSString).replacingCharacters(in: range, with: candidate)
+        guard self.check(string: proposed) else {
+            self.announceInputResult(accepted: false)
+            return false
+        }
+
+        if candidate == string {
+            return true
+        }
+
+        let lower = current.characterIndex(utf16Offset: range.location)
+        let upper = current.characterIndex(utf16Offset: range.location + range.length)
+        self._transformer.onPaste(candidate, in: lower..<max(lower, upper))
+        self.notification()
         return false
     }
 

@@ -333,7 +333,10 @@ public class MaskTextField: UITextField {
     // MARK: - mask
 
     /// Дополнительные ограничения на вводимые символы.
-    public weak var charValidator: CharValidator?
+    ///
+    /// Хранится сильной ссылкой, поэтому валидатор можно создавать прямо в присваивании:
+    /// `field.charValidator = EmojiFreeValidator()`. Валидатор не должен сильно ссылаться на поле.
+    public var charValidator: CharValidator?
 
     /// Система преобразования символов.
     internal lazy var _transformer: BaseTransformer = {

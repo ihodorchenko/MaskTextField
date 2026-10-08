@@ -18,8 +18,17 @@ open class BaseTransformer {
             self.control?.text
         }
         set {
-            self.control?.text = newValue
+            self.control?.text = self.sanitized(newValue)
         }
+    }
+
+    /// Применяет ограничения `CharValidator` к программно устанавливаемому тексту.
+    /// Если результат не проходит `check(string:)`, текущий текст остаётся без изменений.
+    private func sanitized(_ value: String?) -> String? {
+        guard let value, let control = self.control else { return value }
+
+        let filtered = control.correct(string: value.filter { control.check(char: $0) })
+        return control.check(string: filtered) ? filtered : control.text
     }
 
     open var onlyEnteredCount: Int {
