@@ -578,15 +578,7 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertNotNil(field.rightView)
     }
 
-    // MARK: - Locale and Dynamic Type
-
-    func testLocaleControlsDefaultDecimalSeparator() {
-        field.locale = Locale(identifier: "de_DE")
-        XCTAssertEqual(field.culture.decimalSeparator, ",")
-
-        field.locale = Locale(identifier: "en_US")
-        XCTAssertEqual(field.culture.decimalSeparator, ".")
-    }
+    // MARK: - Dynamic Type
 
     func testAdjustsFontForContentSizeCategory() {
         XCTAssertTrue(field.adjustsFontForContentSizeCategory)

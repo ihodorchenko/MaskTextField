@@ -1,10 +1,6 @@
 import UIKit
 
 extension MaskTextField: MaskTextFieldProtocol {
-    public var culture: NumberFormatter {
-        return self.charValidator?.culture ?? self.defaultCulture
-    }
-
     public func check(char: Character) -> Bool {
         return self.charValidator?.check(char: char) ?? true
     }

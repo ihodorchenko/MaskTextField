@@ -18,7 +18,7 @@ import Foundation
 /// are stored separately, in arrays indexed like the mask positions.
 
 @MainActor
-public final class MaskTransformer: FilterTransformer {
+public final class MaskTransformer: BaseTransformer {
     public static let hideChar: Character = "•"
     public static let defaultMaskChar: Character = "_"
 
@@ -64,15 +64,15 @@ public final class MaskTransformer: FilterTransformer {
 
     // MARK: - Filter Transformer
 
-    private var _onlyEnteredCount: Int = 0
+    private var _capacity: Int = 0
 
-    public override var onlyEnteredCount: Int {
-        self._onlyEnteredCount
+    public override var capacity: Int {
+        self._capacity
     }
 
     /// Whether all editable positions are filled (a mask without editable positions is never complete).
     public override var isComplete: Bool {
-        self._onlyEnteredCount > 0
+        self._capacity > 0
             && self.slots.indices.allSatisfy { !self.slots[$0].canEntered || self.entered[$0] != nil }
     }
 
@@ -87,7 +87,7 @@ public final class MaskTransformer: FilterTransformer {
             enteredSlots.contains { self.accepts(char, in: $0) }
         }
 
-        let count = self.onlyEnteredCount
+        let count = self.capacity
         if filtered.count > count {
             return filtered.substring(start: filtered.count - count, length: count)
         }
@@ -154,7 +154,7 @@ public final class MaskTransformer: FilterTransformer {
 
         let hasVeiled = !self._isFocus && zip(self.slots, self.entered).contains { $0.veiled && $1 != nil }
         if self.hideChars || hasVeiled {
-            return L10n.enteredCount(chars.count, of: self.onlyEnteredCount)
+            return L10n.enteredCount(chars.count, of: self.capacity)
         }
 
         return chars.map { String($0) }.joined(separator: " ")
@@ -223,7 +223,7 @@ public final class MaskTransformer: FilterTransformer {
         }
 
         let pasted = self.normalizedValue(from: text)
-        let combined = String((prefix + pasted + suffix).prefix(self.onlyEnteredCount))
+        let combined = String((prefix + pasted + suffix).prefix(self.capacity))
         let filled = self.fill(with: combined)
 
         // Курсор — сразу за последним вставленным символом (литералы пропускаются).
@@ -313,7 +313,7 @@ public final class MaskTransformer: FilterTransformer {
                 self.lostFocusSlots = MaskSlot.parse(self.maskLostFocus)
                 self.entered = Array(repeating: nil, count: self.slots.count)
                 self.hidden = Array(repeating: false, count: self.slots.count)
-                self._onlyEnteredCount = self.slots.filter { $0.canEntered }.count
+                self._capacity = self.slots.filter { $0.canEntered }.count
             }
             self.setTextAndCursor()
         }
@@ -329,7 +329,7 @@ public final class MaskTransformer: FilterTransformer {
             self.slots = MaskSlot.parse(self.mask)
             self.entered = Array(repeating: nil, count: self.slots.count)
             self.hidden = Array(repeating: false, count: self.slots.count)
-            self._onlyEnteredCount = self.slots.filter { $0.canEntered }.count
+            self._capacity = self.slots.filter { $0.canEntered }.count
             self.cancelHideTimer()
             self.setTextAndCursor()
         }
@@ -608,7 +608,7 @@ extension MaskTransformer {
         let lostFocusSlots: [MaskSlot]
         let entered: [Character?]
         let hidden: [Bool]
-        let onlyEnteredCount: Int
+        let capacity: Int
         let variant: MaskVariant?
     }
 
@@ -618,7 +618,7 @@ extension MaskTransformer {
             lostFocusSlots: self.lostFocusSlots,
             entered: self.entered,
             hidden: self.hidden,
-            onlyEnteredCount: self._onlyEnteredCount,
+            capacity: self._capacity,
             variant: self.activeVariant
         )
     }
@@ -628,7 +628,7 @@ extension MaskTransformer {
         self.lostFocusSlots = snapshot.lostFocusSlots
         self.entered = snapshot.entered
         self.hidden = snapshot.hidden
-        self._onlyEnteredCount = snapshot.onlyEnteredCount
+        self._capacity = snapshot.capacity
         self.activeVariant = snapshot.variant
     }
 
@@ -653,7 +653,7 @@ extension MaskTransformer {
             self.lostFocusSlots = MaskSlot.parse(variant.maskLostFocus)
             self.entered = Array(repeating: nil, count: self.slots.count)
             self.hidden = Array(repeating: false, count: self.slots.count)
-            self._onlyEnteredCount = self.slots.filter { $0.canEntered }.count
+            self._capacity = self.slots.filter { $0.canEntered }.count
             self.cancelHideTimer()
             self.activeVariant = variant
         }
@@ -744,8 +744,8 @@ extension MaskTransformer {
         }
 
         // Как и без динамики: вставка, не помещающаяся в пустое поле, — последние символы.
-        if prefix.isEmpty, suffix.isEmpty, accepted.count > self.onlyEnteredCount {
-            accepted = Array(accepted.suffix(self.onlyEnteredCount))
+        if prefix.isEmpty, suffix.isEmpty, accepted.count > self.capacity {
+            accepted = Array(accepted.suffix(self.capacity))
         }
 
         // Проход 2: окончательная маска и раскладка.

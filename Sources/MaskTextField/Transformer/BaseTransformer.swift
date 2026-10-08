@@ -32,7 +32,7 @@ open class BaseTransformer {
         return control.check(string: filtered) ? filtered : control.text
     }
 
-    open var onlyEnteredCount: Int {
+    open var capacity: Int {
         return 0
     }
 

@@ -8,7 +8,6 @@ import Foundation
 @MainActor
 public protocol MaskTextFieldProtocol: AnyObject {
     var text: String? { get set }
-    var culture: NumberFormatter { get }
 
     func check(char: Character) -> Bool
     func check(string: String) -> Bool

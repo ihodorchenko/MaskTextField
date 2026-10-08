@@ -7,13 +7,6 @@ import Foundation
 @MainActor
 final class MockMaskTextField: MaskTextFieldProtocol {
     var text: String?
-    var culture: NumberFormatter = {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal
-        f.decimalSeparator = "."
-        f.groupingSeparator = ","
-        return f
-    }()
 
     /// Последняя позиция курсора, запрошенная трансформером.
     private(set) var cursorPosition: Int = 0

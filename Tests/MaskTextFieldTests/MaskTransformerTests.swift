@@ -62,7 +62,7 @@ final class MaskTransformerTests: XCTestCase {
         transformer.mask = "\\ddd"
         // \d — литеральная 'd', остальные два — вводимые цифры
         XCTAssertEqual(transformer.visibleTextMask, "d__")
-        XCTAssertEqual(transformer.onlyEnteredCount, 2)
+        XCTAssertEqual(transformer.capacity, 2)
     }
 
     // MARK: - Ввод
@@ -199,14 +199,14 @@ final class MaskTransformerTests: XCTestCase {
 
     func testOnlyEnteredCount() {
         transformer.mask = "+375 (dd) ddd-dd-dd"
-        XCTAssertEqual(transformer.onlyEnteredCount, 9)
+        XCTAssertEqual(transformer.capacity, 9)
     }
 
     func testZMaskAcceptsAnyCharacter() {
         transformer.mask = "zz"
 
         // `z` — вводимая позиция без проверки: принимает и букву, и цифру.
-        XCTAssertEqual(transformer.onlyEnteredCount, 2)
+        XCTAssertEqual(transformer.capacity, 2)
 
         _ = transformer.onTextInput("a")
         _ = transformer.onTextInput("1")

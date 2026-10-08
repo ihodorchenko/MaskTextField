@@ -57,19 +57,9 @@ public class MaskTextField: UITextField {
         guard shouldClear else { return }
 
         self.textValue = ""
-        self.clearButtonPublisher = ()
         self.clearButtonSubject.send()
         self.notification()
     }
-
-    /// - Note: `@Published` delivers the current value on subscription, so a subscriber
-    ///   gets an "event" immediately. Use `deleteBackwardEvents` for real events.
-    @Published
-    public internal(set) var deleteBackwardPublisher: Void = ()
-
-    /// - Note: see `deleteBackwardPublisher`; use `clearButtonEvents` for real events.
-    @Published
-    public internal(set) var clearButtonPublisher: Void = ()
 
     private let deleteBackwardSubject = PassthroughSubject<Void, Never>()
     private let clearButtonSubject = PassthroughSubject<Void, Never>()
@@ -82,32 +72,6 @@ public class MaskTextField: UITextField {
     /// Fires when the clear button is tapped; does not fire on subscription.
     public var clearButtonEvents: AnyPublisher<Void, Never> {
         self.clearButtonSubject.eraseToAnyPublisher()
-    }
-
-    /// Locale used for decimal separators by default (when no `charValidator` is set).
-    /// The mask itself does not depend on the locale: it always defines the format literally.
-    public var locale: Locale = .current {
-        didSet {
-            self.cachedDefaultCulture = nil
-        }
-    }
-
-    private var cachedDefaultCulture: NumberFormatter?
-
-    /// Default `NumberFormatter` (used when no `charValidator` is set).
-    var defaultCulture: NumberFormatter {
-        if let cached = self.cachedDefaultCulture { return cached }
-
-        let formatter = NumberFormatter() => {
-            $0.locale = self.locale
-            $0.groupingSeparator = self.locale.groupingSeparator
-            $0.decimalSeparator = self.locale.decimalSeparator
-            $0.usesGroupingSeparator = true
-            $0.formatterBehavior = .behavior10_4
-            $0.numberStyle = .decimal
-        }
-        self.cachedDefaultCulture = formatter
-        return formatter
     }
 
     public private(set) lazy var textPublisher: AnyPublisher<String, Never> = NotificationCenter.default
@@ -295,7 +259,7 @@ public class MaskTextField: UITextField {
     public override var accessibilityValue: String? {
         get {
             if let explicit = self.explicitAccessibilityValue { return explicit }
-            if let mt = self._transformer as? MaskTransformer, mt.onlyEnteredCount > 0 {
+            if let mt = self._transformer as? MaskTransformer, mt.capacity > 0 {
                 return mt.accessibilityDescription
             }
             return super.accessibilityValue
@@ -308,8 +272,8 @@ public class MaskTextField: UITextField {
     func announceInputResult(accepted: Bool) {
         guard self.announcesInputEvents else { return }
 
-        let total = self.onlyEnteredCount
-        let isComplete = total > 0 && (self.textValue?.count ?? 0) == total
+        let total = self.capacity
+        let isComplete = total > 0 && self.textValue.count == total
 
         if !accepted {
             UIAccessibility.post(notification: .announcement, argument: L10n.string("a11y.char_rejected"))
@@ -329,7 +293,6 @@ public class MaskTextField: UITextField {
         guard utf16Offset > 0 else { return }
 
         self._transformer.onDeleteBackward(at: (self.text ?? "").characterIndex(utf16Offset: utf16Offset))
-        self.deleteBackwardPublisher = ()
         self.deleteBackwardSubject.send()
         self.notification()
     }
@@ -499,9 +462,9 @@ public class MaskTextField: UITextField {
     }
 
     /// The value without the mask.
-    public var textValue: String? {
+    public var textValue: String {
         get {
-            self._transformer.text
+            self._transformer.text ?? ""
         }
         set {
             self._transformer.text = newValue
@@ -613,8 +576,8 @@ public class MaskTextField: UITextField {
     }
 
     /// The number of editable positions.
-    public var onlyEnteredCount: Int {
-        return self._transformer.onlyEnteredCount
+    public var capacity: Int {
+        return self._transformer.capacity
     }
 
     /// The displayed mask.

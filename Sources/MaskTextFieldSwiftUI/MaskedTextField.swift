@@ -76,9 +76,6 @@ public struct MaskedTextField: UIViewRepresentable {
     /// Forces the value to be laid out left to right, including in an RTL interface.
     public var forcesLeftToRight: Bool
 
-    /// The locale for decimal separators (the mask does not depend on it).
-    public var locale: Locale
-
     /// Disables keyboard autocorrection and smart substitutions (`true` by default).
     public var disablesAutocorrection: Bool
 
@@ -127,7 +124,6 @@ public struct MaskedTextField: UIViewRepresentable {
     ///   - returnKeyType: the Return key type.
     ///   - clearButtonMode: the clear button mode.
     ///   - forcesLeftToRight: lay the value out left to right in RTL too.
-    ///   - locale: the locale for decimal separators.
     ///   - disablesAutocorrection: disable keyboard autocorrection and substitutions.
     ///   - announcesInputEvents: announce rejected characters and a filled mask.
     ///   - accessibilityLabelText: the VoiceOver label.
@@ -156,7 +152,6 @@ public struct MaskedTextField: UIViewRepresentable {
         returnKeyType: UIReturnKeyType = .default,
         clearButtonMode: UITextField.ViewMode = .never,
         forcesLeftToRight: Bool = true,
-        locale: Locale = .current,
         disablesAutocorrection: Bool = true,
         announcesInputEvents: Bool = false,
         accessibilityLabelText: String? = nil,
@@ -185,7 +180,6 @@ public struct MaskedTextField: UIViewRepresentable {
         self.returnKeyType = returnKeyType
         self.clearButtonMode = clearButtonMode
         self.forcesLeftToRight = forcesLeftToRight
-        self.locale = locale
         self.disablesAutocorrection = disablesAutocorrection
         self.announcesInputEvents = announcesInputEvents
         self.accessibilityLabelText = accessibilityLabelText
@@ -274,7 +268,6 @@ public struct MaskedTextField: UIViewRepresentable {
         if field.returnKeyType != returnKeyType { field.returnKeyType = returnKeyType }
         if field.clearButtonMode != clearButtonMode { field.clearButtonMode = clearButtonMode }
         if field.forcesLeftToRight != forcesLeftToRight { field.forcesLeftToRight = forcesLeftToRight }
-        if field.locale != locale { field.locale = locale }
         if field.disablesAutocorrection != disablesAutocorrection { field.disablesAutocorrection = disablesAutocorrection }
         if field.announcesInputEvents != announcesInputEvents { field.announcesInputEvents = announcesInputEvents }
         if field.accessibilityLabel != accessibilityLabelText { field.accessibilityLabel = accessibilityLabelText }
@@ -304,7 +297,7 @@ public struct MaskedTextField: UIViewRepresentable {
         }
 
         private func fieldDidChange(_ field: MaskTextField) {
-            let value = field.textValue ?? ""
+            let value = field.textValue
             if parent.textValue != value {
                 parent.textValue = value
             }

@@ -42,7 +42,7 @@ final class DynamicMaskTransformerTests: XCTestCase {
         useCardProvider()
 
         XCTAssertEqual(mock.text, "____ ____ ____ ____")
-        XCTAssertEqual(transformer.onlyEnteredCount, 16)
+        XCTAssertEqual(transformer.capacity, 16)
     }
 
     func testMaskSwitchesWhenPrefixIdentifiesAmex() {
@@ -53,7 +53,7 @@ final class DynamicMaskTransformerTests: XCTestCase {
 
         type("4")
         XCTAssertEqual(mock.text, "34__ ______ _____")
-        XCTAssertEqual(transformer.onlyEnteredCount, 15)
+        XCTAssertEqual(transformer.capacity, 15)
         XCTAssertEqual(transformer.text, "34")
     }
 
@@ -71,7 +71,7 @@ final class DynamicMaskTransformerTests: XCTestCase {
 
         type("12345")
         XCTAssertEqual(mock.text, "(12) 345")
-        XCTAssertEqual(transformer.onlyEnteredCount, 5)
+        XCTAssertEqual(transformer.capacity, 5)
 
         // Шестой символ не помещается — маска переключается на большую, значение сохраняется.
         type("6")
@@ -86,7 +86,7 @@ final class DynamicMaskTransformerTests: XCTestCase {
         transformer.onDeleteBackward()
 
         XCTAssertEqual(transformer.text, "12345")
-        XCTAssertEqual(transformer.onlyEnteredCount, 5)
+        XCTAssertEqual(transformer.capacity, 5)
         XCTAssertEqual(mock.text, "(12) 345")
     }
 
@@ -139,13 +139,13 @@ final class DynamicMaskTransformerTests: XCTestCase {
     func testPasteInMiddleShiftsTailAndMayGrowMask() {
         transformer.maskProvider = MaskVariant.provider(byCapacity: phoneVariants)
         transformer.text = "12345"
-        XCTAssertEqual(transformer.onlyEnteredCount, 5)
+        XCTAssertEqual(transformer.capacity, 5)
 
         // Слот 3 — литерал «)» сразу после «12»: вставка идёт между «12» и «345».
         transformer.onPaste("99", in: 3..<3)
 
         XCTAssertEqual(transformer.text, "1299345")
-        XCTAssertEqual(transformer.onlyEnteredCount, 7)
+        XCTAssertEqual(transformer.capacity, 7)
     }
 
     // MARK: - Удаление и курсор
@@ -244,14 +244,14 @@ final class DynamicMaskFieldTests: XCTestCase {
         }
 
         XCTAssertEqual(field.text, "37__ ______ _____")
-        XCTAssertEqual(field.onlyEnteredCount, 15)
+        XCTAssertEqual(field.capacity, 15)
     }
 
     func testClearingProviderRestoresPlainField() {
         field.maskProvider = MaskPreset.cardProvider
         field.maskProvider = nil
 
-        XCTAssertEqual(field.onlyEnteredCount, 0)
+        XCTAssertEqual(field.capacity, 0)
     }
 
     func testSettingStaticMaskWhileProviderIsActiveKeepsProvider() {
@@ -293,7 +293,7 @@ final class DynamicMaskFieldTests: XCTestCase {
 
         field.configure { $0.mask = "" }
 
-        XCTAssertEqual(field.onlyEnteredCount, 0)
+        XCTAssertEqual(field.capacity, 0)
     }
 
     func testConfigurationRoundTripKeepsCustomProvider() {

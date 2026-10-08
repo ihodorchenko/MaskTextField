@@ -20,24 +20,10 @@ public protocol CharValidator: AnyObject {
 
     /// Corrects the entered string after per-character filtering.
     func correct(string: String) -> String
-
-    /// The number formatter for decimal separators.
-    var culture: NumberFormatter { get }
 }
 
 public extension CharValidator {
     func check(char: Character) -> Bool { true }
     func check(string: String) -> Bool { true }
     func correct(string: String) -> String { string }
-
-    var culture: NumberFormatter {
-        NumberFormatter() => {
-            $0.locale = .current
-            $0.groupingSeparator = Locale.current.groupingSeparator
-            $0.decimalSeparator = Locale.current.decimalSeparator
-            $0.usesGroupingSeparator = true
-            $0.formatterBehavior = .behavior10_4
-            $0.numberStyle = .decimal
-        }
-    }
 }
