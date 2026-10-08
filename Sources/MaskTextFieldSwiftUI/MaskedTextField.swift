@@ -25,6 +25,14 @@ public struct MaskedTextField: UIViewRepresentable {
     /// Маска, отображаемая при потере фокуса; символ `^` скрывает введённое.
     public var maskLostFocus: String
 
+    /// Динамические маски по ёмкости (по возрастанию): выбирается первая, в которую помещается
+    /// значение. Если задано, `mask` и `maskLostFocus` не используются.
+    public var maskVariants: [MaskVariant]
+
+    /// Динамические маски по произвольному правилу (например, `MaskPreset.cardProvider`).
+    /// Применяется один раз при создании поля; чтобы сменить, пересоздайте вью (`.id(...)`).
+    public var maskProvider: ((String) -> MaskVariant)?
+
     /// Режим отображения маски: `.fullMask` — вся маска, `.gradualMask` — по мере ввода.
     public var maskMode: MaskMode
 
@@ -102,6 +110,8 @@ public struct MaskedTextField: UIViewRepresentable {
     /// - Parameters:
     ///   - mask: маска во время редактирования.
     ///   - maskLostFocus: маска при потере фокуса (по умолчанию пустая).
+    ///   - maskVariants: динамические маски по ёмкости (вместо `mask`).
+    ///   - maskProvider: динамические маски по произвольному правилу (при создании поля).
     ///   - maskMode: режим отображения маски.
     ///   - cursorBehavior: поведение курсора.
     ///   - maskChar: символ-заглушка.
@@ -127,8 +137,10 @@ public struct MaskedTextField: UIViewRepresentable {
     ///   - onComplete: обработчик заполнения маски пользователем.
     ///   - textValue: привязка к сырому значению.
     public init(
-        mask: String,
+        mask: String = "",
         maskLostFocus: String = "",
+        maskVariants: [MaskVariant] = [],
+        maskProvider: ((String) -> MaskVariant)? = nil,
         maskMode: MaskMode = .fullMask,
         cursorBehavior: CursorBehavior = .free,
         maskChar: Character = "_",
@@ -156,6 +168,8 @@ public struct MaskedTextField: UIViewRepresentable {
     ) {
         self.mask = mask
         self.maskLostFocus = maskLostFocus
+        self.maskVariants = maskVariants
+        self.maskProvider = maskProvider
         self.maskMode = maskMode
         self.cursorBehavior = cursorBehavior
         self.maskChar = maskChar
@@ -189,6 +203,7 @@ public struct MaskedTextField: UIViewRepresentable {
     public func makeUIView(context: Context) -> MaskTextField {
         let field = MaskTextField()
         apply(to: field)
+        if let maskProvider { field.maskProvider = maskProvider }
         field.delegate = context.coordinator
         field.onComplete = { [weak coordinator = context.coordinator] in
             coordinator?.parent.onComplete?()
@@ -241,6 +256,7 @@ public struct MaskedTextField: UIViewRepresentable {
     /// Применяет конфигурацию к полю только при её изменении — чтобы лишние
     /// перерисовки SwiftUI не сбрасывали курсор и уже введённое значение.
     private func apply(to field: MaskTextField) {
+        if field.maskVariants != maskVariants { field.maskVariants = maskVariants }
         if field.maskText != mask { field.maskText = mask }
         if field.maskLostFocus != maskLostFocus { field.maskLostFocus = maskLostFocus }
         if field.maskMode != maskMode { field.maskMode = maskMode }

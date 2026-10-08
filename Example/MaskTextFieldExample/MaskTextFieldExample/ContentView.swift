@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var freeCard = ""
     @State private var sequentialCard = ""
     @State private var snapCard = ""
+    @State private var dynamicCard = ""
 
     var body: some View {
         NavigationStack {
@@ -54,6 +55,23 @@ struct ContentView: View {
                     }
                 } header: {
                     Text("Дата")
+                }
+
+                Section {
+                    MaskedTextField(
+                        maskProvider: MaskPreset.cardProvider,
+                        placeholder: "0000 0000 0000 0000",
+                        keyboardType: .numberPad,
+                        textValue: $dynamicCard
+                    )
+                    LabeledContent("Значение без маски") {
+                        Text(dynamicCard.isEmpty ? "—" : dynamicCard)
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Динамическая маска")
+                } footer: {
+                    Text("Маска выбирается по значению: карта, начинающаяся с 34 или 37 (Amex), — 15 цифр, остальные — 16.")
                 }
 
                 Section {

@@ -91,7 +91,11 @@ public final class MaskTransformer: FilterTransformer {
             String(self.entered.compactMap { $0 })
         }
         set {
-            self.fill(with: newValue ?? "")
+            if self.maskProvider != nil {
+                self.dynamicSetText(newValue ?? "")
+            } else {
+                self.fill(with: newValue ?? "")
+            }
             self.setTextAndCursor()
         }
     }
@@ -151,6 +155,11 @@ public final class MaskTransformer: FilterTransformer {
     // MARK: - override func
 
     public override func onDeleteBackward(at offset: Int = Int.max) {
+        if self.maskProvider != nil {
+            self.dynamicDelete(at: offset)
+            return
+        }
+
         let limit = self.cursorBehavior == .sequential ? Int.max : offset
         guard let index = self.removeLastEntered(before: limit) else { return }
 
@@ -159,6 +168,10 @@ public final class MaskTransformer: FilterTransformer {
 
     public override func onTextInput(_ text: String, at offset: Int = 0) -> Bool {
         guard let f = text.first else { return false }
+
+        if self.maskProvider != nil {
+            return self.dynamicInsert(f, at: offset)
+        }
 
         let start = self.cursorBehavior == .sequential ? 0 : offset
         guard let index = self.insert(char: f, at: start) else { return false }
@@ -176,6 +189,11 @@ public final class MaskTransformer: FilterTransformer {
     /// не затирает остальное значение, а замена выделения убирает выделенное.
     /// Строка `text` предварительно нормализуется (`normalizedValue(from:)`).
     public override func onPaste(_ text: String, in range: Range<Int>) {
+        if self.maskProvider != nil {
+            self.dynamicPaste(text, in: range)
+            return
+        }
+
         var lower = min(max(range.lowerBound, 0), self.slots.count)
         var upper = min(max(range.upperBound, lower), self.slots.count)
 
@@ -273,8 +291,33 @@ public final class MaskTransformer: FilterTransformer {
         }
     }
 
+    /// Динамические маски: по текущему «сырому» значению возвращает вариант маски.
+    /// Пока провайдер задан, свойства `mask` и `maskLostFocus` не используются.
+    /// Провайдер вызывается на каждое изменение и должен быть чистой функцией.
+    public var maskProvider: ((String) -> MaskVariant)? {
+        didSet {
+            if self.maskProvider != nil {
+                self.activeVariant = nil
+                self.dynamicSetText(self.text ?? "")
+            } else {
+                self.activeVariant = nil
+                self.slots = MaskSlot.parse(self.mask)
+                self.lostFocusSlots = MaskSlot.parse(self.maskLostFocus)
+                self.entered = Array(repeating: nil, count: self.slots.count)
+                self.hidden = Array(repeating: false, count: self.slots.count)
+                self._onlyEnteredCount = self.slots.filter { $0.canEntered }.count
+            }
+            self.setTextAndCursor()
+        }
+    }
+
+    /// Вариант, выбранный провайдером на данный момент (`nil` без динамических масок).
+    var activeVariant: MaskVariant?
+
     public var mask: String = "" {
         didSet {
+            guard self.maskProvider == nil else { return }
+
             self.slots = MaskSlot.parse(self.mask)
             self.entered = Array(repeating: nil, count: self.slots.count)
             self.hidden = Array(repeating: false, count: self.slots.count)
@@ -286,6 +329,8 @@ public final class MaskTransformer: FilterTransformer {
 
     public var maskLostFocus: String = "" {
         didSet {
+            guard self.maskProvider == nil else { return }
+
             self.lostFocusSlots = MaskSlot.parse(self.maskLostFocus)
             self.setTextAndCursor()
         }
@@ -500,5 +545,166 @@ public final class MaskTransformer: FilterTransformer {
         }
 
         return (text, cursor)
+    }
+}
+
+// MARK: - Динамические маски
+
+/// Динамический режим хранит значение как последовательность символов («сырое» значение):
+/// после каждой правки провайдер выбирает маску под новое значение, а символы заново
+/// раскладываются по её позициям подряд (без пропусков).
+extension MaskTransformer {
+    private struct Snapshot {
+        let slots: [MaskSlot]
+        let lostFocusSlots: [MaskSlot]
+        let entered: [Character?]
+        let hidden: [Bool]
+        let onlyEnteredCount: Int
+        let variant: MaskVariant?
+    }
+
+    private func snapshot() -> Snapshot {
+        Snapshot(
+            slots: self.slots,
+            lostFocusSlots: self.lostFocusSlots,
+            entered: self.entered,
+            hidden: self.hidden,
+            onlyEnteredCount: self._onlyEnteredCount,
+            variant: self.activeVariant
+        )
+    }
+
+    private func restore(_ snapshot: Snapshot) {
+        self.slots = snapshot.slots
+        self.lostFocusSlots = snapshot.lostFocusSlots
+        self.entered = snapshot.entered
+        self.hidden = snapshot.hidden
+        self._onlyEnteredCount = snapshot.onlyEnteredCount
+        self.activeVariant = snapshot.variant
+    }
+
+    private var rawChars: [Character] {
+        self.entered.compactMap { $0 }
+    }
+
+    /// Сколько символов введено в позициях до `slotIndex` (не включая его).
+    private func enteredCount(before slotIndex: Int) -> Int {
+        self.entered.prefix(max(slotIndex, 0)).reduce(0) { $0 + ($1 == nil ? 0 : 1) }
+    }
+
+    /// Выбирает маску под `raw` и раскладывает символы по её позициям. Возвращает индексы
+    /// заполненных позиций по порядку (символы, не подошедшие позициям, пропускаются).
+    @discardableResult
+    private func resolve(_ raw: [Character]) -> [Int] {
+        guard let provider = self.maskProvider else { return [] }
+
+        let variant = provider(String(raw))
+        if self.activeVariant != variant {
+            self.slots = MaskSlot.parse(variant.mask)
+            self.lostFocusSlots = MaskSlot.parse(variant.maskLostFocus)
+            self.entered = Array(repeating: nil, count: self.slots.count)
+            self.hidden = Array(repeating: false, count: self.slots.count)
+            self._onlyEnteredCount = self.slots.filter { $0.canEntered }.count
+            self.cancelHideTimer()
+            self.activeVariant = variant
+        }
+
+        return self.fill(with: String(raw))
+    }
+
+    /// Символы, которые вместе дают значение, помещающееся в выбранную маску.
+    private func acceptedChars(of raw: [Character]) -> [Character] {
+        let filled = self.resolve(raw)
+        return filled.compactMap { self.entered[$0] }
+    }
+
+    func dynamicSetText(_ value: String) {
+        // Два прохода: первый выбирает маску по длине, второй — по реально подошедшим символам.
+        let accepted = self.acceptedChars(of: Array(value))
+        self.resolve(accepted)
+    }
+
+    func dynamicInsert(_ char: Character, at offset: Int) -> Bool {
+        let before = self.snapshot()
+        let raw = self.rawChars
+
+        let rawIndex: Int
+        if self.cursorBehavior == .sequential {
+            rawIndex = raw.count
+        } else {
+            rawIndex = self.enteredCount(before: min(max(offset, 0), self.slots.count))
+        }
+
+        var newRaw = raw
+        newRaw.insert(char, at: rawIndex)
+
+        let filled = self.resolve(newRaw)
+        guard filled.count == newRaw.count else {
+            self.restore(before)
+            return false
+        }
+
+        let cursor = self.firstEnteredIndex(from: filled[rawIndex] + 1) ?? self.slots.count
+        self.setTextAndCursor(cursorPosition: cursor)
+        return true
+    }
+
+    func dynamicDelete(at offset: Int) {
+        let raw = self.rawChars
+        guard !raw.isEmpty else { return }
+
+        let rawIndex: Int
+        if self.cursorBehavior == .sequential {
+            rawIndex = raw.count - 1
+        } else {
+            var index = min(offset, self.slots.count - 1)
+            while index >= 0, self.entered[index] == nil { index -= 1 }
+            guard index >= 0 else { return }
+            rawIndex = self.enteredCount(before: index)
+        }
+
+        var newRaw = raw
+        newRaw.remove(at: rawIndex)
+
+        let filled = self.resolve(newRaw)
+        let anchor = rawIndex > 0 && rawIndex <= filled.count ? filled[rawIndex - 1] + 1 : 0
+        let cursor = self.firstEnteredIndex(from: anchor) ?? self.slots.count
+        self.setTextAndCursor(cursorPosition: cursor)
+    }
+
+    func dynamicPaste(_ text: String, in range: Range<Int>) {
+        var lower = min(max(range.lowerBound, 0), self.slots.count)
+        var upper = min(max(range.upperBound, lower), self.slots.count)
+
+        if self.cursorBehavior == .sequential {
+            lower = range.isEmpty ? self.slots.count : lower
+            upper = self.slots.count
+        }
+
+        let raw = self.rawChars
+        let rawLower = self.enteredCount(before: lower)
+        let rawUpper = self.enteredCount(before: upper)
+        let prefix = Array(raw[..<rawLower])
+        let suffix = Array(raw[rawUpper...])
+        let pasted = Array(text)
+
+        // Проход 1: маска под полную длину; из вставки остаются только подходящие символы.
+        self.resolve(prefix + pasted + suffix)
+        var accepted = pasted.filter { char in
+            self.slots.contains { $0.canEntered && self.accepts(char, in: $0) }
+        }
+
+        // Как и без динамики: вставка, не помещающаяся в пустое поле, — последние символы.
+        if prefix.isEmpty, suffix.isEmpty, accepted.count > self.onlyEnteredCount {
+            accepted = Array(accepted.suffix(self.onlyEnteredCount))
+        }
+
+        // Проход 2: окончательная маска и раскладка.
+        let filled = self.resolve(prefix + accepted + suffix)
+
+        let insertedCount = prefix.count + accepted.count
+        let anchor = insertedCount > 0 && insertedCount <= filled.count ? filled[insertedCount - 1] + 1 : 0
+        let cursor = self.firstEnteredIndex(from: anchor) ?? self.slots.count
+        self.setTextAndCursor(cursorPosition: cursor)
     }
 }

@@ -406,6 +406,7 @@ public class MaskTextField: UITextField {
             $0.hideChars = self.hideChars
             $0.maskMode = self.maskMode
             $0.cursorBehavior = self.cursorBehavior
+            $0.maskProvider = self.maskProvider
             $0.hiddenMaskIfEnteredTextEmpty = self.hiddenMaskIfEnteredTextEmpty
         }
     }
@@ -413,6 +414,8 @@ public class MaskTextField: UITextField {
     /// Применяет настройку к текущему `MaskTransformer`; если трансформер ещё не
     /// маскирующий (например, `maskText` пуст), создаёт его со всеми настройками.
     private func configureMask(_ configure: (MaskTransformer) -> Void) {
+        guard !self.isApplyingConfiguration else { return }
+
         if let transformer = self._transformer as? MaskTransformer {
             configure(transformer)
         } else {
@@ -424,13 +427,44 @@ public class MaskTextField: UITextField {
     /// Маска со скрытыми введёнными символами (+375 (^d^d) ^d^d^d-^d^d-^d^d) — при потере фокуса.
     public var maskText: String = "" {
         didSet {
+            guard !self.isApplyingConfiguration else { return }
+
             if !self.maskText.isEmpty {
                 self.configureMask { $0.mask = self.maskText }
-            } else {
+            } else if self.maskProvider == nil {
                 self._transformer = BaseTransformer(textField: self)
             }
 
             self.refreshCompletion(userInitiated: false)
+        }
+    }
+
+    /// Динамические маски: по текущему «сырому» значению возвращает вариант маски
+    /// (например, карта: 15 или 16 цифр). Пока задан, `maskText` и `maskLostFocus` не
+    /// используются. Функция вызывается на каждое изменение и должна быть чистой.
+    public var maskProvider: ((String) -> MaskVariant)? {
+        didSet {
+            guard !self.isApplyingConfiguration else { return }
+
+            if self.maskProvider != nil {
+                self.configureMask { $0.maskProvider = self.maskProvider }
+            } else if self.maskText.isEmpty {
+                self._transformer = BaseTransformer(textField: self)
+            } else {
+                self.configureMask { $0.maskProvider = nil }
+            }
+
+            self.refreshCompletion(userInitiated: false)
+        }
+    }
+
+    /// Варианты масок по ёмкости: выбирается первый, в который помещается значение
+    /// (перечисляйте по возрастанию ёмкости). Удобная надстройка над `maskProvider`.
+    public var maskVariants: [MaskVariant] = [] {
+        didSet {
+            self.maskProvider = self.maskVariants.isEmpty
+                ? nil
+                : MaskVariant.provider(byCapacity: self.maskVariants)
         }
     }
 
@@ -473,6 +507,58 @@ public class MaskTextField: UITextField {
             self._transformer.text = newValue
             self.refreshCompletion(userInitiated: false)
         }
+    }
+
+    // MARK: - configuration
+
+    private var isApplyingConfiguration = false
+
+    /// Текущие настройки маски одним значением.
+    public var configuration: MaskConfiguration {
+        MaskConfiguration() => {
+            $0.mask = self.maskText
+            $0.maskLostFocus = self.maskLostFocus
+            $0.maskVariants = self.maskVariants
+            // Провайдер из `maskVariants` восстанавливается из них самих.
+            $0.maskProvider = self.maskVariants.isEmpty ? self.maskProvider : nil
+            $0.maskChar = self.maskChar
+            $0.veiledMaskChar = self.veiledMaskChar
+            $0.hideChars = self.hideChars
+            $0.maskMode = self.maskMode
+            $0.cursorBehavior = self.cursorBehavior
+            $0.hiddenMaskIfEnteredTextEmpty = self.hiddenMaskIfEnteredTextEmpty
+        }
+    }
+
+    /// Применяет все настройки маски разом: порядок присваивания не важен, трансформер
+    /// пересоздаётся один раз. Введённое значение сбрасывается (как при смене маски).
+    public func apply(_ configuration: MaskConfiguration) {
+        self.isApplyingConfiguration = true
+        self.maskText = configuration.mask
+        self.maskLostFocus = configuration.maskLostFocus
+        self.maskChar = configuration.maskChar
+        self.veiledMaskChar = configuration.veiledMaskChar
+        self.hideChars = configuration.hideChars
+        self.maskMode = configuration.maskMode
+        self.cursorBehavior = configuration.cursorBehavior
+        self.hiddenMaskIfEnteredTextEmpty = configuration.hiddenMaskIfEnteredTextEmpty
+        self.maskVariants = configuration.maskVariants
+        if let provider = configuration.maskProvider {
+            self.maskProvider = provider
+        }
+        self.isApplyingConfiguration = false
+
+        let isMasked = !configuration.mask.isEmpty || self.maskProvider != nil
+        self._transformer = isMasked ? self.makeMaskTransformer() : BaseTransformer(textField: self)
+        self.refreshCompletion(userInitiated: false)
+    }
+
+    /// Изменяет настройки маски атомарно:
+    /// `field.configure { $0.mask = "dd/dd"; $0.maskChar = "#" }`.
+    public func configure(_ update: (inout MaskConfiguration) -> Void) {
+        var configuration = self.configuration
+        update(&configuration)
+        self.apply(configuration)
     }
 
     // MARK: - completion

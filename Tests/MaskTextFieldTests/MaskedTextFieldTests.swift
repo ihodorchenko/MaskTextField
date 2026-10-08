@@ -77,6 +77,33 @@ final class MaskedTextFieldTests: XCTestCase {
         XCTAssertFalse(field.forcesLeftToRight)
     }
 
+    func testMaskVariantsDriveDynamicMask() {
+        let text = Box("")
+        let field = show(MaskedTextField(
+            maskVariants: [MaskVariant("dd"), MaskVariant("dd-dd")],
+            textValue: text.binding
+        ))
+        XCTAssertEqual(field.text, "__")
+
+        typeIntoField(field, "1")
+        typeIntoField(field, "2")
+        typeIntoField(field, "3")
+
+        XCTAssertEqual(field.text, "12-3_")
+        XCTAssertEqual(text.value, "123")
+    }
+
+    func testMaskProviderIsAppliedOnCreation() {
+        let text = Box("")
+        let field = show(MaskedTextField(maskProvider: MaskPreset.cardProvider, textValue: text.binding))
+
+        typeIntoField(field, "3")
+        typeIntoField(field, "7")
+
+        XCTAssertEqual(field.text, "37__ ______ _____")
+        XCTAssertEqual(text.value, "37")
+    }
+
     // MARK: - Return, фокус
 
     func testReturnKeyCallsOnCommit() {
