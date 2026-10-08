@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3.0
 
 ### Added
 - Dynamic masks: `maskProvider` (raw value -> `MaskVariant`) and `maskVariants` (by capacity).
