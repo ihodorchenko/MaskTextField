@@ -26,6 +26,16 @@ xcodebuild docbuild -scheme MaskTextField-Package \
 - Swift 5.9+
 - Xcode 27 (the toolchain the library is built and tested with)
 
+## Platforms
+
+| Platform | Status |
+|----------|--------|
+| iOS 15+ | Supported: unit tests, snapshot tests and UI tests. |
+| Mac Catalyst | Builds (`ios15.0-macabi`) and the package unit tests pass. The SwiftUI wrapper hosting tests are skipped there because the unhosted test process has no `NSApplication`. |
+| visionOS | Builds for the visionOS simulator SDK. Not exercised at runtime (no visionOS simulator runtime was available), so treat it as unverified. |
+
+`Package.swift` declares only iOS; SwiftPM builds Mac Catalyst and visionOS with default deployment targets.
+
 ## Installation
 
 ### Via Xcode

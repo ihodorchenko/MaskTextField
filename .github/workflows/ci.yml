@@ -16,3 +16,20 @@ jobs:
           xcodebuild -scheme MaskTextField-Package \
             -destination "platform=iOS Simulator,name=$DEVICE" \
             test
+
+  # Extra platforms: informational, so a runner without the needed SDK does not turn CI red.
+  platforms:
+    runs-on: macos-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Mac Catalyst tests
+        run: |
+          xcodebuild -scheme MaskTextField-Package \
+            -destination 'platform=macOS,variant=Mac Catalyst' \
+            test
+      - name: visionOS simulator build
+        run: |
+          xcodebuild -scheme MaskTextField-Package \
+            -destination 'generic/platform=visionOS Simulator' \
+            build

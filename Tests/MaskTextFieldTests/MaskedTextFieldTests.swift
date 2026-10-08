@@ -20,6 +20,15 @@ final class MaskedTextFieldTests: XCTestCase {
     private var window: UIWindow!
     private var host: UIHostingController<MaskedTextField>!
 
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        #if targetEnvironment(macCatalyst)
+        // Hosting SwiftUI needs a running application; the unhosted package test process on
+        // Mac Catalyst has no NSApplication.
+        throw XCTSkip("SwiftUI hosting tests need an application host on Mac Catalyst")
+        #endif
+    }
+
     override func tearDown() {
         window?.isHidden = true
         window = nil

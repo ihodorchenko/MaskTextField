@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Verified that the package builds for Mac Catalyst and for the visionOS simulator SDK; the package
+  unit tests pass on Mac Catalyst (SwiftUI hosting tests are skipped there). See the Platforms
+  section of the README.
+- XCUITest target in the example app (typing, backspace, cursor behaviors, dynamic masks).
+
 ## 1.4.0
 
 ### Changed
