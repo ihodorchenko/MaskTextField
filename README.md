@@ -87,7 +87,7 @@ struct MyView: View {
 Optional parameters: `font`, `textColor`, `textAlignment`, `returnKeyType`,
 `clearButtonMode`, `isFocused: Binding<Bool>?` (read and drive focus) and
 `onCommit` (Return key), `isComplete: Binding<Bool>?`, `onComplete`, `forcesLeftToRight`, `locale`, `announcesInputEvents`,
-`accessibilityLabelText` and `accessibilityHintText`.
+`disablesAutocorrection`, `accessibilityLabelText` and `accessibilityHintText`.
 
 ```swift
 MaskedTextField(mask: "dd/dd/dddd", isFocused: $isDateFocused, onCommit: { submit() }, textValue: $date)
@@ -176,6 +176,18 @@ Combine publishers: `textPublisher`, `deleteBackwardPublisher`,
   text is right-aligned there. Set it to `false` for fully mirrored layout. The
   clear button always sits at the end of the line (left in RTL).
 - Library strings are localized in English and Russian.
+
+## Keyboard suggestions and autofill
+
+- `disablesAutocorrection` (default `true`) turns off autocorrection, spell checking and
+  smart quotes/dashes/insert-delete for masked fields, so card numbers, PINs and codes do not
+  end up in keyboard suggestions. Explicitly set `autocorrectionType`, `spellCheckingType`,
+  etc. always win; plain (unmasked) fields keep the system defaults.
+- `hideChars` only hides characters on screen. It is **not** `isSecureTextEntry` and does not
+  protect against screenshots or screen recording.
+- One-time codes: set `textContentType = .oneTimeCode`; the autofilled code arrives as a
+  single replacement and is applied through the paste path (covered by a unit test). Autofill
+  from a real SMS can only be verified on a device and has not been tested there.
 
 ## Restricting input (`charValidator`)
 

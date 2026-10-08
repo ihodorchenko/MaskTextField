@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Changed
+- Masked fields now disable autocorrection, spell checking and smart quotes/dashes/insert-delete
+  by default (`disablesAutocorrection`, also on `MaskedTextField`). Explicitly set traits win;
+  set `disablesAutocorrection = false` to restore the old behavior.
 - In `.free` (and `.snapOnFocus`) typing at a cursor with no free position to its right now
   fills the first free position on the left, so a mask can be completed by typing at the
   end. Before, such input was rejected.
