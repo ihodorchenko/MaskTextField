@@ -137,7 +137,8 @@ public final class MaskTransformer: FilterTransformer {
     // MARK: - override func
 
     public override func onDeleteBackward(at offset: Int = Int.max) {
-        guard let index = self.removeLastEntered(before: offset) else { return }
+        let limit = self.cursorBehavior == .sequential ? Int.max : offset
+        guard let index = self.removeLastEntered(before: limit) else { return }
 
         self.setTextAndCursor(cursorPosition: index)
     }
@@ -145,7 +146,8 @@ public final class MaskTransformer: FilterTransformer {
     public override func onTextInput(_ text: String, at offset: Int = 0) -> Bool {
         guard let f = text.first else { return false }
 
-        guard let index = self.insert(char: f, at: offset) else { return false }
+        let start = self.cursorBehavior == .sequential ? 0 : offset
+        guard let index = self.insert(char: f, at: start) else { return false }
 
         // Курсор — на следующей пустой вводимой позиции, литералы пропускаются.
         let cursor = self.nextEmptyEnteredIndex(after: index) ?? self.slots.count
@@ -160,8 +162,14 @@ public final class MaskTransformer: FilterTransformer {
     /// не затирает остальное значение, а замена выделения убирает выделенное.
     /// Строка `text` предварительно нормализуется (`normalizedValue(from:)`).
     public override func onPaste(_ text: String, in range: Range<Int>) {
-        let lower = min(max(range.lowerBound, 0), self.slots.count)
-        let upper = min(max(range.upperBound, lower), self.slots.count)
+        var lower = min(max(range.lowerBound, 0), self.slots.count)
+        var upper = min(max(range.upperBound, lower), self.slots.count)
+
+        if self.cursorBehavior == .sequential {
+            // Только в конец: пустой диапазон — добавление, выделение — «до конца».
+            lower = range.isEmpty ? self.slots.count : lower
+            upper = self.slots.count
+        }
 
         var prefix = ""
         var suffix = ""
@@ -193,6 +201,13 @@ public final class MaskTransformer: FilterTransformer {
 
     public override func onSelectionChanged() {
         guard !self.isRendering else { return }
+
+        if self.cursorBehavior == .sequential {
+            // Произвольный курсор запрещён: возвращаем его на первую свободную позицию.
+            self.setTextAndCursor()
+            return
+        }
+
         // Сохраняем текущую позицию курсора (пользователь мог переместить его),
         // а не «отскакиваем» на первую пустую вводимую позицию.
         self.setTextAndCursor(cursorPosition: self.control?.cursorOffset)
@@ -250,6 +265,12 @@ public final class MaskTransformer: FilterTransformer {
     }
 
     public var maskMode: MaskMode = .fullMask {
+        didSet {
+            self.setTextAndCursor()
+        }
+    }
+
+    public var cursorBehavior: CursorBehavior = .free {
         didSet {
             self.setTextAndCursor()
         }

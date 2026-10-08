@@ -225,6 +225,81 @@ final class MaskTransformerTests: XCTestCase {
         XCTAssertEqual(transformer.text, "9912")
     }
 
+    // MARK: - Последовательный курсор
+
+    func testSequentialInputIgnoresOffset() {
+        transformer.mask = "dddd"
+        transformer.cursorBehavior = .sequential
+        transformer.text = "12"
+
+        _ = transformer.onTextInput("9", at: 3)
+
+        XCTAssertEqual(transformer.text, "129")
+        XCTAssertEqual(mock.text, "129_")
+    }
+
+    func testSequentialDeleteAlwaysRemovesLastEntered() {
+        transformer.mask = "dddd"
+        transformer.cursorBehavior = .sequential
+        transformer.text = "123"
+
+        transformer.onDeleteBackward(at: 1)
+
+        XCTAssertEqual(transformer.text, "12")
+    }
+
+    func testFreeDeleteRemovesAtOffset() {
+        transformer.mask = "dddd"
+        transformer.text = "123"
+
+        transformer.onDeleteBackward(at: 1)
+
+        // Удаляется символ с индексом 1 ("2"), а не последний.
+        XCTAssertEqual(transformer.text, "13")
+    }
+
+    func testSequentialSelectionChangeSnapsCursorToFirstFreePosition() {
+        transformer.mask = "+375 (dd) ddd"
+        transformer.cursorBehavior = .sequential
+        transformer.text = "29"
+
+        mock.setCursorPosition(2)
+        transformer.onSelectionChanged()
+
+        // Первая свободная вводимая позиция — индекс 10 (после "+375 (29) ").
+        XCTAssertEqual(mock.cursorPosition, 10)
+    }
+
+    func testFreeSelectionChangeKeepsCursor() {
+        transformer.mask = "+375 (dd) ddd"
+        transformer.text = "29"
+
+        mock.setCursorPosition(2)
+        transformer.onSelectionChanged()
+
+        XCTAssertEqual(mock.cursorPosition, 2)
+    }
+
+    func testSequentialPasteAppendsToEnd() {
+        transformer.mask = "dd-dd"
+        transformer.cursorBehavior = .sequential
+        transformer.text = "12"
+
+        transformer.onPaste("9", in: 0..<0)
+
+        XCTAssertEqual(transformer.text, "129")
+    }
+
+    func testSequentialPasteOverSelectionDropsEverythingAfterSelectionStart() {
+        transformer.mask = "dd-dd"
+        transformer.cursorBehavior = .sequential
+        transformer.text = "1234"
+
+        transformer.onPaste("9", in: 1..<2)
+
+        XCTAssertEqual(transformer.text, "19")
+    }
+
     // MARK: - Режимы отображения
 
     func testGradualMaskShowsOnlyEnteredPrefix() {

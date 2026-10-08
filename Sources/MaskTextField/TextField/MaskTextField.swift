@@ -335,6 +335,7 @@ public class MaskTextField: UITextField {
             $0.veiledMaskChar = self.veiledMaskChar
             $0.hideChars = self.hideChars
             $0.maskMode = self.maskMode
+            $0.cursorBehavior = self.cursorBehavior
             $0.hiddenMaskIfEnteredTextEmpty = self.hiddenMaskIfEnteredTextEmpty
         }
     }
@@ -405,6 +406,13 @@ public class MaskTextField: UITextField {
     public var maskMode: MaskMode = .fullMask {
         didSet {
             self.configureMask { $0.maskMode = self.maskMode }
+        }
+    }
+
+    /// Поведение курсора: свободное или строго последовательный ввод.
+    public var cursorBehavior: CursorBehavior = .free {
+        didSet {
+            self.configureMask { $0.cursorBehavior = self.cursorBehavior }
         }
     }
 

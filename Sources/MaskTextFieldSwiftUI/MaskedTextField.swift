@@ -28,6 +28,9 @@ public struct MaskedTextField: UIViewRepresentable {
     /// Режим отображения маски: `.fullMask` — вся маска, `.gradualMask` — по мере ввода.
     public var maskMode: MaskMode
 
+    /// Поведение курсора: `.free` или `.sequential` (только последовательный ввод).
+    public var cursorBehavior: CursorBehavior
+
     /// Символ-заглушка для пустых вводимых позиций (`_` по умолчанию).
     public var maskChar: Character
 
@@ -91,6 +94,7 @@ public struct MaskedTextField: UIViewRepresentable {
     ///   - mask: маска во время редактирования.
     ///   - maskLostFocus: маска при потере фокуса (по умолчанию пустая).
     ///   - maskMode: режим отображения маски.
+    ///   - cursorBehavior: поведение курсора.
     ///   - maskChar: символ-заглушка.
     ///   - veiledMaskChar: символ скрытия при потере фокуса.
     ///   - hideChars: режим пароля.
@@ -114,6 +118,7 @@ public struct MaskedTextField: UIViewRepresentable {
         mask: String,
         maskLostFocus: String = "",
         maskMode: MaskMode = .fullMask,
+        cursorBehavior: CursorBehavior = .free,
         maskChar: Character = "_",
         veiledMaskChar: Character = "•",
         hideChars: Bool = false,
@@ -137,6 +142,7 @@ public struct MaskedTextField: UIViewRepresentable {
         self.mask = mask
         self.maskLostFocus = maskLostFocus
         self.maskMode = maskMode
+        self.cursorBehavior = cursorBehavior
         self.maskChar = maskChar
         self.veiledMaskChar = veiledMaskChar
         self.hideChars = hideChars
@@ -209,6 +215,7 @@ public struct MaskedTextField: UIViewRepresentable {
         if field.maskText != mask { field.maskText = mask }
         if field.maskLostFocus != maskLostFocus { field.maskLostFocus = maskLostFocus }
         if field.maskMode != maskMode { field.maskMode = maskMode }
+        if field.cursorBehavior != cursorBehavior { field.cursorBehavior = cursorBehavior }
         if field.maskChar != maskChar { field.maskChar = maskChar }
         if field.veiledMaskChar != veiledMaskChar { field.veiledMaskChar = veiledMaskChar }
         if field.hideChars != hideChars { field.hideChars = hideChars }

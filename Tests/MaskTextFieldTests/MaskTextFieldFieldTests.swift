@@ -274,6 +274,61 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertEqual(field.textValue, "")
     }
 
+    // MARK: - Последовательный курсор
+
+    func testSequentialTypingAppendsEvenIfCursorIsElsewhere() {
+        field.maskText = "dd-dd"
+        field.cursorBehavior = .sequential
+        field.textValue = "12"
+
+        _ = field.textField(
+            field,
+            shouldChangeCharactersIn: NSRange(location: 0, length: 0),
+            replacementString: "3"
+        )
+
+        XCTAssertEqual(field.textValue, "123")
+        XCTAssertEqual(field.text, "12-3_")
+    }
+
+    func testSequentialBackspaceRemovesFromTheEnd() {
+        field.maskText = "dd-dd"
+        field.cursorBehavior = .sequential
+        field.textValue = "1234"
+
+        _ = field.textField(
+            field,
+            shouldChangeCharactersIn: NSRange(location: 1, length: 1),
+            replacementString: ""
+        )
+
+        XCTAssertEqual(field.textValue, "123")
+    }
+
+    func testSequentialCursorCannotBeMoved() {
+        field.maskText = "dd-dd"
+        field.cursorBehavior = .sequential
+        field.textValue = "12" // курсор — на индексе 3 (первая свободная позиция)
+
+        field.setCursorPosition(0)
+        field.textFieldDidChangeSelection(field)
+
+        XCTAssertEqual(field.cursorOffset, 3)
+    }
+
+    func testCursorBehaviorSurvivesMaskToggle() {
+        field.cursorBehavior = .sequential
+        field.maskText = "dd"
+        field.maskText = ""
+        field.maskText = "dd"
+        field.textValue = "12"
+
+        field.setCursorPosition(0)
+        field.textFieldDidChangeSelection(field)
+
+        XCTAssertEqual(field.cursorOffset, 2)
+    }
+
     // MARK: - Accessibility
 
     func testAccessibilityValueIsEmptyDescriptionForEmptyField() {
