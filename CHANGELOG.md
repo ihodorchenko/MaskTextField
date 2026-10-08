@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.4.2
 
 ### Fixed
 - The password-mode (`hideChars`) timer now calls back synchronously through a target/selector
