@@ -4,6 +4,7 @@ import Foundation
 /// Минимальная реализация `MaskTextFieldProtocol` для юнит-тестов трансформеров.
 /// Не зависит от UIKit и не использует реальный `UITextField`, поэтому тесты
 /// выполняются быстро и детерминированно.
+@MainActor
 final class MockMaskTextField: MaskTextFieldProtocol {
     var text: String?
     var culture: NumberFormatter = {

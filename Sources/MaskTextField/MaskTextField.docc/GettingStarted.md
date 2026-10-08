@@ -20,7 +20,8 @@ targets: [
 ]
 ```
 
-Requires iOS 15.0+ and Swift 5.9+.
+Requires iOS 15.0+ and Swift 5.9+; built and tested with Xcode 27. The library builds without
+warnings under Swift 6 strict concurrency.
 
 ### A masked field
 

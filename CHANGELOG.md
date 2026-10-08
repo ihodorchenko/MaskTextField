@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- **Source-breaking for off-main-thread callers:** `MaskTextFieldProtocol`, `BaseTransformer`,
+  `FilterTransformer` and `MaskTransformer` are now `@MainActor`. `MaskTextField` and the SwiftUI
+  wrapper were already main-actor bound, so UIKit/SwiftUI usage is unaffected; only code that
+  drives transformers or implements `MaskTextFieldProtocol` from a non-isolated context needs
+  `@MainActor` (or an `await`).
+- The library builds without warnings under `-strict-concurrency=complete` and compiles in the
+  Swift 6 language mode. `swift-tools-version` stays 5.9 and the package builds in Swift 5 mode.
+- The documented requirement is now Xcode 27, the toolchain the library is built and tested with
+  (the package still declares `swift-tools-version` 5.9 and iOS 15).
+- The hide timer hops to the main actor and ignores firings from an outdated timer.
+
 ## 1.3.2
 
 ### Changed

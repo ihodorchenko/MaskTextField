@@ -5,6 +5,7 @@ import MaskTextFieldSwiftUI
 
 /// Тесты SwiftUI-обёртки: `MaskedTextField` рендерится внутри `UIHostingController`
 /// в реальном окне, поле достаётся из иерархии вью.
+@MainActor
 final class MaskedTextFieldTests: XCTestCase {
 
     private final class Box<Value> {

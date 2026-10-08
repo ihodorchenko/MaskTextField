@@ -24,7 +24,7 @@ xcodebuild docbuild -scheme MaskTextField-Package \
 
 - iOS 15.0+
 - Swift 5.9+
-- Xcode 15+
+- Xcode 27 (the toolchain the library is built and tested with)
 
 ## Installation
 

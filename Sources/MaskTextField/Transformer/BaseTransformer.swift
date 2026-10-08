@@ -2,6 +2,7 @@ import Foundation
 
 /// The base text transformer. Implements the behavior of an "ordinary" text field
 /// without a mask: input appends characters, deletion removes the last one.
+@MainActor
 open class BaseTransformer {
     public private(set) weak var control: MaskTextFieldProtocol?
 

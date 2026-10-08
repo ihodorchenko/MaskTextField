@@ -2,6 +2,7 @@ import Foundation
 
 /// A transformer that filters entered characters through `CharValidator`
 /// and normalizes decimal separators to the current culture.
+@MainActor
 open class FilterTransformer: BaseTransformer {
     private let delimiters: [String] = [".", ","]
 

@@ -9,8 +9,8 @@ public struct MaskConfiguration {
 
     /// A custom mask provider; if set, it takes precedence over `maskVariants`.
     public var maskProvider: ((String) -> MaskVariant)?
-    public var maskChar: Character = MaskTransformer.defaultMaskChar
-    public var veiledMaskChar: Character = MaskTransformer.hideChar
+    public var maskChar: Character = "_"
+    public var veiledMaskChar: Character = "•"
     public var hideChars: Bool = false
     public var maskMode: MaskMode = .fullMask
     public var cursorBehavior: CursorBehavior = .free

@@ -8,6 +8,7 @@ import Combine
 /// и проброс событий внешнему делегату.
 ///
 /// Запускаются как обычные тесты пакета на симуляторе iOS (host-приложение не нужно).
+@MainActor
 final class MaskTextFieldFieldTests: XCTestCase {
 
     private var field: MaskTextField!

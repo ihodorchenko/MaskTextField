@@ -1,6 +1,7 @@
 import XCTest
 @testable import MaskTextField
 
+@MainActor
 final class MaskTransformerTests: XCTestCase {
 
     private var mock: MockMaskTextField!
@@ -601,6 +602,7 @@ final class MaskTransformerTests: XCTestCase {
     }
 }
 
+@MainActor
 final class SupportUtilitiesTests: XCTestCase {
 
     func testForwardApplicationOperator() {

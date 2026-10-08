@@ -5,6 +5,7 @@ import Foundation
 /// The protocol does not depend on UIKit: all cursor positioning is folded into
 /// the single method `setCursorPosition(_:)`, which works with an integer offset.
 /// This makes it possible to test the mask logic without a `UITextField` and without UIKit.
+@MainActor
 public protocol MaskTextFieldProtocol: AnyObject {
     var text: String? { get set }
     var culture: NumberFormatter { get }

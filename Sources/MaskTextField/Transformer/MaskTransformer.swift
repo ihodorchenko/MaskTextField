@@ -17,6 +17,7 @@ import Foundation
 /// The mask template (`MaskSlot`) is immutable; entered values and veiling flags
 /// are stored separately, in arrays indexed like the mask positions.
 
+@MainActor
 public final class MaskTransformer: FilterTransformer {
     public static let hideChar: Character = "•"
     public static let defaultMaskChar: Character = "_"
@@ -33,7 +34,18 @@ public final class MaskTransformer: FilterTransformer {
     /// The "hidden" flag by `slots` index (`hideChars` mode).
     private var hidden: [Bool] = []
 
-    private var hideTimer: Timer?
+    /// Owns the hide timer and invalidates it when the transformer is released (a nonisolated
+    /// `deinit` cannot touch the main-actor state of the transformer itself).
+    private let hideTimerHolder = HideTimerHolder()
+
+    private var hideTimer: Timer? {
+        get { self.hideTimerHolder.timer }
+        set { self.hideTimerHolder.timer = newValue }
+    }
+
+    /// Bumped whenever the timer is restarted or cancelled, so a firing that was already
+    /// queued for an outdated timer is ignored.
+    private var hideTimerGeneration = 0
 
     /// The time during which the first selection after gaining focus is treated as the
     /// cursor placed by a tap and is replaced with a jump to the first free position
@@ -49,10 +61,6 @@ public final class MaskTransformer: FilterTransformer {
     /// Prevents recursion: `setCursorPosition` → `textFieldDidChangeSelection` →
     /// `onSelectionChanged` → `setTextAndCursor` → …
     private var isRendering: Bool = false
-
-    deinit {
-        self.hideTimer?.invalidate()
-    }
 
     // MARK: - Filter Transformer
 
@@ -429,10 +437,18 @@ public final class MaskTransformer: FilterTransformer {
     private func restartHideTimer() {
         self.hideTimer?.invalidate()
 
-        // The Timer block is `@Sendable`, so it captures a weak box instead of `self`.
+        self.hideTimerGeneration += 1
+        let generation = self.hideTimerGeneration
+
+        // The Timer block is `@Sendable`, so it captures a weak box instead of `self` and hops
+        // back to the main actor to touch the transformer.
         let box = WeakTransformerBox(self)
         let timer = Timer(timeInterval: MaskTransformer.hideCharDelay, repeats: false) { _ in
-            box.transformer?.hideTimerFired()
+            Task { @MainActor in
+                guard let transformer = box.transformer,
+                      transformer.hideTimerGeneration == generation else { return }
+                transformer.hideTimerFired()
+            }
         }
         // `.common` — чтобы таймер срабатывал и во время скролла/трекинга.
         RunLoop.main.add(timer, forMode: .common)
@@ -440,11 +456,12 @@ public final class MaskTransformer: FilterTransformer {
     }
 
     private func cancelHideTimer() {
+        self.hideTimerGeneration += 1
         self.hideTimer?.invalidate()
         self.hideTimer = nil
     }
 
-    fileprivate func hideTimerFired() {
+    private func hideTimerFired() {
         self.hideTimer = nil
         guard self.hideChars else { return }
 
@@ -550,15 +567,23 @@ public final class MaskTransformer: FilterTransformer {
     }
 }
 
-/// A weak reference to a transformer for the hide-timer block.
-///
-/// The timer is scheduled on the main run loop and fires on the main thread, which is also where
-/// the transformer is used, so sharing the reference with the `@Sendable` block is safe.
+/// A weak reference to a transformer for the hide-timer block. The reference is only ever
+/// dereferenced on the main actor (the block hops there first).
 private final class WeakTransformerBox: @unchecked Sendable {
     weak var transformer: MaskTransformer?
 
     init(_ transformer: MaskTransformer) {
         self.transformer = transformer
+    }
+}
+
+/// Holds the hide timer and invalidates it on release. The timer is scheduled on the main run
+/// loop, and transformers are released on the main thread like the fields that own them.
+private final class HideTimerHolder: @unchecked Sendable {
+    var timer: Timer?
+
+    deinit {
+        self.timer?.invalidate()
     }
 }
 

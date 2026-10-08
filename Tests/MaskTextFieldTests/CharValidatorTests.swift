@@ -2,6 +2,7 @@ import XCTest
 import UIKit
 @testable import MaskTextField
 
+@MainActor
 final class EmojiDetectionTests: XCTestCase {
 
     func testEmojiClustersAreDetectedAsWhole() {
@@ -28,6 +29,7 @@ final class EmojiDetectionTests: XCTestCase {
     }
 }
 
+@MainActor
 final class BuiltInValidatorTests: XCTestCase {
 
     func testEmojiFreeValidator() {
@@ -64,6 +66,7 @@ final class BuiltInValidatorTests: XCTestCase {
 }
 
 /// Ограничение ввода через `charValidator` в реальном `MaskTextField`.
+@MainActor
 final class CharValidatorFieldTests: XCTestCase {
 
     private var field: MaskTextField!

@@ -3,6 +3,7 @@ import UIKit
 @testable import MaskTextField
 
 /// Динамические маски на уровне трансформера (без UIKit).
+@MainActor
 final class DynamicMaskTransformerTests: XCTestCase {
 
     private var mock: MockMaskTextField!
@@ -195,6 +196,7 @@ final class DynamicMaskTransformerTests: XCTestCase {
 }
 
 /// Динамические маски, конфигурация и пресеты в реальном `MaskTextField`.
+@MainActor
 final class DynamicMaskFieldTests: XCTestCase {
 
     private var field: MaskTextField!
