@@ -1,11 +1,11 @@
 import Foundation
 
 extension Character {
-    /// Является ли символ (grapheme cluster) эмодзи.
+    /// Whether the character (grapheme cluster) is an emoji.
     ///
-    /// Цифры, `#`, `*`, `©`, `™` и «текстовые» символы без селектора эмодзи (`❤` без
-    /// `U+FE0F`) эмодзи не считаются. Составные эмодзи (ZWJ-последовательности, флаги,
-    /// цвета кожи, keycap) определяются целиком, а не по отдельным скалярам.
+    /// Digits, `#`, `*`, `©`, `™` and "text" symbols without an emoji selector (`❤` without
+    /// `U+FE0F`) are not considered emoji. Composite emoji (ZWJ sequences, flags,
+    /// skin tones, keycaps) are detected as a whole rather than by individual scalars.
     public var isEmojiCharacter: Bool {
         let scalars = self.unicodeScalars
 

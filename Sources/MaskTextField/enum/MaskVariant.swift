@@ -1,6 +1,6 @@
 import Foundation
 
-/// Один вариант маски для динамических масок: маска ввода и (необязательно) маска без фокуса.
+/// One mask variant for dynamic masks: the input mask and (optionally) the unfocused mask.
 public struct MaskVariant: Equatable {
     public var mask: String
     public var maskLostFocus: String
@@ -12,10 +12,10 @@ public struct MaskVariant: Equatable {
 }
 
 extension MaskVariant {
-    /// Строит провайдер масок по ёмкости: выбирается первый вариант, в который помещается
-    /// введённое значение; если не помещается ни в один — вариант с наибольшей ёмкостью.
+    /// Builds a mask provider by capacity: the first variant the entered value fits into is
+    /// chosen; if it fits none, the variant with the largest capacity is used.
     ///
-    /// Варианты стоит перечислять по возрастанию ёмкости, например
+    /// List the variants in ascending capacity order, for example
     /// `["(dd) ddd-dd", "(dd) ddd-dd-dd"]`.
     public static func provider(byCapacity variants: [MaskVariant]) -> (String) -> MaskVariant {
         let sized = variants.map { variant in

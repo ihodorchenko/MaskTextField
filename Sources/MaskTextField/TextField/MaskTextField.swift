@@ -14,8 +14,8 @@ public class MaskTextField: UITextField {
 
     private var requestedClearButtonMode: UITextField.ViewMode = .never
 
-    /// Переопределяем системную clear-кнопку собственной (через `rightView`),
-    /// чтобы не обращаться к приватному `_clearButton` и свободно красить её.
+    /// Replaces the system clear button with our own (via `rightView`),
+    /// so that the private `_clearButton` is not touched and the button can be tinted freely.
     public override var clearButtonMode: UITextField.ViewMode {
         get { self.requestedClearButtonMode }
         set {
@@ -35,7 +35,7 @@ public class MaskTextField: UITextField {
         return button
     }()
 
-    /// Кнопка очистки стоит на конце строки: справа в LTR и слева в RTL.
+    /// The clear button sits at the end of the line: on the right in LTR and on the left in RTL.
     private func updateCustomClearButton() {
         self.leftView = nil
         self.rightView = nil
@@ -62,30 +62,30 @@ public class MaskTextField: UITextField {
         self.notification()
     }
 
-    /// - Note: `@Published` отдаёт текущее значение при подписке, поэтому подписчик
-    ///   получает «событие» сразу. Для реальных событий используйте `deleteBackwardEvents`.
+    /// - Note: `@Published` delivers the current value on subscription, so a subscriber
+    ///   gets an "event" immediately. Use `deleteBackwardEvents` for real events.
     @Published
     public internal(set) var deleteBackwardPublisher: Void = ()
 
-    /// - Note: см. `deleteBackwardPublisher`; для реальных событий — `clearButtonEvents`.
+    /// - Note: see `deleteBackwardPublisher`; use `clearButtonEvents` for real events.
     @Published
     public internal(set) var clearButtonPublisher: Void = ()
 
     private let deleteBackwardSubject = PassthroughSubject<Void, Never>()
     private let clearButtonSubject = PassthroughSubject<Void, Never>()
 
-    /// Срабатывает при каждом удалении символа назад; при подписке не срабатывает.
+    /// Fires on every backward delete; does not fire on subscription.
     public var deleteBackwardEvents: AnyPublisher<Void, Never> {
         self.deleteBackwardSubject.eraseToAnyPublisher()
     }
 
-    /// Срабатывает при нажатии на кнопку очистки; при подписке не срабатывает.
+    /// Fires when the clear button is tapped; does not fire on subscription.
     public var clearButtonEvents: AnyPublisher<Void, Never> {
         self.clearButtonSubject.eraseToAnyPublisher()
     }
 
-    /// Локаль для десятичных разделителей по умолчанию (когда `charValidator` не задан).
-    /// Сама маска от локали не зависит: она всегда задаёт формат буквально.
+    /// Locale used for decimal separators by default (when no `charValidator` is set).
+    /// The mask itself does not depend on the locale: it always defines the format literally.
     public var locale: Locale = .current {
         didSet {
             self.cachedDefaultCulture = nil
@@ -94,7 +94,7 @@ public class MaskTextField: UITextField {
 
     private var cachedDefaultCulture: NumberFormatter?
 
-    /// `NumberFormatter` по умолчанию (используется, когда `charValidator` не задан).
+    /// Default `NumberFormatter` (used when no `charValidator` is set).
     var defaultCulture: NumberFormatter {
         if let cached = self.cachedDefaultCulture { return cached }
 
@@ -118,11 +118,11 @@ public class MaskTextField: UITextField {
         .receive(on: RunLoop.main)
         .eraseToAnyPublisher()
 
-    /// Пользовательский делегат, задаваемый через `delegate`.
+    /// The user's delegate, assigned through `delegate`.
     ///
-    /// `MaskTextField` сам является делегатом самого себя (`super.delegate`),
-    /// чтобы обрабатывать маску. Внешний делегат хранится отдельно, а вызовы
-    /// делегата форвардятся в него из `MaskTextFieldWithDelegate`.
+    /// `MaskTextField` is its own delegate (`super.delegate`) in order to handle the mask.
+    /// The external delegate is stored separately, and delegate calls are forwarded to it
+    /// from `MaskTextFieldWithDelegate`.
     internal weak var externalDelegate: UITextFieldDelegate?
 
     public override var delegate: UITextFieldDelegate? {
@@ -160,12 +160,12 @@ public class MaskTextField: UITextField {
 
     // MARK: - keyboard suggestions
 
-    /// Отключать автокоррекцию, проверку орфографии и «умные» подстановки (по умолчанию `true`)
-    /// у полей с маской: номера карт, PIN и коды не должны попадать в подсказки клавиатуры.
-    /// Явно заданные `autocorrectionType`, `spellCheckingType` и т.д. имеют приоритет.
+    /// Disables autocorrection, spell checking and smart substitutions (`true` by default)
+    /// for masked fields: card numbers, PINs and codes must not end up in keyboard suggestions.
+    /// Explicitly set `autocorrectionType`, `spellCheckingType`, etc. take precedence.
     ///
-    /// - Important: это не `isSecureTextEntry`: `hideChars` лишь скрывает символы на экране
-    ///   и не защищает от скриншотов и записи экрана.
+    /// - Important: this is not `isSecureTextEntry`: `hideChars` only hides characters on screen
+    ///   and does not protect against screenshots or screen recording.
     public var disablesAutocorrection: Bool = true {
         didSet {
             if self.isFirstResponder { self.reloadInputViews() }
@@ -209,10 +209,10 @@ public class MaskTextField: UITextField {
 
     // MARK: - layout direction (RTL)
 
-    /// Принудительно выводить значение слева направо (по умолчанию `true`).
+    /// Forces the value to be laid out left to right (`true` by default).
     ///
-    /// Маскированные значения (телефон, карта, дата) читаются слева направо и в
-    /// RTL-интерфейсах. При `.natural`-выравнивании текст в RTL прижимается к правому краю.
+    /// Masked values (phone, card, date) read left to right in RTL interfaces too.
+    /// With `.natural` alignment the text is pinned to the right edge in RTL.
     public var forcesLeftToRight: Bool = true {
         didSet {
             self.updateLayoutDirection()
@@ -276,7 +276,7 @@ public class MaskTextField: UITextField {
         return rec.offsetBy(dx: self.textContainerInset.left, dy: 0)
     }
 
-    /// Системная clear-кнопка стоит на конце строки: слева в RTL, справа в LTR.
+    /// The system clear button sits at the end of the line: left in RTL, right in LTR.
     override open func clearButtonRect(forBounds bounds: CGRect) -> CGRect {
         let rec = super.clearButtonRect(forBounds: bounds)
         let isRTL = self.effectiveUserInterfaceLayoutDirection == .rightToLeft
@@ -285,13 +285,13 @@ public class MaskTextField: UITextField {
 
     // MARK: - accessibility
 
-    /// Озвучивать VoiceOver отклонённые символы и заполнение маски (по умолчанию выключено).
+    /// Makes VoiceOver announce rejected characters and a filled mask (off by default).
     public var announcesInputEvents: Bool = false
 
     private var explicitAccessibilityValue: String?
 
-    /// Значение для VoiceOver: без заглушек маски и без скрытых символов.
-    /// Явно заданное значение имеет приоритет.
+    /// The VoiceOver value: without mask placeholders and without hidden characters.
+    /// An explicitly set value takes precedence.
     public override var accessibilityValue: String? {
         get {
             if let explicit = self.explicitAccessibilityValue { return explicit }
@@ -381,22 +381,22 @@ public class MaskTextField: UITextField {
 
     // MARK: - mask
 
-    /// Дополнительные ограничения на вводимые символы.
+    /// Additional restrictions on the characters that can be entered.
     ///
-    /// Хранится сильной ссылкой, поэтому валидатор можно создавать прямо в присваивании:
-    /// `field.charValidator = EmojiFreeValidator()`. Валидатор не должен сильно ссылаться на поле.
+    /// Held by a strong reference, so a validator can be created right in the assignment:
+    /// `field.charValidator = EmojiFreeValidator()`. A validator must not hold the field strongly.
     public var charValidator: CharValidator?
 
-    /// Система преобразования символов.
+    /// The character transformation engine.
     internal lazy var _transformer: BaseTransformer = {
         return BaseTransformer(textField: self)
     }()
 
-    /// Создаёт `MaskTransformer` с полным набором текущих настроек маски.
+    /// Creates a `MaskTransformer` with the full set of current mask settings.
     ///
-    /// Нужен, чтобы повторное включение маски (после `maskText = ""`, которое
-    /// сбрасывает трансформер в `BaseTransformer`) не теряло `maskChar`,
-    /// `veiledMaskChar`, `hideChars`, `maskMode` и `maskLostFocus`.
+    /// Needed so that re-enabling the mask (after `maskText = ""`, which resets the
+    /// transformer to `BaseTransformer`) does not lose `maskChar`, `veiledMaskChar`,
+    /// `hideChars`, `maskMode` or `maskLostFocus`.
     private func makeMaskTransformer() -> MaskTransformer {
         MaskTransformer(textField: self) => {
             $0.mask = self.maskText
@@ -411,8 +411,8 @@ public class MaskTextField: UITextField {
         }
     }
 
-    /// Применяет настройку к текущему `MaskTransformer`; если трансформер ещё не
-    /// маскирующий (например, `maskText` пуст), создаёт его со всеми настройками.
+    /// Applies a setting to the current `MaskTransformer`; if the transformer is not yet
+    /// a masking one (for example `maskText` is empty), creates it with all the settings.
     private func configureMask(_ configure: (MaskTransformer) -> Void) {
         guard !self.isApplyingConfiguration else { return }
 
@@ -423,8 +423,8 @@ public class MaskTextField: UITextField {
         }
     }
 
-    /// Настраиваемая маска (+375 (dd) ddd-dd-dd).
-    /// Маска со скрытыми введёнными символами (+375 (^d^d) ^d^d^d-^d^d-^d^d) — при потере фокуса.
+    /// The editing mask, e.g. `+375 (dd) ddd-dd-dd`; see <doc:MaskSyntax> for the syntax.
+    /// Use `maskLostFocus` for a mask with veiled characters shown when the field loses focus.
     public var maskText: String = "" {
         didSet {
             guard !self.isApplyingConfiguration else { return }
@@ -439,9 +439,9 @@ public class MaskTextField: UITextField {
         }
     }
 
-    /// Динамические маски: по текущему «сырому» значению возвращает вариант маски
-    /// (например, карта: 15 или 16 цифр). Пока задан, `maskText` и `maskLostFocus` не
-    /// используются. Функция вызывается на каждое изменение и должна быть чистой.
+    /// Dynamic masks: returns a mask variant for the current raw value
+    /// (for example a card: 15 or 16 digits). While set, `maskText` and `maskLostFocus` are
+    /// ignored. Called on every change, so it must be a pure function.
     public var maskProvider: ((String) -> MaskVariant)? {
         didSet {
             guard !self.isApplyingConfiguration else { return }
@@ -458,8 +458,8 @@ public class MaskTextField: UITextField {
         }
     }
 
-    /// Варианты масок по ёмкости: выбирается первый, в который помещается значение
-    /// (перечисляйте по возрастанию ёмкости). Удобная надстройка над `maskProvider`.
+    /// Mask variants by capacity: the first one the value fits into is chosen
+    /// (list them in ascending capacity order). A convenience on top of `maskProvider`.
     public var maskVariants: [MaskVariant] = [] {
         didSet {
             self.maskProvider = self.maskVariants.isEmpty
@@ -468,7 +468,7 @@ public class MaskTextField: UITextField {
         }
     }
 
-    /// Маска, отображаемая, если поле не в фокусе.
+    /// The mask shown while the field is not focused, e.g. `+375 (^d^d) ^d^d^d-^d^d-^d^d`.
     public var maskLostFocus: String = "" {
         didSet {
             guard !self.maskLostFocus.isEmpty else { return }
@@ -477,28 +477,28 @@ public class MaskTextField: UITextField {
         }
     }
 
-    /// Символ маски, на котором происходит ввод (+375 (__) ___-__-__).
+    /// The placeholder character for editable positions (`+375 (__) ___-__-__`).
     public var maskChar: Character = "_" {
         didSet {
             self.configureMask { $0.maskChar = self.maskChar }
         }
     }
 
-    /// Символ, который при потере фокуса заменяет отредактированные символы в маске (+375 (XX) XXX-XX-XX).
+    /// The character that replaces entered characters when the field loses focus (`+375 (XX) XXX-XX-XX`).
     public var veiledMaskChar: Character = "•" {
         didSet {
             self.configureMask { $0.veiledMaskChar = self.veiledMaskChar }
         }
     }
 
-    /// Включает режим пароля.
+    /// Enables password mode: an entered character is veiled after a short delay.
     public var hideChars: Bool = false {
         didSet {
             self.configureMask { $0.hideChars = self.hideChars }
         }
     }
 
-    /// Значение без маски.
+    /// The value without the mask.
     public var textValue: String? {
         get {
             self._transformer.text
@@ -513,7 +513,7 @@ public class MaskTextField: UITextField {
 
     private var isApplyingConfiguration = false
 
-    /// Текущие настройки маски одним значением.
+    /// The current mask settings as a single value.
     public var configuration: MaskConfiguration {
         MaskConfiguration() => {
             $0.mask = self.maskText
@@ -530,8 +530,8 @@ public class MaskTextField: UITextField {
         }
     }
 
-    /// Применяет все настройки маски разом: порядок присваивания не важен, трансформер
-    /// пересоздаётся один раз. Введённое значение сбрасывается (как при смене маски).
+    /// Applies all mask settings at once: the order of assignment does not matter and the
+    /// transformer is rebuilt once. The entered value is reset (as on any mask change).
     public func apply(_ configuration: MaskConfiguration) {
         self.isApplyingConfiguration = true
         self.maskText = configuration.mask
@@ -553,7 +553,7 @@ public class MaskTextField: UITextField {
         self.refreshCompletion(userInitiated: false)
     }
 
-    /// Изменяет настройки маски атомарно:
+    /// Changes the mask settings atomically:
     /// `field.configure { $0.mask = "dd/dd"; $0.maskChar = "#" }`.
     public func configure(_ update: (inout MaskConfiguration) -> Void) {
         var configuration = self.configuration
@@ -563,22 +563,22 @@ public class MaskTextField: UITextField {
 
     // MARK: - completion
 
-    /// Заполнены ли все вводимые позиции маски. Для поля без маски всегда `false`.
+    /// Whether all editable positions of the mask are filled. Always `false` for a field without a mask.
     public var isComplete: Bool {
         self._transformer.isComplete
     }
 
     private let isCompleteSubject = CurrentValueSubject<Bool, Never>(false)
 
-    /// Состояние заполнения: при подписке отдаёт текущее значение, затем только изменения
-    /// (и от действий пользователя, и от программной установки значения или маски).
+    /// The completion state: delivers the current value on subscription, then only changes
+    /// (both from user actions and from programmatic changes of the value or the mask).
     public var isCompletePublisher: AnyPublisher<Bool, Never> {
         self.isCompleteSubject.removeDuplicates().eraseToAnyPublisher()
     }
 
-    /// Вызывается, когда **пользователь** своим вводом заполнил маску (переход «не заполнено» →
-    /// «заполнено»). Не вызывается при программной установке значения и не повторяется,
-    /// пока маска остаётся заполненной.
+    /// Called when the **user** fills the mask with their input (a "not filled" → "filled"
+    /// transition). Not called for programmatic values and not repeated
+    /// while the mask stays filled.
     public var onComplete: (() -> Void)?
 
     func refreshCompletion(userInitiated: Bool) {
@@ -591,38 +591,38 @@ public class MaskTextField: UITextField {
         }
     }
 
-    /// Режим отображения маски.
+    /// The mask display mode.
     public var maskMode: MaskMode = .fullMask {
         didSet {
             self.configureMask { $0.maskMode = self.maskMode }
         }
     }
 
-    /// Поведение курсора: свободное или строго последовательный ввод.
+    /// The cursor behavior: free, snap on focus, or strictly sequential input.
     public var cursorBehavior: CursorBehavior = .free {
         didSet {
             self.configureMask { $0.cursorBehavior = self.cursorBehavior }
         }
     }
 
-    /// Не отображать маску, если значение пустое, когда поле не в фокусе.
+    /// Hides the mask when the value is empty and the field is not focused.
     public var hiddenMaskIfEnteredTextEmpty: Bool = false {
         didSet {
             self.configureMask { $0.hiddenMaskIfEnteredTextEmpty = self.hiddenMaskIfEnteredTextEmpty }
         }
     }
 
-    /// Количество видимых символов.
+    /// The number of editable positions.
     public var onlyEnteredCount: Int {
         return self._transformer.onlyEnteredCount
     }
 
-    /// Отображаемая маска.
+    /// The displayed mask.
     public var visibleTextMask: String {
         return (self._transformer as? MaskTransformer)?.visibleTextMask ?? ""
     }
 
-    /// Отображаемая маска после потери фокуса.
+    /// The displayed mask while the field is not focused.
     public var visibleTextMaskLostFocus: String {
         return (self._transformer as? MaskTransformer)?.visibleTextMaskLostFocus ?? ""
     }

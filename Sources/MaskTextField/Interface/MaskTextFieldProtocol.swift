@@ -1,10 +1,10 @@
 import Foundation
 
-/// Абстракция над `UITextField`, с которой работают трансформеры.
+/// An abstraction over `UITextField` that the transformers work with.
 ///
-/// Протокол не зависит от UIKit: всё позиционирование курсора свёрнуто в
-/// один метод `setCursorPosition(_:)`, работающий с целочисленным смещением.
-/// Благодаря этому логику маски можно тестировать без `UITextField` и без UIKit.
+/// The protocol does not depend on UIKit: all cursor positioning is folded into
+/// the single method `setCursorPosition(_:)`, which works with an integer offset.
+/// This makes it possible to test the mask logic without a `UITextField` and without UIKit.
 public protocol MaskTextFieldProtocol: AnyObject {
     var text: String? { get set }
     var culture: NumberFormatter { get }
@@ -13,9 +13,9 @@ public protocol MaskTextFieldProtocol: AnyObject {
     func check(string: String) -> Bool
     func correct(string: String) -> String
 
-    /// Устанавливает курсор на позицию `offset` (в символах).
+    /// Puts the cursor at position `offset` (in characters).
     func setCursorPosition(_ offset: Int)
 
-    /// Текущая позиция курсора (в символах).
+    /// The current cursor position (in characters).
     var cursorOffset: Int { get }
 }

@@ -1,8 +1,8 @@
 import UIKit
 
-/// Стандартные действия редактирования, которые можно разрешить или запретить
-/// в контекстном меню текстового поля через `MaskTextField.setEditActions(only:)`,
-/// `addToCurrentEditActions(actions:)` и `filterEditActions(notAllowed:)`.
+/// Standard editing actions that can be allowed or forbidden in the text field's
+/// context menu through `MaskTextField.setEditActions(only:)`,
+/// `addToCurrentEditActions(actions:)` and `filterEditActions(notAllowed:)`.
 public enum ResponderStandardEditActions: Hashable {
     case cut
     case copy

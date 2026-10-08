@@ -1,8 +1,8 @@
 import Foundation
 
-/// Оператор "конфигурации объекта": `object => { $0.property = value }`.
+/// The "object configuration" operator: `object => { $0.property = value }`.
 ///
-/// Возвращает тот же объект, что позволяет использовать его прямо в выражении.
+/// Returns the same object, which allows using it right in an expression.
 precedencegroup ForwardApplication {
     associativity: left
     higherThan: AssignmentPrecedence

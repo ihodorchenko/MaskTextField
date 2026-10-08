@@ -43,12 +43,12 @@ extension MaskTextField: UITextFieldDelegate {
         return false
     }
 
-    /// Обработка изменения в поле без маски.
+    /// Handles a change in a field without a mask.
     ///
-    /// Без валидатора, при удалении и во время композиции IME изменение остаётся
-    /// нативным (`true`): сохраняются курсор, автокоррекция и undo. Если строка прошла
-    /// фильтр без изменений — тоже нативно; если фильтр её изменил — текст
-    /// подставляется вручную, если ничего не осталось — изменение отклоняется.
+    /// Without a validator, on deletion and during IME composition the change stays
+    /// native (`true`): the cursor, autocorrection and undo are preserved. If the string passed
+    /// the filter unchanged, it is native as well; if the filter changed it, the text is
+    /// inserted manually, and if nothing is left the change is rejected.
     private func shouldChangePlainText(in range: NSRange, with string: String) -> Bool {
         guard self.charValidator != nil, !string.isEmpty, self.markedTextRange == nil else {
             return true

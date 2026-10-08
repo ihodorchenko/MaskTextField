@@ -2,11 +2,11 @@ import UIKit
 import SwiftUI
 import MaskTextField
 
-/// SwiftUI-обёртка над `MaskTextField`.
+/// A SwiftUI wrapper around `MaskTextField`.
 ///
-/// Позволяет использовать маскированный ввод в SwiftUI без ручного создания
-/// `UIViewRepresentable`. Сырое значение (без маски) синхронизируется со
-/// SwiftUI-состоянием через привязку `textValue`.
+/// Lets you use masked input in SwiftUI without writing a `UIViewRepresentable` by hand.
+/// The raw value (without the mask) is synchronized with SwiftUI state through
+/// the `textValue` binding.
 ///
 /// ```swift
 /// @State private var phone = ""
@@ -19,123 +19,123 @@ import MaskTextField
 /// )
 /// ```
 public struct MaskedTextField: UIViewRepresentable {
-    /// Маска, отображаемая во время редактирования, например `+375 (dd) ddd-dd-dd`.
+    /// The mask shown while editing, e.g. `+375 (dd) ddd-dd-dd`.
     public var mask: String
 
-    /// Маска, отображаемая при потере фокуса; символ `^` скрывает введённое.
+    /// The mask shown when the field loses focus; the `^` character veils entered characters.
     public var maskLostFocus: String
 
-    /// Динамические маски по ёмкости (по возрастанию): выбирается первая, в которую помещается
-    /// значение. Если задано, `mask` и `maskLostFocus` не используются.
+    /// Dynamic masks by capacity (ascending): the first one the value fits into is chosen.
+    /// If set, `mask` and `maskLostFocus` are not used.
     public var maskVariants: [MaskVariant]
 
-    /// Динамические маски по произвольному правилу (например, `MaskPreset.cardProvider`).
-    /// Применяется один раз при создании поля; чтобы сменить, пересоздайте вью (`.id(...)`).
+    /// Dynamic masks by an arbitrary rule (for example `MaskPreset.cardProvider`).
+    /// Applied once when the field is created; to change it, recreate the view (`.id(...)`).
     public var maskProvider: ((String) -> MaskVariant)?
 
-    /// Режим отображения маски: `.fullMask` — вся маска, `.gradualMask` — по мере ввода.
+    /// The mask display mode: `.fullMask` shows the whole mask, `.gradualMask` shows it as you type.
     public var maskMode: MaskMode
 
-    /// Поведение курсора: `.free` или `.sequential` (только последовательный ввод).
+    /// The cursor behavior: `.free`, `.snapOnFocus` or `.sequential` (sequential input only).
     public var cursorBehavior: CursorBehavior
 
-    /// Символ-заглушка для пустых вводимых позиций (`_` по умолчанию).
+    /// The placeholder character for empty editable positions (`_` by default).
     public var maskChar: Character
 
-    /// Символ, которым скрываются введённые символы при потере фокуса (`•` по умолчанию).
+    /// The character that veils entered characters when the field loses focus (`•` by default).
     public var veiledMaskChar: Character
 
-    /// Режим пароля: введённый символ скрывается спустя короткую задержку.
+    /// Password mode: an entered character is veiled after a short delay.
     public var hideChars: Bool
 
-    /// Скрывать маску, если значение пустое и поле не в фокусе.
+    /// Hide the mask when the value is empty and the field is not focused.
     public var hiddenMaskIfEnteredTextEmpty: Bool
 
-    /// Текст-подсказка (placeholder) поля.
+    /// The field's placeholder text.
     public var placeholder: String?
 
-    /// Тип клавиатуры.
+    /// The keyboard type.
     public var keyboardType: UIKeyboardType
 
-    /// Шрифт текста; `nil` — не переопределять.
+    /// The text font; `nil` means do not override.
     public var font: UIFont?
 
-    /// Цвет текста; `nil` — не переопределять.
+    /// The text color; `nil` means do not override.
     public var textColor: UIColor?
 
-    /// Выравнивание текста.
+    /// The text alignment.
     public var textAlignment: NSTextAlignment
 
-    /// Вид клавиши Return.
+    /// The Return key type.
     public var returnKeyType: UIReturnKeyType
 
-    /// Режим кнопки очистки.
+    /// The clear button mode.
     public var clearButtonMode: UITextField.ViewMode
 
-    /// Принудительно выводить значение слева направо, в том числе в RTL-интерфейсе.
+    /// Forces the value to be laid out left to right, including in an RTL interface.
     public var forcesLeftToRight: Bool
 
-    /// Локаль для десятичных разделителей (маска от неё не зависит).
+    /// The locale for decimal separators (the mask does not depend on it).
     public var locale: Locale
 
-    /// Отключать автокоррекцию и «умные» подстановки клавиатуры (по умолчанию `true`).
+    /// Disables keyboard autocorrection and smart substitutions (`true` by default).
     public var disablesAutocorrection: Bool
 
-    /// Озвучивать VoiceOver отклонённые символы и заполнение маски.
+    /// Makes VoiceOver announce rejected characters and a filled mask.
     public var announcesInputEvents: Bool
 
-    /// Подпись поля для VoiceOver.
+    /// The field's VoiceOver label.
     public var accessibilityLabelText: String?
 
-    /// Подсказка поля для VoiceOver (например, формат ввода).
+    /// The field's VoiceOver hint (for example the input format).
     public var accessibilityHintText: String?
 
-    /// Сырое значение без маски (двусторонняя привязка к SwiftUI-состоянию).
+    /// The raw value without the mask (a two-way binding to SwiftUI state).
     @Binding public var textValue: String
 
-    /// Необязательная привязка к состоянию фокуса (`true` — поле в фокусе).
+    /// An optional binding to the focus state (`true` means the field is focused).
     private var isFocused: Binding<Bool>?
 
-    /// Вызывается по нажатию Return.
+    /// Called when the Return key is pressed.
     private var onCommit: (() -> Void)?
 
-    /// Необязательная привязка к состоянию «маска заполнена».
+    /// An optional binding to the "mask is filled" state.
     private var isComplete: Binding<Bool>?
 
-    /// Вызывается, когда пользователь своим вводом заполнил маску.
+    /// Called when the user fills the mask with their input.
     private var onComplete: (() -> Void)?
 
-    /// Создаёт маскированное поле.
+    /// Creates a masked field.
     ///
     /// - Parameters:
-    ///   - mask: маска во время редактирования.
-    ///   - maskLostFocus: маска при потере фокуса (по умолчанию пустая).
-    ///   - maskVariants: динамические маски по ёмкости (вместо `mask`).
-    ///   - maskProvider: динамические маски по произвольному правилу (при создании поля).
-    ///   - maskMode: режим отображения маски.
-    ///   - cursorBehavior: поведение курсора.
-    ///   - maskChar: символ-заглушка.
-    ///   - veiledMaskChar: символ скрытия при потере фокуса.
-    ///   - hideChars: режим пароля.
-    ///   - hiddenMaskIfEnteredTextEmpty: скрывать пустую маску.
-    ///   - placeholder: подсказка.
-    ///   - keyboardType: тип клавиатуры.
-    ///   - font: шрифт текста.
-    ///   - textColor: цвет текста.
-    ///   - textAlignment: выравнивание текста.
-    ///   - returnKeyType: вид клавиши Return.
-    ///   - clearButtonMode: режим кнопки очистки.
-    ///   - forcesLeftToRight: выводить значение слева направо и в RTL.
-    ///   - locale: локаль для десятичных разделителей.
-    ///   - disablesAutocorrection: отключать автокоррекцию и подстановки клавиатуры.
-    ///   - announcesInputEvents: озвучивать отклонённые символы и заполнение.
-    ///   - accessibilityLabelText: подпись для VoiceOver.
-    ///   - accessibilityHintText: подсказка для VoiceOver.
-    ///   - isFocused: привязка к состоянию фокуса (чтение и управление).
-    ///   - onCommit: обработчик нажатия Return.
-    ///   - isComplete: привязка к состоянию «маска заполнена».
-    ///   - onComplete: обработчик заполнения маски пользователем.
-    ///   - textValue: привязка к сырому значению.
+    ///   - mask: the mask while editing.
+    ///   - maskLostFocus: the mask when the field loses focus (empty by default).
+    ///   - maskVariants: dynamic masks by capacity (instead of `mask`).
+    ///   - maskProvider: dynamic masks by an arbitrary rule (applied when the field is created).
+    ///   - maskMode: the mask display mode.
+    ///   - cursorBehavior: the cursor behavior.
+    ///   - maskChar: the placeholder character.
+    ///   - veiledMaskChar: the veiling character used when focus is lost.
+    ///   - hideChars: password mode.
+    ///   - hiddenMaskIfEnteredTextEmpty: hide an empty mask.
+    ///   - placeholder: the placeholder text.
+    ///   - keyboardType: the keyboard type.
+    ///   - font: the text font.
+    ///   - textColor: the text color.
+    ///   - textAlignment: the text alignment.
+    ///   - returnKeyType: the Return key type.
+    ///   - clearButtonMode: the clear button mode.
+    ///   - forcesLeftToRight: lay the value out left to right in RTL too.
+    ///   - locale: the locale for decimal separators.
+    ///   - disablesAutocorrection: disable keyboard autocorrection and substitutions.
+    ///   - announcesInputEvents: announce rejected characters and a filled mask.
+    ///   - accessibilityLabelText: the VoiceOver label.
+    ///   - accessibilityHintText: the VoiceOver hint.
+    ///   - isFocused: a binding to the focus state (read and drive).
+    ///   - onCommit: the Return key handler.
+    ///   - isComplete: a binding to the "mask is filled" state.
+    ///   - onComplete: the handler for the user filling the mask.
+    ///   - textValue: a binding to the raw value.
     public init(
         mask: String = "",
         maskLostFocus: String = "",
@@ -229,7 +229,7 @@ public struct MaskedTextField: UIViewRepresentable {
         syncCompletion(of: field)
     }
 
-    /// Обновляет привязку `isComplete` после программных изменений значения.
+    /// Updates the `isComplete` binding after programmatic changes of the value.
     private func syncCompletion(of field: MaskTextField) {
         guard let binding = isComplete, binding.wrappedValue != field.isComplete else { return }
 
@@ -239,7 +239,7 @@ public struct MaskedTextField: UIViewRepresentable {
         }
     }
 
-    /// Приводит фокус поля в соответствие с привязкой `isFocused`.
+    /// Brings the field's focus in line with the `isFocused` binding.
     private func syncFocus(of field: MaskTextField) {
         guard let wantsFocus = isFocused?.wrappedValue else { return }
 
@@ -253,8 +253,8 @@ public struct MaskedTextField: UIViewRepresentable {
         }
     }
 
-    /// Применяет конфигурацию к полю только при её изменении — чтобы лишние
-    /// перерисовки SwiftUI не сбрасывали курсор и уже введённое значение.
+    /// Applies the configuration to the field only when it changes, so that extra SwiftUI
+    /// redraws do not reset the cursor and the already entered value.
     private func apply(to field: MaskTextField) {
         if field.maskVariants != maskVariants { field.maskVariants = maskVariants }
         if field.maskText != mask { field.maskText = mask }
@@ -280,8 +280,8 @@ public struct MaskedTextField: UIViewRepresentable {
         if field.accessibilityHint != accessibilityHintText { field.accessibilityHint = accessibilityHintText }
     }
 
-    /// Связывает `MaskTextField` со SwiftUI-состоянием и пробрасывает
-    /// изменения сырого значения и фокуса обратно в привязки.
+    /// Connects `MaskTextField` with SwiftUI state and passes changes of the raw value
+    /// and of focus back into the bindings.
     public final class Coordinator: NSObject, UITextFieldDelegate {
         var parent: MaskedTextField
 

@@ -1,20 +1,20 @@
 import Foundation
 
 extension String {
-    /// Доступ к символу по целочисленному индексу.
+    /// Access to a character by an integer index.
     ///
-    /// Упрощает посимвольный разбор маски. Выход за границы приведёт к крашу,
-    /// поэтому вызывающий код обязан гарантировать корректный индекс.
+    /// Simplifies character-by-character parsing of a mask. Out-of-bounds access crashes,
+    /// so the caller must guarantee a valid index.
     subscript(offset: Int) -> Character {
         get {
             self[self.index(self.startIndex, offsetBy: offset)]
         }
     }
 
-    /// Возвращает подстроку, начиная с `start`, длиной `length`.
+    /// Returns a substring starting at `start` with the given `length`.
     ///
-    /// В отличие от `NSString.substring(with:)`, безопасна: при выходе за границы
-    /// возвращается максимально доступная подстрока, а не краш.
+    /// Unlike `NSString.substring(with:)` it is safe: when out of bounds, the largest
+    /// available substring is returned instead of crashing.
     func substring(start: Int, length: Int) -> String {
         guard start >= 0, length >= 0 else { return "" }
 
@@ -33,11 +33,11 @@ extension String {
         return String(self[startIndex..<endIndex])
     }
 
-    /// Индекс символа (grapheme cluster), на который приходится `utf16Offset`.
+    /// The index of the character (grapheme cluster) that `utf16Offset` falls into.
     ///
-    /// Курсор `UITextField` задаётся в UTF-16 единицах, а позиция маски — в
-    /// символах. Метод преобразует первое во второе; если смещение попадает
-    /// внутрь многобайтового символа, округляет вниз.
+    /// A `UITextField` cursor is expressed in UTF-16 units, while a mask position is expressed
+    /// in characters. This method converts the former to the latter; if the offset falls
+    /// inside a multi-unit character, it rounds down.
     func characterIndex(utf16Offset: Int) -> Int {
         guard utf16Offset > 0 else { return 0 }
 
@@ -54,7 +54,7 @@ extension String {
         return characterIndex
     }
 
-    /// UTF-16 offset, соответствующий индексу символа (grapheme cluster).
+    /// The UTF-16 offset that corresponds to a character (grapheme cluster) index.
     func utf16Offset(characterIndex: Int) -> Int {
         let index = self.index(
             self.startIndex,

@@ -1,28 +1,28 @@
 import Foundation
 
-/// Готовые маски для типовых случаев с фиксированным форматом.
+/// Ready-made masks for typical fixed-format cases.
 ///
-/// Маска задаёт только формат, а не допустимость значения: `dateDMY` примет `99/99/9999`.
-/// Форматы, зависящие от страны (телефоны, IBAN), намеренно не включены.
+/// A mask defines only a format, not whether a value is valid: `dateDMY` accepts `99/99/9999`.
+/// Country-dependent formats (phones, IBAN) are deliberately not included.
 public enum MaskPreset {
-    /// Банковская карта из 16 цифр: `1234 5678 9012 3456`.
+    /// A bank card of 16 digits: `1234 5678 9012 3456`.
     public static let card16 = "dddd dddd dddd dddd"
 
-    /// Карта American Express (15 цифр): `3412 345678 12345`.
+    /// An American Express card (15 digits): `3412 345678 12345`.
     public static let cardAmex = "dddd dddddd ddddd"
 
-    /// Дата `дд/мм/гггг` (только формат, без проверки значения).
+    /// A date `dd/mm/yyyy` (format only, the value is not validated).
     public static let dateDMY = "dd/dd/dddd"
 
-    /// Время `чч:мм` (только формат, без проверки значения).
+    /// A time `hh:mm` (format only, the value is not validated).
     public static let timeHM = "dd:dd"
 
-    /// Одноразовый код из `length` цифр.
+    /// A one-time code of `length` digits.
     public static func otp(length: Int) -> String {
         String(repeating: "d", count: max(length, 0))
     }
 
-    /// Провайдер для карт: American Express (начинается с 34 или 37) — 15 цифр, остальные — 16.
+    /// A provider for cards: American Express (starts with 34 or 37) is 15 digits, all others are 16.
     ///
     /// ```swift
     /// field.maskProvider = MaskPreset.cardProvider

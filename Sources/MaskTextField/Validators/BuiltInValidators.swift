@@ -1,6 +1,6 @@
 import Foundation
 
-/// Запрещает эмодзи (включая составные: флаги, семьи, цвета кожи, keycap).
+/// Forbids emoji (composite ones included: flags, families, skin tones, keycaps).
 public final class EmojiFreeValidator: CharValidator {
     public init() {}
 
@@ -9,7 +9,7 @@ public final class EmojiFreeValidator: CharValidator {
     }
 }
 
-/// Разрешает только символы из заданного набора.
+/// Allows only characters from the given set.
 public final class AllowedCharactersValidator: CharValidator {
     private let allowed: CharacterSet
 
@@ -22,8 +22,8 @@ public final class AllowedCharactersValidator: CharValidator {
     }
 }
 
-/// Ограничивает длину текста. Изменение, после которого текст станет длиннее, отклоняется
-/// целиком (в том числе вставка).
+/// Limits the text length. A change after which the text would be longer is rejected
+/// as a whole (pasting included).
 public final class MaxLengthValidator: CharValidator {
     private let maxLength: Int
 
@@ -36,8 +36,8 @@ public final class MaxLengthValidator: CharValidator {
     }
 }
 
-/// Объединяет несколько валидаторов: символ и текст должны пройти все,
-/// `correct(string:)` применяется по порядку.
+/// Combines several validators: a character and a text must pass all of them,
+/// `correct(string:)` is applied in order.
 public final class CompositeValidator: CharValidator {
     private let validators: [CharValidator]
 

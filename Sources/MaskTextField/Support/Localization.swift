@@ -1,6 +1,6 @@
 import Foundation
 
-/// Локализованные строки библиотеки (VoiceOver-описания и подписи).
+/// The library's localized strings (VoiceOver descriptions and labels).
 enum L10n {
     static func string(_ key: String) -> String {
         NSLocalizedString(key, bundle: .module, comment: "")

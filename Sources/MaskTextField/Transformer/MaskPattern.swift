@@ -1,13 +1,13 @@
 import Foundation
 
-/// Тип вводимой позиции маски.
+/// The type of an editable mask position.
 ///
-/// - `d` — цифра `0-9`
-/// - `a` — латинская буква `a-zA-Z`
-/// - `A` — латинская буква или цифра
-/// - `x` — любой видимый ASCII-символ, кроме цифр: буква или знак препинания/символ
-/// - `X` — любой видимый ASCII-символ, включая цифры (пробел не входит)
-/// - `z` — любой символ без проверки
+/// - `d` — a digit `0-9`
+/// - `a` — a Latin letter `a-zA-Z`
+/// - `A` — a Latin letter or a digit
+/// - `x` — any visible ASCII character except a digit: a letter or a punctuation mark/symbol
+/// - `X` — any visible ASCII character, digits included (a space is not)
+/// - `z` — any character, without validation
 enum MaskCharType {
     case digit
     case letter
@@ -16,7 +16,7 @@ enum MaskCharType {
     case anySymbolOrDigit
     case any
 
-    /// Возвращает тип по символу маски, либо `nil` для литерала.
+    /// Returns the type for a mask character, or `nil` for a literal.
     static func type(for char: Character) -> MaskCharType? {
         switch char {
         case "d": return .digit
@@ -29,7 +29,7 @@ enum MaskCharType {
         }
     }
 
-    /// Проверяет, допустим ли символ на позиции этого типа.
+    /// Checks whether a character is acceptable at a position of this type.
     func accepts(_ char: Character) -> Bool {
         if self == .any { return true }
 
@@ -51,15 +51,15 @@ enum MaskCharType {
     }
 }
 
-/// Неизменяемое описание одной позиции маски: литерал или вводимый символ.
+/// An immutable description of one mask position: a literal or an editable character.
 struct MaskSlot {
-    /// Символ маски: литерал для вывода либо спецсимвол типа позиции.
+    /// The mask character: a literal to output or a special character of the position type.
     let char: Character
 
-    /// Тип вводимой позиции; `nil` для литерала (в том числе экранированного).
+    /// The type of the editable position; `nil` for a literal (including an escaped one).
     let type: MaskCharType?
 
-    /// Значение позиции скрывается при потере фокуса (`^c`).
+    /// The position value is veiled when focus is lost (`^c`).
     let veiled: Bool
 
     var canEntered: Bool {
@@ -70,11 +70,11 @@ struct MaskSlot {
         type?.accepts(char) ?? false
     }
 
-    /// Разбирает строку маски в набор позиций.
+    /// Parses a mask string into a set of positions.
     ///
-    /// - `\c` — экранированный литерал `c`;
-    /// - `^c` — вводимая позиция, скрываемая при потере фокуса;
-    /// - остальные символы — спецсимволы типов (`d`, `a`, …) либо литералы.
+    /// - `\c` — an escaped literal `c`;
+    /// - `^c` — an editable position that is veiled when focus is lost;
+    /// - other characters — special type characters (`d`, `a`, …) or literals.
     static func parse(_ mask: String) -> [MaskSlot] {
         let chars = Array(mask)
         var slots: [MaskSlot] = []

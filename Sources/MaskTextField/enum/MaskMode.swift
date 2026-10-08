@@ -1,9 +1,9 @@
 import Foundation
 
-/// Режимы отображения маски.
+/// Mask display modes.
 public enum MaskMode: Equatable {
-    /// Маска отображается полностью.
+    /// The mask is displayed in full.
     case fullMask
-    /// Маска отображается постепенно, по мере ввода, начиная с первых символов.
+    /// The mask is displayed gradually, as you type, starting from the first characters.
     case gradualMask
 }

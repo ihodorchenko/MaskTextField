@@ -1,27 +1,27 @@
 import Foundation
 
-/// Валидатор вводимых символов.
+/// A validator of entered characters.
 ///
-/// Ограничивает ввод в `MaskTextField`: и в поле без маски (например, запретить эмодзи),
-/// и в поле с маской (дополнительное ограничение поверх типов позиций).
+/// Restricts input in `MaskTextField`, both in a field without a mask (for example, forbidding emoji)
+/// and in a masked field (an extra restriction on top of the position types).
 ///
-/// Все методы имеют реализации по умолчанию — переопределяйте только нужные.
+/// All methods have default implementations — override only the ones you need.
 ///
-/// - Поле без маски: символы вводимой или вставляемой строки проходят `check(char:)`,
-///   затем строка — `correct(string:)`; результирующий текст целиком — `check(string:)`.
-/// - Поле с маской: используются только `check(char:)` и `correct(string:)`.
+/// - A field without a mask: the characters of a typed or pasted string go through `check(char:)`,
+///   then the string through `correct(string:)`; the resulting text as a whole through `check(string:)`.
+/// - A masked field: only `check(char:)` and `correct(string:)` are used.
 public protocol CharValidator: AnyObject {
-    /// Допустим ли символ. Недопустимые символы удаляются из вводимой строки.
+    /// Whether a character is acceptable. Unacceptable characters are removed from the entered string.
     func check(char: Character) -> Bool
 
-    /// Допустим ли результирующий текст целиком (например, ограничение длины).
-    /// Если нет — изменение отклоняется.
+    /// Whether the resulting text as a whole is acceptable (for example a length limit).
+    /// If not, the change is rejected.
     func check(string: String) -> Bool
 
-    /// Корректирует вводимую строку после посимвольной фильтрации.
+    /// Corrects the entered string after per-character filtering.
     func correct(string: String) -> String
 
-    /// Форматтер чисел для десятичных разделителей.
+    /// The number formatter for decimal separators.
     var culture: NumberFormatter { get }
 }
 

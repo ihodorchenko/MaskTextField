@@ -1,7 +1,7 @@
 import Foundation
 
-/// Трансформер, фильтрующий вводимые символы через `CharValidator`
-/// и нормализующий десятичные разделители под текущую культуру.
+/// A transformer that filters entered characters through `CharValidator`
+/// and normalizes decimal separators to the current culture.
 open class FilterTransformer: BaseTransformer {
     private let delimiters: [String] = [".", ","]
 

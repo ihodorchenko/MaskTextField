@@ -1,52 +1,52 @@
 import Foundation
 
-/// Трансформер, накладывающий маску на вводимый текст.
+/// A transformer that applies a mask to the entered text.
 ///
-/// Маска описывается строкой, в которой спецсимволы задают вводимые позиции:
-/// - `d` — цифра `[0-9]`
-/// - `a` — латинская буква `[a-zA-Z]`
-/// - `A` — латинская буква или цифра
-/// - `x` — любой видимый ASCII-символ, кроме цифр
-/// - `X` — любой видимый ASCII-символ, включая цифры
-/// - `z` — произвольный символ без проверки
-/// - `\c` — экранированный символ (литерал, даже если совпадает со спецсимволом)
-/// - `^c` — вводимая позиция, значение которой скрывается при потере фокуса
+/// A mask is a string in which special characters define the editable positions:
+/// - `d` — a digit `[0-9]`
+/// - `a` — a Latin letter `[a-zA-Z]`
+/// - `A` — a Latin letter or a digit
+/// - `x` — any visible ASCII character except a digit
+/// - `X` — any visible ASCII character, digits included
+/// - `z` — any character, without validation
+/// - `\c` — an escaped character (a literal, even if it matches a special character)
+/// - `^c` — an editable position whose value is veiled when the field loses focus
 ///
-/// Остальные символы — литералы, выводимые как есть.
+/// All other characters are literals and are output as is.
 ///
-/// Шаблон маски (`MaskSlot`) неизменяем; введённые значения и флаги скрытия
-/// хранятся отдельно, в массивах, индексированных так же, как позиции маски.
+/// The mask template (`MaskSlot`) is immutable; entered values and veiling flags
+/// are stored separately, in arrays indexed like the mask positions.
 
 public final class MaskTransformer: FilterTransformer {
     public static let hideChar: Character = "•"
     public static let defaultMaskChar: Character = "_"
 
-    /// Задержка перед скрытием последнего введённого символа в режиме `hideChars`.
+    /// The delay before the last entered character is veiled in `hideChars` mode.
     public static let hideCharDelay: TimeInterval = 1.5
 
     private var slots: [MaskSlot] = []
     private var lostFocusSlots: [MaskSlot] = []
 
-    /// Введённые значения по индексам `slots`; `nil` — позиция пуста (или литерал).
+    /// Entered values by `slots` index; `nil` means the position is empty (or a literal).
     private var entered: [Character?] = []
 
-    /// Признак «скрыто» по индексам `slots` (режим `hideChars`).
+    /// The "hidden" flag by `slots` index (`hideChars` mode).
     private var hidden: [Bool] = []
 
     private var hideTimer: Timer?
 
-    /// Время ожидания, в течение которого первое выделение после получения фокуса
-    /// трактуется как установка курсора тапом и заменяется переходом на первую
-    /// свободную позицию (`.snapOnFocus`).
+    /// The time during which the first selection after gaining focus is treated as the
+    /// cursor placed by a tap and is replaced with a jump to the first free position
+    /// (`.snapOnFocus`).
     static var focusSnapWindow: TimeInterval = 0.5
 
-    /// Момент (`systemUptime`), до которого действует привязка курсора после фокуса.
+    /// The moment (`systemUptime`) until which cursor snapping after focus is active.
     private var focusSnapDeadline: TimeInterval?
 
     private var _isFocus: Bool = false
 
-    /// Флаг, показывающий, что `setTextAndCursor` сейчас сам меняет текст/курсор.
-    /// Предотвращает рекурсию: `setCursorPosition` → `textFieldDidChangeSelection` →
+    /// A flag saying that `setTextAndCursor` is currently changing the text/cursor itself.
+    /// Prevents recursion: `setCursorPosition` → `textFieldDidChangeSelection` →
     /// `onSelectionChanged` → `setTextAndCursor` → …
     private var isRendering: Bool = false
 
@@ -62,15 +62,15 @@ public final class MaskTransformer: FilterTransformer {
         self._onlyEnteredCount
     }
 
-    /// Заполнены ли все вводимые позиции маски (маска без вводимых позиций не бывает заполненной).
+    /// Whether all editable positions are filled (a mask without editable positions is never complete).
     public override var isComplete: Bool {
         self._onlyEnteredCount > 0
             && self.slots.indices.allSatisfy { !self.slots[$0].canEntered || self.entered[$0] != nil }
     }
 
-    /// Нормализует вставляемую строку: оставляет только символы, допустимые
-    /// на вводимых позициях, и обрезает до их количества (при вставке
-    /// используются последние символы).
+    /// Normalizes a pasted string: keeps only the characters allowed
+    /// at the editable positions and trims to their number (the last characters
+    /// are kept on paste).
     public override func normalizedValue(from value: String) -> String {
         let enteredSlots = self.slots.filter { $0.canEntered }
         guard !enteredSlots.isEmpty else { return "" }
@@ -100,11 +100,11 @@ public final class MaskTransformer: FilterTransformer {
         }
     }
 
-    /// Раскладывает «сырое» значение (без маски) по вводимым позициям.
+    /// Distributes a raw value (without the mask) over the editable positions.
     ///
-    /// Для каждой позиции берётся следующий подходящий по `accepts` символ;
-    /// неподходящие символы пропускаются. Если подходящих символов не осталось,
-    /// позиция остаётся пустой. Возвращает индексы заполненных позиций по порядку.
+    /// Each position takes the next character accepted by `accepts`;
+    /// unsuitable characters are skipped. If no suitable characters are left,
+    /// the position stays empty. Returns the indices of the filled positions in order.
     @discardableResult
     private func fill(with value: String) -> [Int] {
         let chars = Array(value)
@@ -136,10 +136,10 @@ public final class MaskTransformer: FilterTransformer {
         String(self.lostFocusSlots.map { self.placeholder(for: $0) })
     }
 
-    /// Описание значения для VoiceOver: без заглушек маски и без скрытых символов.
+    /// The VoiceOver description of the value: without mask placeholders and hidden characters.
     ///
-    /// Пустое поле — «Пусто»; если символы скрыты (`hideChars` или `^` без фокуса),
-    /// озвучивается только количество введённых символов.
+    /// An empty field is described as "Empty"; if characters are hidden (`hideChars`, or `^` while
+    /// unfocused), only the number of entered characters is announced.
     public var accessibilityDescription: String {
         let chars = self.entered.compactMap { $0 }
         guard !chars.isEmpty else { return L10n.string("a11y.empty") }
@@ -183,11 +183,11 @@ public final class MaskTransformer: FilterTransformer {
         return true
     }
 
-    /// Заменяет диапазон `range` (в позициях маски) строкой `text`.
+    /// Replaces the `range` (in mask positions) with the string `text`.
     ///
-    /// Символы вне диапазона сохраняются и сдвигаются, так что вставка в середину
-    /// не затирает остальное значение, а замена выделения убирает выделенное.
-    /// Строка `text` предварительно нормализуется (`normalizedValue(from:)`).
+    /// Characters outside the range are kept and shifted, so pasting into the middle
+    /// does not overwrite the rest of the value, and replacing a selection removes the selected part.
+    /// The `text` string is normalized first (`normalizedValue(from:)`).
     public override func onPaste(_ text: String, in range: Range<Int>) {
         if self.maskProvider != nil {
             self.dynamicPaste(text, in: range)
@@ -291,9 +291,9 @@ public final class MaskTransformer: FilterTransformer {
         }
     }
 
-    /// Динамические маски: по текущему «сырому» значению возвращает вариант маски.
-    /// Пока провайдер задан, свойства `mask` и `maskLostFocus` не используются.
-    /// Провайдер вызывается на каждое изменение и должен быть чистой функцией.
+    /// Dynamic masks: returns a mask variant for the current raw value.
+    /// While the provider is set, the `mask` and `maskLostFocus` properties are not used.
+    /// The provider is called on every change and must be a pure function.
     public var maskProvider: ((String) -> MaskVariant)? {
         didSet {
             if self.maskProvider != nil {
@@ -311,7 +311,7 @@ public final class MaskTransformer: FilterTransformer {
         }
     }
 
-    /// Вариант, выбранный провайдером на данный момент (`nil` без динамических масок).
+    /// The variant currently chosen by the provider (`nil` without dynamic masks).
     var activeVariant: MaskVariant?
 
     public var mask: String = "" {
@@ -356,7 +356,7 @@ public final class MaskTransformer: FilterTransformer {
 
     // MARK: - entered state
 
-    /// Символ подходит позиции по её типу и проходит `CharValidator` поля (если задан).
+    /// The character fits the position by its type and passes the field's `CharValidator` (if set).
     private func accepts(_ char: Character, in slot: MaskSlot) -> Bool {
         slot.accepts(char) && (self.control?.check(char: char) ?? true)
     }
@@ -370,10 +370,10 @@ public final class MaskTransformer: FilterTransformer {
         }
     }
 
-    /// Вставляет символ в первую пустую вводимую позицию, начиная с `offset`; если справа
-    /// от `offset` свободных позиций нет — в первую пустую позицию слева (так маску можно
-    /// добить вводом с конца). Возвращает индекс позиции либо `nil`, если позиции нет
-    /// или символ ей не подходит.
+    /// Inserts a character into the first empty editable position starting at `offset`; if there
+    /// is no free position to the right of `offset`, into the first empty position on the left
+    /// (so a mask can be completed by typing at the end). Returns the position index, or `nil`
+    /// if there is no position or the character does not fit it.
     private func insert(char: Character, at offset: Int) -> Int? {
         let start = min(max(offset, 0), self.slots.count)
 
@@ -390,8 +390,8 @@ public final class MaskTransformer: FilterTransformer {
         range.first { self.slots[$0].canEntered && self.entered[$0] == nil }
     }
 
-    /// Индекс первой пустой вводимой позиции после `index` (литералы пропускаются).
-    /// Возвращает `nil`, если таких позиций нет.
+    /// The index of the first empty editable position after `index` (literals are skipped).
+    /// Returns `nil` if there is none.
     private func nextEmptyEnteredIndex(after index: Int) -> Int? {
         guard index + 1 < self.slots.count else { return nil }
 
@@ -400,15 +400,15 @@ public final class MaskTransformer: FilterTransformer {
         }
     }
 
-    /// Индекс первой вводимой позиции начиная с `index` (включительно).
+    /// The index of the first editable position starting at `index` (inclusive).
     private func firstEnteredIndex(from index: Int) -> Int? {
         guard index < self.slots.count else { return nil }
 
         return (max(index, 0)..<self.slots.count).first { self.slots[$0].canEntered }
     }
 
-    /// Удаляет последнюю заполненную позицию с индексом не больше `offset`.
-    /// Возвращает индекс удалённой позиции либо `nil`, если удалять нечего.
+    /// Removes the last filled position with an index not greater than `offset`.
+    /// Returns the index of the removed position, or `nil` if there is nothing to remove.
     private func removeLastEntered(before offset: Int) -> Int? {
         var index = min(offset, self.slots.count - 1)
         guard index >= 0 else { return nil }
@@ -462,12 +462,12 @@ public final class MaskTransformer: FilterTransformer {
 
     // MARK: - rendering
 
-    /// Символ-заглушка для позиции: `maskChar` для вводимой, сам литерал — иначе.
+    /// The placeholder character for a position: `maskChar` for an editable one, the literal itself otherwise.
     private func placeholder(for slot: MaskSlot) -> Character {
         slot.canEntered ? self.maskChar : slot.char
     }
 
-    /// Символ, который нужно показать на заполненной позиции, либо `nil`, если она пуста.
+    /// The character to show at a filled position, or `nil` if it is empty.
     private func displayChar(at index: Int) -> Character? {
         guard let char = self.entered[index] else { return nil }
 
@@ -478,7 +478,7 @@ public final class MaskTransformer: FilterTransformer {
         return (!self.slots[index].veiled || self._isFocus) ? char : self.veiledMaskChar
     }
 
-    /// В режиме пароля скрывает все введённые символы, кроме последнего.
+    /// In password mode, veils all entered characters except the last one.
     private func applyHideCharsPolicy() {
         guard self.hideChars,
               let last = self.entered.lastIndex(where: { $0 != nil }) else { return }
@@ -550,9 +550,9 @@ public final class MaskTransformer: FilterTransformer {
 
 // MARK: - Динамические маски
 
-/// Динамический режим хранит значение как последовательность символов («сырое» значение):
-/// после каждой правки провайдер выбирает маску под новое значение, а символы заново
-/// раскладываются по её позициям подряд (без пропусков).
+/// The dynamic mode stores the value as a sequence of characters (the "raw" value):
+/// after every edit the provider picks a mask for the new value, and the characters
+/// are laid out over its positions again, in order (without gaps).
 extension MaskTransformer {
     private struct Snapshot {
         let slots: [MaskSlot]
@@ -587,13 +587,13 @@ extension MaskTransformer {
         self.entered.compactMap { $0 }
     }
 
-    /// Сколько символов введено в позициях до `slotIndex` (не включая его).
+    /// How many characters are entered in the positions before `slotIndex` (not including it).
     private func enteredCount(before slotIndex: Int) -> Int {
         self.entered.prefix(max(slotIndex, 0)).reduce(0) { $0 + ($1 == nil ? 0 : 1) }
     }
 
-    /// Выбирает маску под `raw` и раскладывает символы по её позициям. Возвращает индексы
-    /// заполненных позиций по порядку (символы, не подошедшие позициям, пропускаются).
+    /// Picks a mask for `raw` and lays the characters out over its positions. Returns the indices
+    /// of the filled positions in order (characters that do not fit a position are skipped).
     @discardableResult
     private func resolve(_ raw: [Character]) -> [Int] {
         guard let provider = self.maskProvider else { return [] }
@@ -612,7 +612,7 @@ extension MaskTransformer {
         return self.fill(with: String(raw))
     }
 
-    /// Символы, которые вместе дают значение, помещающееся в выбранную маску.
+    /// The characters that together form a value that fits the chosen mask.
     private func acceptedChars(of raw: [Character]) -> [Character] {
         let filled = self.resolve(raw)
         return filled.compactMap { self.entered[$0] }

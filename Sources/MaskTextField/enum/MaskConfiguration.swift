@@ -1,13 +1,13 @@
 import Foundation
 
-/// Полный набор настроек маски. Применяется к полю разом (`MaskTextField.apply(_:)`,
-/// `MaskTextField.configure(_:)`): порядок присваивания не важен, а маска пересоздаётся один раз.
+/// The full set of mask settings. Applied to a field at once (`MaskTextField.apply(_:)`,
+/// `MaskTextField.configure(_:)`): the order of assignment does not matter and the mask is rebuilt once.
 public struct MaskConfiguration {
     public var mask: String = ""
     public var maskLostFocus: String = ""
     public var maskVariants: [MaskVariant] = []
 
-    /// Пользовательский провайдер масок; если задан, имеет приоритет над `maskVariants`.
+    /// A custom mask provider; if set, it takes precedence over `maskVariants`.
     public var maskProvider: ((String) -> MaskVariant)?
     public var maskChar: Character = MaskTransformer.defaultMaskChar
     public var veiledMaskChar: Character = MaskTransformer.hideChar

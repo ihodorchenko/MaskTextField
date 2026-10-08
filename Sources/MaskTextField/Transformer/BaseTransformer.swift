@@ -1,7 +1,7 @@
 import Foundation
 
-/// Базовый трансформер текста. Реализует поведение "обычного" текстового поля
-/// без маски: ввод добавляет символы, удаление — убирает последний.
+/// The base text transformer. Implements the behavior of an "ordinary" text field
+/// without a mask: input appends characters, deletion removes the last one.
 open class BaseTransformer {
     public private(set) weak var control: MaskTextFieldProtocol?
 
@@ -22,8 +22,8 @@ open class BaseTransformer {
         }
     }
 
-    /// Применяет ограничения `CharValidator` к программно устанавливаемому тексту.
-    /// Если результат не проходит `check(string:)`, текущий текст остаётся без изменений.
+    /// Applies the `CharValidator` restrictions to programmatically set text.
+    /// If the result does not pass `check(string:)`, the current text is left unchanged.
     private func sanitized(_ value: String?) -> String? {
         guard let value, let control = self.control else { return value }
 
@@ -35,13 +35,13 @@ open class BaseTransformer {
         return 0
     }
 
-    /// Заполнены ли все вводимые позиции. Для поля без маски всегда `false`.
+    /// Whether all editable positions are filled. Always `false` for a field without a mask.
     open var isComplete: Bool {
         return false
     }
 
-    /// Нормализует строку для вставки. Для поля без маски возвращает строку
-    /// без изменений; подклассы могут переопределить (например, снять маску).
+    /// Normalizes a string for pasting. For a field without a mask it returns the string
+    /// unchanged; subclasses may override it (for example, to strip a mask).
     open func normalizedValue(from value: String) -> String {
         return value
     }
@@ -67,9 +67,9 @@ open class BaseTransformer {
         return true
     }
 
-    /// Заменяет диапазон `range` (в символах текущего текста) строкой `text`
-    /// и ставит курсор за вставленным фрагментом. Используется для вставки из
-    /// буфера обмена и замены выделения.
+    /// Replaces the `range` (in characters of the current text) with the string `text`
+    /// and puts the cursor after the inserted fragment. Used for pasting from the
+    /// pasteboard and for replacing a selection.
     open func onPaste(_ text: String, in range: Range<Int>) {
         var chars = Array(self.text ?? "")
         let lower = min(max(range.lowerBound, 0), chars.count)
