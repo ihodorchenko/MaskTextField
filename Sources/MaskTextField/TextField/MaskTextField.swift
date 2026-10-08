@@ -158,6 +158,55 @@ public class MaskTextField: UITextField {
         self.updateLayoutDirection()
     }
 
+    // MARK: - keyboard suggestions
+
+    /// Отключать автокоррекцию, проверку орфографии и «умные» подстановки (по умолчанию `true`)
+    /// у полей с маской: номера карт, PIN и коды не должны попадать в подсказки клавиатуры.
+    /// Явно заданные `autocorrectionType`, `spellCheckingType` и т.д. имеют приоритет.
+    ///
+    /// - Important: это не `isSecureTextEntry`: `hideChars` лишь скрывает символы на экране
+    ///   и не защищает от скриншотов и записи экрана.
+    public var disablesAutocorrection: Bool = true {
+        didSet {
+            if self.isFirstResponder { self.reloadInputViews() }
+        }
+    }
+
+    private var suppressesSuggestions: Bool {
+        self.disablesAutocorrection && !self.maskText.isEmpty
+    }
+
+    private var explicitAutocorrectionType: UITextAutocorrectionType?
+    private var explicitSpellCheckingType: UITextSpellCheckingType?
+    private var explicitSmartQuotesType: UITextSmartQuotesType?
+    private var explicitSmartDashesType: UITextSmartDashesType?
+    private var explicitSmartInsertDeleteType: UITextSmartInsertDeleteType?
+
+    public override var autocorrectionType: UITextAutocorrectionType {
+        get { self.explicitAutocorrectionType ?? (self.suppressesSuggestions ? .no : super.autocorrectionType) }
+        set { self.explicitAutocorrectionType = newValue; super.autocorrectionType = newValue }
+    }
+
+    public override var spellCheckingType: UITextSpellCheckingType {
+        get { self.explicitSpellCheckingType ?? (self.suppressesSuggestions ? .no : super.spellCheckingType) }
+        set { self.explicitSpellCheckingType = newValue; super.spellCheckingType = newValue }
+    }
+
+    public override var smartQuotesType: UITextSmartQuotesType {
+        get { self.explicitSmartQuotesType ?? (self.suppressesSuggestions ? .no : super.smartQuotesType) }
+        set { self.explicitSmartQuotesType = newValue; super.smartQuotesType = newValue }
+    }
+
+    public override var smartDashesType: UITextSmartDashesType {
+        get { self.explicitSmartDashesType ?? (self.suppressesSuggestions ? .no : super.smartDashesType) }
+        set { self.explicitSmartDashesType = newValue; super.smartDashesType = newValue }
+    }
+
+    public override var smartInsertDeleteType: UITextSmartInsertDeleteType {
+        get { self.explicitSmartInsertDeleteType ?? (self.suppressesSuggestions ? .no : super.smartInsertDeleteType) }
+        set { self.explicitSmartInsertDeleteType = newValue; super.smartInsertDeleteType = newValue }
+    }
+
     // MARK: - layout direction (RTL)
 
     /// Принудительно выводить значение слева направо (по умолчанию `true`).

@@ -485,6 +485,64 @@ final class MaskTextFieldFieldTests: XCTestCase {
         XCTAssertEqual(field.rightView?.accessibilityLabel, L10n.string("a11y.clear"))
     }
 
+    // MARK: - Подсказки клавиатуры
+
+    func testMaskedFieldDisablesSuggestionsByDefault() {
+        field.maskText = "dddd dddd dddd dddd"
+
+        XCTAssertEqual(field.autocorrectionType, .no)
+        XCTAssertEqual(field.spellCheckingType, .no)
+        XCTAssertEqual(field.smartQuotesType, .no)
+        XCTAssertEqual(field.smartDashesType, .no)
+        XCTAssertEqual(field.smartInsertDeleteType, .no)
+    }
+
+    func testPlainFieldKeepsSystemSuggestions() {
+        XCTAssertEqual(field.autocorrectionType, .default)
+        XCTAssertEqual(field.spellCheckingType, .default)
+    }
+
+    func testSuggestionsCanBeEnabledBack() {
+        field.maskText = "dd"
+        field.disablesAutocorrection = false
+
+        XCTAssertEqual(field.autocorrectionType, .default)
+    }
+
+    func testExplicitTraitWinsOverSuppression() {
+        field.maskText = "dd"
+        field.autocorrectionType = .yes
+
+        XCTAssertEqual(field.autocorrectionType, .yes)
+        // Остальные признаки по-прежнему подавлены.
+        XCTAssertEqual(field.spellCheckingType, .no)
+    }
+
+    func testSuggestionsReturnWhenMaskIsRemoved() {
+        field.maskText = "dd"
+        field.maskText = ""
+
+        XCTAssertEqual(field.autocorrectionType, .default)
+    }
+
+    // MARK: - OTP
+
+    func testOneTimeCodeAutofillIsAcceptedAsWholeReplacement() {
+        field.maskText = "dddddd"
+        field.textContentType = .oneTimeCode
+        field.textValue = "12"
+
+        // Автозаполнение приходит одной строкой с диапазоном всего текущего значения.
+        _ = field.textField(
+            field,
+            shouldChangeCharactersIn: NSRange(location: 0, length: field.text?.count ?? 0),
+            replacementString: "493817"
+        )
+
+        XCTAssertEqual(field.textValue, "493817")
+        XCTAssertTrue(field.isComplete)
+    }
+
     // MARK: - RTL
 
     func testForcesLeftToRightByDefault() {

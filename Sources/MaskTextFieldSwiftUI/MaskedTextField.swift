@@ -70,6 +70,9 @@ public struct MaskedTextField: UIViewRepresentable {
     /// Локаль для десятичных разделителей (маска от неё не зависит).
     public var locale: Locale
 
+    /// Отключать автокоррекцию и «умные» подстановки клавиатуры (по умолчанию `true`).
+    public var disablesAutocorrection: Bool
+
     /// Озвучивать VoiceOver отклонённые символы и заполнение маски.
     public var announcesInputEvents: Bool
 
@@ -114,6 +117,7 @@ public struct MaskedTextField: UIViewRepresentable {
     ///   - clearButtonMode: режим кнопки очистки.
     ///   - forcesLeftToRight: выводить значение слева направо и в RTL.
     ///   - locale: локаль для десятичных разделителей.
+    ///   - disablesAutocorrection: отключать автокоррекцию и подстановки клавиатуры.
     ///   - announcesInputEvents: озвучивать отклонённые символы и заполнение.
     ///   - accessibilityLabelText: подпись для VoiceOver.
     ///   - accessibilityHintText: подсказка для VoiceOver.
@@ -140,6 +144,7 @@ public struct MaskedTextField: UIViewRepresentable {
         clearButtonMode: UITextField.ViewMode = .never,
         forcesLeftToRight: Bool = true,
         locale: Locale = .current,
+        disablesAutocorrection: Bool = true,
         announcesInputEvents: Bool = false,
         accessibilityLabelText: String? = nil,
         accessibilityHintText: String? = nil,
@@ -166,6 +171,7 @@ public struct MaskedTextField: UIViewRepresentable {
         self.clearButtonMode = clearButtonMode
         self.forcesLeftToRight = forcesLeftToRight
         self.locale = locale
+        self.disablesAutocorrection = disablesAutocorrection
         self.announcesInputEvents = announcesInputEvents
         self.accessibilityLabelText = accessibilityLabelText
         self.accessibilityHintText = accessibilityHintText
@@ -252,6 +258,7 @@ public struct MaskedTextField: UIViewRepresentable {
         if field.clearButtonMode != clearButtonMode { field.clearButtonMode = clearButtonMode }
         if field.forcesLeftToRight != forcesLeftToRight { field.forcesLeftToRight = forcesLeftToRight }
         if field.locale != locale { field.locale = locale }
+        if field.disablesAutocorrection != disablesAutocorrection { field.disablesAutocorrection = disablesAutocorrection }
         if field.announcesInputEvents != announcesInputEvents { field.announcesInputEvents = announcesInputEvents }
         if field.accessibilityLabel != accessibilityLabelText { field.accessibilityLabel = accessibilityLabelText }
         if field.accessibilityHint != accessibilityHintText { field.accessibilityHint = accessibilityHintText }
