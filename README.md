@@ -48,7 +48,7 @@ xcodebuild docbuild -scheme MaskTextField-Package \
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ihodorchenko/MaskTextField.git", from: "1.0.0")
+    .package(url: "https://github.com/ihodorchenko/MaskTextField.git", from: "2.0.0")
 ],
 targets: [
     .target(
@@ -110,7 +110,7 @@ struct MyView: View {
 
 Optional parameters: `font`, `textColor`, `textAlignment`, `returnKeyType`,
 `clearButtonMode`, `isFocused: Binding<Bool>?` (read and drive focus) and
-`onCommit` (Return key), `isComplete: Binding<Bool>?`, `onComplete`, `forcesLeftToRight`, `locale`, `announcesInputEvents`,
+`onCommit` (Return key), `isComplete: Binding<Bool>?`, `onComplete`, `forcesLeftToRight`, `announcesInputEvents`,
 `disablesAutocorrection`, `accessibilityLabelText` and `accessibilityHintText`.
 
 ```swift
@@ -158,8 +158,8 @@ Examples:
 | `cursorBehavior` | `CursorBehavior` | `.free` (default), `.snapOnFocus` or `.sequential` |
 | `hideChars` | `Bool` | Password mode (characters are veiled after a delay) |
 | `hiddenMaskIfEnteredTextEmpty` | `Bool` | Hide the mask when the value is empty and the field is not focused |
-| `textValue` | `String?` | Raw value without the mask (read/write) |
-| `onlyEnteredCount` | `Int` | Number of editable positions |
+| `textValue` | `String` | Raw value without the mask (read/write) |
+| `capacity` | `Int` | Number of editable positions |
 | `isComplete` | `Bool` | All editable positions are filled (always `false` without a mask) |
 | `isCompletePublisher` | `AnyPublisher<Bool, Never>` | Current completion state, then changes (no duplicates) |
 | `onComplete` | `(() -> Void)?` | Fires once when the **user** fills the mask (not for programmatic values) |
@@ -179,8 +179,8 @@ Pasting into the middle of a value keeps the surrounding characters (the tail
 shifts right), and typing, pasting or deleting over a selection replaces only the
 selected part.
 
-Combine publishers: `textPublisher`, `deleteBackwardPublisher`,
-`clearButtonPublisher`.
+Combine publishers: `textPublisher`, `deleteBackwardEvents`, `clearButtonEvents`
+(the events do not fire on subscription), `isCompletePublisher`.
 
 ## Dynamic masks
 
@@ -228,7 +228,7 @@ field.configure {
 // or: field.apply(MaskConfiguration(mask: "dd/dd")), field.configuration (read current)
 ```
 
-## Accessibility, locale and RTL
+## Accessibility and RTL
 
 - **VoiceOver.** `accessibilityValue` returns a meaningful value instead of the
   displayed mask: `Empty` for an empty field, the entered characters without mask
@@ -240,8 +240,6 @@ field.configure {
   characters and a completed mask (off by default).
 - **Dynamic Type.** The default font is `preferredFont(.body)` with
   `adjustsFontForContentSizeCategory` enabled; a custom font must scale itself.
-- **Locale.** `locale` (default `.current`) drives decimal and grouping separators
-  when no `charValidator` is set. Masks never depend on the locale: the format is literal.
 - **RTL.** `forcesLeftToRight` (default `true`) keeps masked values (phones, cards,
   dates) left-to-right in right-to-left interfaces; with `.natural` alignment the
   text is right-aligned there. Set it to `false` for fully mirrored layout. The
@@ -293,12 +291,10 @@ in progress (marked text) the field does not intervene. In a masked field only
 
 ## Architecture
 
-Input is processed by a chain of transformers (`BaseTransformer` →
-`FilterTransformer` → `MaskTransformer`):
+Input is processed by a transformer (`BaseTransformer` → `MaskTransformer`), both `@MainActor`:
 
-- `BaseTransformer` — a plain, unmasked field;
-- `FilterTransformer` — character filtering and decimal separator normalization;
-- `MaskTransformer` — mask application, character veiling, display modes.
+- `BaseTransformer` — a plain, unmasked field (character restrictions via `charValidator`);
+- `MaskTransformer` — mask application, character veiling, display modes, dynamic masks.
 
 The mask itself is parsed once into immutable `MaskSlot`s; entered characters and
 veiling flags live in the transformer next to them, with a single hide timer for

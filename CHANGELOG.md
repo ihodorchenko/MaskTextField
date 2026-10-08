@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.0.0
+
+See [MIGRATION.md](MIGRATION.md) for before/after snippets.
+
+### Removed (breaking)
+- `MaskTextField.locale`, `MaskedTextField(locale:)`, `CharValidator.culture`,
+  `MaskTextFieldProtocol.culture` and `FilterTransformer`. None of them had any effect: the decimal
+  separator normalization they served was unreachable since `MaskTransformer` does not use
+  `FilterTransformer`'s text handling. (The `locale` property added in 1.1.0 was documented as
+  working, which was wrong.)
+- `deleteBackwardPublisher` and `clearButtonPublisher` (`@Published Void`, which emitted on
+  subscription). Use `deleteBackwardEvents` and `clearButtonEvents`.
+
+### Changed (breaking)
+- `onlyEnteredCount` is renamed to `capacity` (`MaskTextField`, `BaseTransformer`, `MaskTransformer`).
+- `MaskTextField.textValue` is `String` instead of `String?`.
+- `MaskTransformer` now inherits `BaseTransformer` directly.
+
 ## 1.4.2
 
 ### Fixed

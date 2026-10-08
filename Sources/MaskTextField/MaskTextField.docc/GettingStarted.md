@@ -10,7 +10,7 @@ Add the package in Xcode (**File ▸ Add Package Dependencies…**) or in `Packa
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ihodorchenko/MaskTextField.git", from: "1.4.2")
+    .package(url: "https://github.com/ihodorchenko/MaskTextField.git", from: "2.0.0")
 ],
 targets: [
     .target(name: "MyApp", dependencies: [

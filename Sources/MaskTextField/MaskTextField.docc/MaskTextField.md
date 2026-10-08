@@ -18,7 +18,7 @@ field.maskLostFocus = "+375 (^d^d) ^d^d^d-^d^d-^d^d"   // veils digits when focu
 
 field.textValue = "291234567"
 print(field.text!)       // "+375 (29) 123-45-67"
-print(field.textValue!)  // "291234567"
+print(field.textValue)   // "291234567"
 ```
 
 The SwiftUI wrapper `MaskedTextField` lives in the separate `MaskTextFieldSwiftUI` module.
@@ -50,7 +50,7 @@ The SwiftUI wrapper `MaskedTextField` lives in the separate `MaskTextFieldSwiftU
 - ``MaxLengthValidator``
 - ``CompositeValidator``
 
-### Accessibility and localization
+### Accessibility and RTL
 
 - <doc:Accessibility>
 
@@ -58,7 +58,6 @@ The SwiftUI wrapper `MaskedTextField` lives in the separate `MaskTextFieldSwiftU
 
 - ``MaskTransformer``
 - ``BaseTransformer``
-- ``FilterTransformer``
 - ``MaskTextFieldProtocol``
 
 ### Utilities

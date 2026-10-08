@@ -1,6 +1,6 @@
-# Accessibility, locale and RTL
+# Accessibility and RTL
 
-Make masked fields work well with VoiceOver, Dynamic Type, other locales and right-to-left interfaces.
+Make masked fields work well with VoiceOver, Dynamic Type and right-to-left interfaces.
 
 ## Overview
 
@@ -19,11 +19,6 @@ and a completed mask.
 
 The default font is the body text style with automatic content-size adjustment. A custom font
 must scale itself.
-
-### Locale
-
-``MaskTextField/locale`` drives decimal and grouping separators when no validator supplies its
-own. Masks never depend on the locale: the format is literal.
 
 ### Right-to-left
 
