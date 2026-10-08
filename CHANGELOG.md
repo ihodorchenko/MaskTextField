@@ -1,38 +1,38 @@
 # Changelog
 
-## Unreleased
-
-### Changed
-- Masked fields now disable autocorrection, spell checking and smart quotes/dashes/insert-delete
-  by default (`disablesAutocorrection`, also on `MaskedTextField`). Explicitly set traits win;
-  set `disablesAutocorrection = false` to restore the old behavior.
-- In `.free` (and `.snapOnFocus`) typing at a cursor with no free position to its right now
-  fills the first free position on the left, so a mask can be completed by typing at the
-  end. Before, such input was rejected.
-- `MaskedTextField` now observes `textDidChangeNotification` instead of the control's
-  `.editingChanged` target-action, so the binding no longer depends on UIControl event
-  delivery (which does not work without a running `UIApplication`).
+## 1.2.0
 
 ### Added
-- SwiftUI wrapper test coverage (binding in both directions, focus, Return, completion,
-  configuration updates).
-- `isComplete`, `isCompletePublisher` and `onComplete`: the mask is filled. `onComplete`
-  fires once when the user fills the mask and not for programmatic values; SwiftUI
-  `MaskedTextField` gets `isComplete: Binding<Bool>?` and `onComplete`.
-- `CursorBehavior.snapOnFocus`: on focus the cursor snaps to the first free position, then
-  can be moved freely. Verified on the iOS simulator with real taps.
 - `charValidator` now works: it restricts typed, pasted and programmatic input in plain
   fields and acts as an extra restriction in masked fields. Built-in validators:
   `EmojiFreeValidator`, `AllowedCharactersValidator`, `MaxLengthValidator`,
   `CompositeValidator`; `Character.isEmojiCharacter` detects emoji clusters as a whole.
-- All `CharValidator` methods have default implementations.
+  All `CharValidator` methods have default implementations.
+- `isComplete`, `isCompletePublisher` and `onComplete`: the mask is filled. `onComplete`
+  fires once when the user fills the mask and not for programmatic values; SwiftUI
+  `MaskedTextField` gets `isComplete: Binding<Bool>?` and `onComplete`.
+- `CursorBehavior.snapOnFocus`: on focus the cursor snaps to the first free position, then
+  can be moved freely.
+- `disablesAutocorrection` (also on `MaskedTextField`).
+- SwiftUI wrapper test coverage (binding in both directions, focus, Return, completion,
+  configuration updates).
+- Release workflow: pushing a version tag creates a GitHub Release from this changelog.
 
 ### Changed
+- Masked fields now disable autocorrection, spell checking and smart quotes/dashes/insert-delete
+  by default (`disablesAutocorrection`). Explicitly set traits win; set
+  `disablesAutocorrection = false` to restore the old behavior.
+- In `.free` (and `.snapOnFocus`) typing at a cursor with no free position to its right now
+  fills the first free position on the left, so a mask can be completed by typing at the
+  end. Before, such input was rejected.
 - `charValidator` is held by a strong reference (it was `weak`, so an inline assignment
   was released immediately).
 - Plain (unmasked) fields no longer re-implement typing: edits are native unless a
   validator is set and changes the input. Typing and deleting in the middle of a plain
   field now works at the cursor instead of appending/removing at the end.
+- `MaskedTextField` observes `textDidChangeNotification` instead of the control's
+  `.editingChanged` target-action, so the binding no longer depends on UIControl event
+  delivery (which does not work without a running `UIApplication`).
 
 ## 1.1.1
 
