@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3.2
 
 ### Changed
 - Fewer Swift strict-concurrency warnings (`-strict-concurrency=complete`): the hide timer no
