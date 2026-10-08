@@ -15,9 +15,11 @@ final class MaskTextFieldFieldTests: XCTestCase {
     override func setUp() {
         super.setUp()
         field = MaskTextField()
+        MaskTransformer.focusSnapWindow = 60
     }
 
     override func tearDown() {
+        MaskTransformer.focusSnapWindow = 0.5
         field = nil
         super.tearDown()
     }

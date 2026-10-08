@@ -9,10 +9,33 @@ final class MaskTransformerTests: XCTestCase {
     override func setUp() {
         super.setUp()
         mock = MockMaskTextField()
+        // Широкое окно привязки курсора: тесты не должны зависеть от скорости раннера.
+        MaskTransformer.focusSnapWindow = 60
         transformer = MaskTransformer(textField: mock)
     }
 
+    /// Крутит main run loop, пока условие не выполнится или не истечёт `timeout`.
+    ///
+    /// Вместо `asyncAfter` с проверками внутри замыкания: на нагруженном CI таймеры
+    /// опаздывают, а замыкание, сработавшее после `tearDown`, роняет процесс тестов.
+    private func waitUntil(timeout: TimeInterval = 15, _ condition: () -> Bool) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() {
+            if Date() >= deadline { return false }
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        }
+        return true
+    }
+
+    private func spinRunLoop(for interval: TimeInterval) {
+        let deadline = Date().addingTimeInterval(interval)
+        while Date() < deadline {
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        }
+    }
+
     override func tearDown() {
+        MaskTransformer.focusSnapWindow = 0.5
         transformer = nil
         mock = nil
         super.tearDown()
@@ -369,7 +392,6 @@ final class MaskTransformerTests: XCTestCase {
         transformer.text = "29"
 
         MaskTransformer.focusSnapWindow = 0
-        defer { MaskTransformer.focusSnapWindow = 0.5 }
 
         transformer.onGotFocus()
         Thread.sleep(forTimeInterval: 0.01)
@@ -493,13 +515,7 @@ final class MaskTransformerTests: XCTestCase {
         XCTAssertEqual(mock.text, "1_")
 
         // Через 1.5 секунды символ скрывается.
-        let expectation = expectation(description: "char hidden")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
-            XCTAssertEqual(self.mock.text, "•_")
-            expectation.fulfill()
-        }
-
-        wait(for: [expectation], timeout: 2.5)
+        XCTAssertTrue(waitUntil { self.mock.text == "•_" }, "символ не скрылся: \(mock.text ?? "nil")")
     }
 
     func testHideCharsTimerKeepsCursorPositionInFreeMode() {
@@ -510,13 +526,8 @@ final class MaskTransformerTests: XCTestCase {
         // Пользователь переставил курсор, пока шёл таймер скрытия.
         mock.setCursorPosition(0)
 
-        let expectation = expectation(description: "timer fired")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
-            XCTAssertEqual(self.mock.text, "•___")
-            XCTAssertEqual(self.mock.cursorPosition, 0)
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.5)
+        XCTAssertTrue(waitUntil { self.mock.text == "•___" }, "таймер не сработал: \(mock.text ?? "nil")")
+        XCTAssertEqual(mock.cursorPosition, 0)
     }
 
     func testHideCharsTimerKeepsCanonicalCursorInSequentialMode() {
@@ -525,12 +536,8 @@ final class MaskTransformerTests: XCTestCase {
         transformer.hideChars = true
         _ = transformer.onTextInput("1")
 
-        let expectation = expectation(description: "timer fired")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
-            XCTAssertEqual(self.mock.cursorPosition, 1)
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.5)
+        XCTAssertTrue(waitUntil { self.mock.text == "•___" }, "таймер не сработал: \(mock.text ?? "nil")")
+        XCTAssertEqual(mock.cursorPosition, 1)
     }
 
     func testHideCharsTimerCanceledOnMaskChange() {
@@ -545,12 +552,9 @@ final class MaskTransformerTests: XCTestCase {
 
         // Спустя больше, чем задержка скрытия, старый таймер не должен
         // ничего «завеить» в новой маске.
-        let expectation = expectation(description: "stale timer")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
-            XCTAssertEqual(self.mock.text, "___")
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.5)
+        spinRunLoop(for: MaskTransformer.hideCharDelay + 0.5)
+
+        XCTAssertEqual(mock.text, "___")
     }
 
     func testHideCharsKeepsOnlyLastEnteredVisibleThenVeilsAll() {
@@ -563,12 +567,7 @@ final class MaskTransformerTests: XCTestCase {
         // Предыдущие символы скрываются сразу, последний — виден.
         XCTAssertEqual(mock.text, "•2_")
 
-        let expectation = expectation(description: "all hidden")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
-            XCTAssertEqual(self.mock.text, "••_")
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.5)
+        XCTAssertTrue(waitUntil { self.mock.text == "••_" }, "символы не скрылись: \(mock.text ?? "nil")")
     }
 
     // MARK: - Установка значения без маски
