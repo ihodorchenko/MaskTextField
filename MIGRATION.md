@@ -1,3 +1,27 @@
+# Migrating from 2.x to 3.0
+
+3.0 makes the input engine an implementation detail. Nothing about how masks behave changes: if you
+only use `MaskTextField`, `MaskedTextField`, `MaskConfiguration`, `MaskVariant`, `MaskPreset` and
+the validators, there is nothing to do.
+
+## Removed from the public API
+
+- `BaseTransformer` and `MaskTransformer` (including `MaskTransformer.hideChar`,
+  `MaskTransformer.defaultMaskChar` and `MaskTransformer.hideCharDelay`)
+- `MaskTextFieldProtocol`
+
+They are `internal` now, so they can change in 3.x minor releases. `MaskTextField` still has
+`check(char:)`, `check(string:)`, `correct(string:)`, `setCursorPosition(_:)` and `cursorOffset`.
+
+| 2.x | 3.0 |
+|-----|-----|
+| `MaskTransformer.defaultMaskChar` | `MaskConfiguration.defaultMaskChar` |
+| `MaskTransformer.hideChar` | `MaskConfiguration.defaultVeiledMaskChar` |
+| subclassing `BaseTransformer` / `MaskTransformer` | not supported; use `charValidator`, `maskProvider` or `maskVariants` |
+| implementing `MaskTextFieldProtocol` to test logic without UIKit | test through `MaskTextField` (it works off-screen, without a window) |
+
+---
+
 # Migrating from 1.x to 2.0
 
 2.0 removes API that did not work or was only kept for compatibility, and tidies up two names.

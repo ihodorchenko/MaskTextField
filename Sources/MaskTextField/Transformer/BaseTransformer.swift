@@ -3,18 +3,18 @@ import Foundation
 /// The base text transformer. Implements the behavior of an "ordinary" text field
 /// without a mask: input appends characters, deletion removes the last one.
 @MainActor
-open class BaseTransformer {
-    public private(set) weak var control: MaskTextFieldProtocol?
+class BaseTransformer {
+    private(set) weak var control: MaskTextFieldProtocol?
 
     // MARK: - init
 
-    public init(textField: MaskTextFieldProtocol) {
+    init(textField: MaskTextFieldProtocol) {
         self.control = textField
     }
 
     // MARK: - property
 
-    open var text: String? {
+    var text: String? {
         get {
             self.control?.text
         }
@@ -32,37 +32,37 @@ open class BaseTransformer {
         return control.check(string: filtered) ? filtered : control.text
     }
 
-    open var capacity: Int {
+    var capacity: Int {
         return 0
     }
 
     /// Whether all editable positions are filled. Always `false` for a field without a mask.
-    open var isComplete: Bool {
+    var isComplete: Bool {
         return false
     }
 
     /// Normalizes a string for pasting. For a field without a mask it returns the string
     /// unchanged; subclasses may override it (for example, to strip a mask).
-    open func normalizedValue(from value: String) -> String {
+    func normalizedValue(from value: String) -> String {
         return value
     }
 
     // MARK: - func
 
-    open func onGotFocus() {
+    func onGotFocus() {
         // virtual
     }
 
-    open func onLostFocus() {
+    func onLostFocus() {
         // virtual
     }
 
-    open func onSelectionChanged() {
+    func onSelectionChanged() {
         // virtual
     }
 
     @discardableResult
-    open func onTextInput(_ text: String, at offset: Int = 0) -> Bool {
+    func onTextInput(_ text: String, at offset: Int = 0) -> Bool {
         // virtual
         self.text = (self.text ?? "") + text
         return true
@@ -71,7 +71,7 @@ open class BaseTransformer {
     /// Replaces the `range` (in characters of the current text) with the string `text`
     /// and puts the cursor after the inserted fragment. Used for pasting from the
     /// pasteboard and for replacing a selection.
-    open func onPaste(_ text: String, in range: Range<Int>) {
+    func onPaste(_ text: String, in range: Range<Int>) {
         var chars = Array(self.text ?? "")
         let lower = min(max(range.lowerBound, 0), chars.count)
         let upper = min(max(range.upperBound, lower), chars.count)
@@ -81,7 +81,7 @@ open class BaseTransformer {
         self.control?.setCursorPosition(lower + text.count)
     }
 
-    open func onDeleteBackward(at offset: Int = Int.max) {
+    func onDeleteBackward(at offset: Int = Int.max) {
         // virtual
         guard !(self.text ?? "").isEmpty else { return }
         _ = self.text?.removeLast()

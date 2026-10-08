@@ -6,7 +6,7 @@ import Foundation
 /// the single method `setCursorPosition(_:)`, which works with an integer offset.
 /// This makes it possible to test the mask logic without a `UITextField` and without UIKit.
 @MainActor
-public protocol MaskTextFieldProtocol: AnyObject {
+protocol MaskTextFieldProtocol: AnyObject {
     var text: String? { get set }
 
     func check(char: Character) -> Bool

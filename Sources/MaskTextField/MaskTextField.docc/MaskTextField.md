@@ -54,12 +54,6 @@ The SwiftUI wrapper `MaskedTextField` lives in the separate `MaskTextFieldSwiftU
 
 - <doc:Accessibility>
 
-### Transformers
-
-- ``MaskTransformer``
-- ``BaseTransformer``
-- ``MaskTextFieldProtocol``
-
 ### Utilities
 
 - ``ResponderStandardEditActions``

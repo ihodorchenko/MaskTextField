@@ -18,12 +18,12 @@ import Foundation
 /// are stored separately, in arrays indexed like the mask positions.
 
 @MainActor
-public final class MaskTransformer: BaseTransformer {
-    public static let hideChar: Character = MaskConfiguration.defaultVeiledMaskChar
-    public static let defaultMaskChar: Character = MaskConfiguration.defaultMaskChar
+final class MaskTransformer: BaseTransformer {
+    static let hideChar: Character = MaskConfiguration.defaultVeiledMaskChar
+    static let defaultMaskChar: Character = MaskConfiguration.defaultMaskChar
 
     /// The delay before the last entered character is veiled in `hideChars` mode.
-    public static let hideCharDelay: TimeInterval = 1.5
+    static let hideCharDelay: TimeInterval = 1.5
 
     var slots: [MaskSlot] = []
     var lostFocusSlots: [MaskSlot] = []
@@ -66,12 +66,12 @@ public final class MaskTransformer: BaseTransformer {
 
     var _capacity: Int = 0
 
-    public override var capacity: Int {
+    override var capacity: Int {
         self._capacity
     }
 
     /// Whether all editable positions are filled (a mask without editable positions is never complete).
-    public override var isComplete: Bool {
+    override var isComplete: Bool {
         self._capacity > 0
             && self.slots.indices.allSatisfy { !self.slots[$0].canEntered || self.entered[$0] != nil }
     }
@@ -79,7 +79,7 @@ public final class MaskTransformer: BaseTransformer {
     /// Normalizes a pasted string: keeps only the characters allowed
     /// at the editable positions and trims to their number (the last characters
     /// are kept on paste).
-    public override func normalizedValue(from value: String) -> String {
+    override func normalizedValue(from value: String) -> String {
         let enteredSlots = self.slots.filter { $0.canEntered }
         guard !enteredSlots.isEmpty else { return "" }
 
@@ -94,7 +94,7 @@ public final class MaskTransformer: BaseTransformer {
         return filtered
     }
 
-    override public var text: String? {
+    override var text: String? {
         get {
             String(self.entered.compactMap { $0 })
         }
@@ -136,11 +136,11 @@ public final class MaskTransformer: BaseTransformer {
         return filled
     }
 
-    public var visibleTextMask: String {
+    var visibleTextMask: String {
         String(self.slots.map { self.placeholder(for: $0) })
     }
 
-    public var visibleTextMaskLostFocus: String {
+    var visibleTextMaskLostFocus: String {
         String(self.lostFocusSlots.map { self.placeholder(for: $0) })
     }
 
@@ -148,7 +148,7 @@ public final class MaskTransformer: BaseTransformer {
     ///
     /// An empty field is described as "Empty"; if characters are hidden (`hideChars`, or `^` while
     /// unfocused), only the number of entered characters is announced.
-    public var accessibilityDescription: String {
+    var accessibilityDescription: String {
         let chars = self.entered.compactMap { $0 }
         guard !chars.isEmpty else { return L10n.string("a11y.empty") }
 
@@ -162,7 +162,7 @@ public final class MaskTransformer: BaseTransformer {
 
     // MARK: - override func
 
-    public override func onDeleteBackward(at offset: Int = Int.max) {
+    override func onDeleteBackward(at offset: Int = Int.max) {
         if self.maskProvider != nil {
             self.dynamicDelete(at: offset)
             return
@@ -174,7 +174,7 @@ public final class MaskTransformer: BaseTransformer {
         self.setTextAndCursor(cursorPosition: index)
     }
 
-    public override func onTextInput(_ text: String, at offset: Int = 0) -> Bool {
+    override func onTextInput(_ text: String, at offset: Int = 0) -> Bool {
         guard let f = text.first else { return false }
 
         if self.maskProvider != nil {
@@ -196,7 +196,7 @@ public final class MaskTransformer: BaseTransformer {
     /// Characters outside the range are kept and shifted, so pasting into the middle
     /// does not overwrite the rest of the value, and replacing a selection removes the selected part.
     /// The `text` string is normalized first (`normalizedValue(from:)`).
-    public override func onPaste(_ text: String, in range: Range<Int>) {
+    override func onPaste(_ text: String, in range: Range<Int>) {
         if self.maskProvider != nil {
             self.dynamicPaste(text, in: range)
             return
@@ -239,7 +239,7 @@ public final class MaskTransformer: BaseTransformer {
         self.setTextAndCursor(cursorPosition: cursor)
     }
 
-    public override func onSelectionChanged() {
+    override func onSelectionChanged() {
         guard !self.isRendering else { return }
 
         if self.cursorBehavior == .snapOnFocus, let deadline = self.focusSnapDeadline {
@@ -262,7 +262,7 @@ public final class MaskTransformer: BaseTransformer {
         self.setTextAndCursor(cursorPosition: self.control?.cursorOffset)
     }
 
-    public override func onGotFocus() {
+    override func onGotFocus() {
         self._isFocus = true
         self.focusSnapDeadline = self.cursorBehavior == .snapOnFocus
             ? ProcessInfo.processInfo.systemUptime + self.focusSnapWindow
@@ -270,7 +270,7 @@ public final class MaskTransformer: BaseTransformer {
         self.setTextAndCursor()
     }
 
-    public override func onLostFocus() {
+    override func onLostFocus() {
         self._isFocus = false
         self.focusSnapDeadline = nil
         self.setTextAndCursor()
@@ -278,19 +278,19 @@ public final class MaskTransformer: BaseTransformer {
 
     // MARK: - property
 
-    public var veiledMaskChar: Character = MaskTransformer.hideChar {
+    var veiledMaskChar: Character = MaskTransformer.hideChar {
         didSet {
             self.setTextAndCursor()
         }
     }
 
-    public var maskChar: Character = MaskTransformer.defaultMaskChar {
+    var maskChar: Character = MaskTransformer.defaultMaskChar {
         didSet {
             self.setTextAndCursor()
         }
     }
 
-    public var hideChars: Bool = false {
+    var hideChars: Bool = false {
         didSet {
             if !self.hideChars {
                 self.cancelHideTimer()
@@ -302,7 +302,7 @@ public final class MaskTransformer: BaseTransformer {
     /// Dynamic masks: returns a mask variant for the current raw value.
     /// While the provider is set, the `mask` and `maskLostFocus` properties are not used.
     /// The provider is called on every change and must be a pure function.
-    public var maskProvider: ((String) -> MaskVariant)? {
+    var maskProvider: ((String) -> MaskVariant)? {
         didSet {
             if self.maskProvider != nil {
                 self.activeVariant = nil
@@ -322,7 +322,7 @@ public final class MaskTransformer: BaseTransformer {
     /// The variant currently chosen by the provider (`nil` without dynamic masks).
     var activeVariant: MaskVariant?
 
-    public var mask: String = "" {
+    var mask: String = "" {
         didSet {
             guard self.maskProvider == nil else { return }
 
@@ -335,7 +335,7 @@ public final class MaskTransformer: BaseTransformer {
         }
     }
 
-    public var maskLostFocus: String = "" {
+    var maskLostFocus: String = "" {
         didSet {
             guard self.maskProvider == nil else { return }
 
@@ -344,19 +344,19 @@ public final class MaskTransformer: BaseTransformer {
         }
     }
 
-    public var maskMode: MaskMode = .fullMask {
+    var maskMode: MaskMode = .fullMask {
         didSet {
             self.setTextAndCursor()
         }
     }
 
-    public var cursorBehavior: CursorBehavior = .free {
+    var cursorBehavior: CursorBehavior = .free {
         didSet {
             self.setTextAndCursor()
         }
     }
 
-    public var hiddenMaskIfEnteredTextEmpty: Bool = false {
+    var hiddenMaskIfEnteredTextEmpty: Bool = false {
         didSet {
             self.setTextAndCursor()
         }

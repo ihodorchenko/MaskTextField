@@ -48,7 +48,7 @@ xcodebuild docbuild -scheme MaskTextField-Package \
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ihodorchenko/MaskTextField.git", from: "2.0.0")
+    .package(url: "https://github.com/ihodorchenko/MaskTextField.git", from: "3.0.0")
 ],
 targets: [
     .target(
@@ -302,7 +302,7 @@ in progress (marked text) the field does not intervene. In a masked field only
 
 ## Architecture
 
-Input is processed by a transformer (`BaseTransformer` → `MaskTransformer`), both `@MainActor`:
+Input is processed by an internal transformer (`BaseTransformer` → `MaskTransformer`), both `@MainActor`:
 
 - `BaseTransformer` — a plain, unmasked field (character restrictions via `charValidator`);
 - `MaskTransformer` — mask application, character veiling, display modes, dynamic masks.
@@ -311,8 +311,8 @@ The mask itself is parsed once into immutable `MaskSlot`s; entered characters an
 veiling flags live in the transformer next to them, with a single hide timer for
 password mode.
 
-The logic works through the `MaskTextFieldProtocol`, so the transformers can be
-tested without a real `UITextField`.
+The logic works through an internal `MaskTextFieldProtocol`, so the transformers can be
+tested without a real `UITextField`. These types are not public API.
 
 ## Example app
 

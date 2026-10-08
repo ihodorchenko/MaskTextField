@@ -1,6 +1,18 @@
 # Changelog
 
-## Unreleased
+## 3.0.0
+
+See [MIGRATION.md](MIGRATION.md).
+
+### Removed (breaking)
+- `BaseTransformer`, `MaskTransformer` (with `hideChar`, `defaultMaskChar`, `hideCharDelay`) and
+  `MaskTextFieldProtocol` are no longer public. They were an implementation detail whose public
+  surface blocked changes to the input engine. Default characters moved to
+  `MaskConfiguration.defaultMaskChar` / `defaultVeiledMaskChar`.
+
+### Changed
+- Default mask characters are defined in one place (`MaskConfiguration`).
+- Dynamic masks live in their own file; internal comments are in English.
 
 ### Fixed
 - `deleteBackward()` removes the whole selected fragment instead of one character before the
