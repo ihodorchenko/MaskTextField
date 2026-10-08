@@ -130,6 +130,7 @@ Examples:
 | `maskChar` | `Character` | Placeholder character (`_` by default) |
 | `veiledMaskChar` | `Character` | Character that veils entered characters (`•` by default) |
 | `maskMode` | `MaskMode` | `.fullMask` or `.gradualMask` |
+| `maskProvider` / `maskVariants` | `((String) -> MaskVariant)?` / `[MaskVariant]` | Dynamic masks (see below) |
 | `cursorBehavior` | `CursorBehavior` | `.free` (default), `.snapOnFocus` or `.sequential` |
 | `hideChars` | `Bool` | Password mode (characters are veiled after a delay) |
 | `hiddenMaskIfEnteredTextEmpty` | `Bool` | Hide the mask when the value is empty and the field is not focused |
@@ -156,6 +157,52 @@ selected part.
 
 Combine publishers: `textPublisher`, `deleteBackwardPublisher`,
 `clearButtonPublisher`.
+
+## Dynamic masks
+
+The mask can follow the value, for example a card number: 15 digits for American Express
+(starts with 34/37), 16 otherwise.
+
+```swift
+field.maskProvider = MaskPreset.cardProvider        // raw value -> MaskVariant
+
+// or by capacity (list variants in ascending order): the first one the value fits into
+field.maskVariants = [MaskVariant("(dd) ddd"), MaskVariant("(dd) ddd-dd")]
+```
+
+After every edit the provider picks a mask for the new raw value and the characters are laid
+out on its positions in order. Notes:
+
+- The provider must be a pure function; it is called on every change. While it is set,
+  `maskText` / `maskLostFocus` are ignored (a `MaskVariant` carries its own `maskLostFocus`).
+- Dynamic masks keep the value compact (no gaps between entered characters, unlike a static
+  mask in `.free` mode), and the cursor follows the edited character across mask switches.
+- Input that fits no mask (or a character invalid for its position) is rejected as a whole.
+  Pasting more than the largest mask holds into an empty field keeps the last characters.
+- SwiftUI: `MaskedTextField(maskVariants:)`, or `maskProvider:` (applied once at creation;
+  recreate the view with `.id(...)` to change it).
+
+## Presets
+
+`MaskPreset` holds fixed-format masks: `card16`, `cardAmex`, `dateDMY`, `timeHM`,
+`otp(length:)`, and `cardProvider` for dynamic card masks. A mask only defines a format, not
+validity (`dateDMY` accepts `99/99/9999`). Country-dependent formats (phones, IBAN) are
+deliberately not included.
+
+## Atomic configuration
+
+Properties apply one by one, so the order of assignment matters (for example `maskChar`
+before `maskText`). `MaskConfiguration` applies everything at once and rebuilds the mask once
+(entered value is reset, as on any mask change):
+
+```swift
+field.configure {
+    $0.mask = "dd/dd/dddd"
+    $0.maskChar = "#"
+    $0.cursorBehavior = .sequential
+}
+// or: field.apply(MaskConfiguration(mask: "dd/dd")), field.configuration (read current)
+```
 
 ## Accessibility, locale and RTL
 

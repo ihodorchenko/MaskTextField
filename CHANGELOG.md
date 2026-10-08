@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Dynamic masks: `maskProvider` (raw value -> `MaskVariant`) and `maskVariants` (by capacity).
+  The mask is re-picked after every edit and the value is re-laid out on it; input that fits
+  no mask is rejected. SwiftUI: `MaskedTextField(maskVariants:)` and `maskProvider:`.
+- `MaskPreset`: `card16`, `cardAmex`, `dateDMY`, `timeHM`, `otp(length:)` and `cardProvider`.
+- `MaskConfiguration` with `MaskTextField.apply(_:)`, `configure { }` and `configuration`:
+  atomic, order-independent configuration.
+
 ## 1.2.0
 
 ### Added
