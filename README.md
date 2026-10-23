@@ -287,7 +287,8 @@ text through `check(string:)` (for example a length limit; a failing change is r
 as a whole). Input that passes unchanged is handled natively by UIKit; if the filter
 changed it, the filtered text is inserted at the selection. While an IME composition is
 in progress (marked text) the field does not intervene. In a masked field only
-`check(char:)` and `correct(string:)` are used.
+`check(char:)` and `correct(string:)` are used for typed and pasted input; a value set
+programmatically (`textValue`, `text`) goes through `check(char:)` only.
 
 ## Limitations of masked fields
 
@@ -297,6 +298,14 @@ in progress (marked text) the field does not intervene. In a masked field only
   native undo.
 - **IME composition.** In a masked field there is no marked-text handling: composing input
   (Chinese, Japanese, Korean) is not supported; use a plain field with a `charValidator`.
+- **External delegate.** `MaskTextField` is its own delegate and forwards to yours only
+  `shouldChangeCharactersIn`, `shouldBeginEditing`, `didBeginEditing`, `shouldEndEditing`,
+  `didEndEditing(reason:)`, `didChangeSelection`, `shouldClear` and `shouldReturn`. The edit menu
+  methods (`editMenuForCharactersIn`, `willPresentEditMenu`, `willDismissEditMenu`) and
+  `shouldInteractWith` are not forwarded; use `setEditActions` / `filterEditActions` instead.
+- **Custom `maskProvider` together with `maskVariants`.** `maskVariants` is a convenience that
+  generates the provider, so set only one of them. If both are set, `configuration` reports the
+  variants only and `configure { }` replaces the custom provider with the one built from them.
 - **Selection.** A non-empty selection is collapsed to a cursor when it changes; editing a
   range goes through the paste path (typing or pasting over a selection works).
 

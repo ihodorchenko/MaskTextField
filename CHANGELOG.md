@@ -7,6 +7,18 @@
 - In a masked field, assigning `text` / `attributedText` goes through the mask like `textValue`
   instead of desyncing the displayed text from the mask state.
 - Assigning the same `maskText` again no longer resets the entered value.
+- Observers (`textPublisher`, `.editingChanged`, `.valueChanged`) are no longer notified when input
+  is rejected or a backspace changes nothing.
+- The built-in clear button no longer removes a custom `leftView` / `rightView` and is hidden on an
+  empty field.
+- `setEditActions(only:)` replaces the previous set instead of adding to it.
+
+### Removed
+- An unused integer `subscript` on `String` (internal).
+
+### Documentation
+- Documented the delegate methods that are forwarded, the `maskProvider` / `maskVariants`
+  interaction and how `CharValidator` applies to programmatic values.
 
 ## 3.0.0
 

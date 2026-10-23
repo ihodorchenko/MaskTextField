@@ -1,16 +1,6 @@
 import Foundation
 
 extension String {
-    /// Access to a character by an integer index.
-    ///
-    /// Simplifies character-by-character parsing of a mask. Out-of-bounds access crashes,
-    /// so the caller must guarantee a valid index.
-    subscript(offset: Int) -> Character {
-        get {
-            self[self.index(self.startIndex, offsetBy: offset)]
-        }
-    }
-
     /// Returns a substring starting at `start` with the given `length`.
     ///
     /// Unlike `NSString.substring(with:)` it is safe: when out of bounds, the largest

@@ -725,6 +725,78 @@ final class MaskTextFieldFieldTests: XCTestCase {
 
         XCTAssertEqual(field.textValue, "1234")
     }
+
+    // MARK: - Уведомления, clear-кнопка, edit actions
+
+    func testRejectedInputDoesNotNotify() {
+        field.maskText = "dd"
+        var events = 0
+        let token = NotificationCenter.default.addObserver(
+            forName: UITextField.textDidChangeNotification, object: field, queue: nil
+        ) { _ in events += 1 }
+        defer { NotificationCenter.default.removeObserver(token) }
+
+        _ = field.textField(field, shouldChangeCharactersIn: NSRange(location: 0, length: 0), replacementString: "a")
+        XCTAssertEqual(events, 0)
+
+        _ = field.textField(field, shouldChangeCharactersIn: NSRange(location: 0, length: 0), replacementString: "1")
+        XCTAssertEqual(events, 1)
+    }
+
+    func testBackspaceOnEmptyValueDoesNotNotify() {
+        field.maskText = "dd"
+        var events = 0
+        let token = NotificationCenter.default.addObserver(
+            forName: UITextField.textDidChangeNotification, object: field, queue: nil
+        ) { _ in events += 1 }
+        defer { NotificationCenter.default.removeObserver(token) }
+
+        field.deleteBackward()
+
+        XCTAssertEqual(events, 0)
+    }
+
+    func testClearButtonIsHiddenOnEmptyFieldAndShownWithText() throws {
+        field.maskText = "dd"
+        field.clearButtonMode = .always
+        let button = try XCTUnwrap(field.rightView)
+        XCTAssertTrue(button.isHidden)
+
+        field.textValue = "12"
+        XCTAssertFalse(button.isHidden)
+
+        field.textValue = ""
+        XCTAssertTrue(button.isHidden)
+    }
+
+    func testClearButtonKeepsCustomRightView() {
+        let custom = UIView()
+        field.rightView = custom
+        field.clearButtonMode = .always
+
+        XCTAssertTrue(field.rightView === custom)
+
+        field.clearButtonMode = .never
+        XCTAssertTrue(field.rightView === custom)
+    }
+
+    func testClearButtonDoesNotTouchCustomLeftView() {
+        let custom = UIView()
+        field.leftView = custom
+        field.clearButtonMode = .always
+        field.clearButtonMode = .never
+
+        XCTAssertTrue(field.leftView === custom)
+        XCTAssertNil(field.rightView)
+    }
+
+    func testSetEditActionsOnlyReplacesPreviousSet() {
+        field.setEditActions(only: [.copy])
+        field.setEditActions(only: [.paste])
+
+        XCTAssertFalse(field.canPerformAction(#selector(UIResponderStandardEditActions.copy(_:)), withSender: nil))
+        XCTAssertTrue(field.canPerformAction(#selector(UIResponderStandardEditActions.paste(_:)), withSender: nil))
+    }
 }
 
 /// Поле с подменяемым выделением (реальное выделение маска схлопывает сама).

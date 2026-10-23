@@ -17,6 +17,7 @@ extension MaskTextField: MaskTextFieldProtocol {
         self.isDisplayingText = true
         defer { self.isDisplayingText = false }
         super.text = text
+        self.refreshClearButtonVisibility()
     }
 
     public func setCursorPosition(_ offset: Int) {

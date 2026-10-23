@@ -13,7 +13,15 @@ extension MaskTextField: UITextFieldDelegate {
             return self.shouldChangePlainText(in: range, with: string)
         }
 
-        defer { self.notification() }
+        // Observers are notified only when the text or the value really changed:
+        // a rejected character or a paste that adds nothing stays silent.
+        let textBefore = self.text
+        let valueBefore = self.textValue
+        defer {
+            if self.text != textBefore || self.textValue != valueBefore {
+                self.notification()
+            }
+        }
 
         if range.location == 0 && range.length == 0 && string.isEmpty {
             self.textValue = ""

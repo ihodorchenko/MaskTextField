@@ -23,6 +23,7 @@ public class MaskTextField: UITextField {
         set {
             guard !self.isDisplayingText, self._transformer is MaskTransformer else {
                 super.text = newValue
+                self.refreshClearButtonVisibility()
                 return
             }
             self.textValue = newValue ?? ""
@@ -65,19 +66,36 @@ public class MaskTextField: UITextField {
     }()
 
     /// The clear button sits at the end of the line: on the right in LTR and on the left in RTL.
+    ///
+    /// Only the slot the button itself occupies is touched: a `leftView` / `rightView` set by the
+    /// user is kept, and if it sits at the end of the line the clear button is not shown.
     private func updateCustomClearButton() {
-        self.leftView = nil
-        self.rightView = nil
+        if self.leftView === self.customClearButton { self.leftView = nil }
+        if self.rightView === self.customClearButton { self.rightView = nil }
 
         guard self.requestedClearButtonMode != .never else { return }
 
         if self.effectiveUserInterfaceLayoutDirection == .rightToLeft {
+            guard self.leftView == nil else { return }
             self.leftView = self.customClearButton
             self.leftViewMode = self.requestedClearButtonMode
         } else {
+            guard self.rightView == nil else { return }
             self.rightView = self.customClearButton
             self.rightViewMode = self.requestedClearButtonMode
         }
+        self.refreshClearButtonVisibility()
+    }
+
+    /// Like the system button, ours is not shown on an empty field.
+    func refreshClearButtonVisibility() {
+        let isEmpty = (self.text ?? "").isEmpty
+            || (self._transformer is MaskTransformer && self.textValue.isEmpty)
+        self.customClearButton.isHidden = isEmpty
+    }
+
+    @objc private func refreshClearButtonVisibilityAction() {
+        self.refreshClearButtonVisibility()
     }
 
     @objc private func clearButtonHandler() {
@@ -148,6 +166,7 @@ public class MaskTextField: UITextField {
     }
 
     private func commonInit() {
+        self.addTarget(self, action: #selector(self.refreshClearButtonVisibilityAction), for: .editingChanged)
         // Dynamic Type: scales the font set through `preferredFont`.
         self.font = UIFont.preferredFont(forTextStyle: .body)
         self.adjustsFontForContentSizeCategory = true
@@ -321,6 +340,7 @@ public class MaskTextField: UITextField {
         // Deletion must go through the transformer: `super.deleteBackward()` removes a
         // character from the displayed text directly and desyncs the mask state.
         let current = self.text ?? ""
+        let valueBefore = self.textValue
         let selection = self.selectedTextRange ?? self.textRange(from: self.endOfDocument, to: self.endOfDocument)
         let start = selection?.start ?? self.endOfDocument
         let end = selection?.end ?? start
@@ -338,7 +358,9 @@ public class MaskTextField: UITextField {
             self._transformer.onDeleteBackward(at: current.characterIndex(utf16Offset: utf16Offset))
         }
         self.deleteBackwardSubject.send()
-        self.notification()
+        if self.text != current || self.textValue != valueBefore {
+            self.notification()
+        }
     }
 
     // MARK: - edit menu
@@ -347,7 +369,7 @@ public class MaskTextField: UITextField {
     private var filterEditActions: [ResponderStandardEditActions: Bool]?
 
     public func setEditActions(only actions: [ResponderStandardEditActions]) {
-        if self.editActions == nil { self.editActions = [:] }
+        self.editActions = [:]
         self.filterEditActions = nil
         actions.forEach { self.editActions?[$0] = true }
     }
@@ -451,6 +473,7 @@ public class MaskTextField: UITextField {
     /// Dynamic masks: returns a mask variant for the current raw value
     /// (for example a card: 15 or 16 digits). While set, `maskText` and `maskLostFocus` are
     /// ignored. Called on every change, so it must be a pure function.
+    /// Do not combine with `maskVariants`, which generates its own provider.
     public var maskProvider: ((String) -> MaskVariant)? {
         didSet {
             guard !self.isApplyingConfiguration else { return }
@@ -512,6 +535,7 @@ public class MaskTextField: UITextField {
         }
         set {
             self._transformer.text = newValue
+            self.refreshClearButtonVisibility()
             self.refreshCompletion(userInitiated: false)
         }
     }

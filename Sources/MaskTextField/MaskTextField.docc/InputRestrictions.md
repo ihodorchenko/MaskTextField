@@ -30,7 +30,8 @@ remaining string through ``CharValidator/correct(string:)``, and the resulting t
 ``CharValidator/check(string:)`` (for example a length limit; a failing change is rejected as a
 whole). Input that passes unchanged is handled natively by UIKit; if the filter changed it, the
 filtered text is inserted at the selection. During IME composition the field does not
-intervene. In a masked field only `check(char:)` and `correct(string:)` are used.
+intervene. In a masked field only `check(char:)` and `correct(string:)` are used for typed and pasted
+input; a value set programmatically (`textValue`, `text`) goes through `check(char:)` only.
 
 ### Limitations of masked fields
 
