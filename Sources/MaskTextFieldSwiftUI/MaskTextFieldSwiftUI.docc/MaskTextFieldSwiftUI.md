@@ -28,6 +28,14 @@ struct PhoneView: View {
 }
 ```
 
+### Field options
+
+Beyond the mask settings, ``MaskedTextField`` exposes `charValidator`, `textContentType`,
+`clearButtonColor`, `textContainerInset`, `font`, `textColor`, `textAlignment` and the accessibility
+labels. Accessory views are passed as `leftView` / `rightView` (with `leftViewMode` /
+`rightViewMode`); a custom `rightView`, for example a "show password" button, takes the place of the
+built-in clear button.
+
 The underlying UIKit field, its mask syntax, dynamic masks and validators are documented in the
 `MaskTextField` module.
 

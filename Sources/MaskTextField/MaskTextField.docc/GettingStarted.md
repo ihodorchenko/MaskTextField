@@ -10,7 +10,7 @@ Add the package in Xcode (**File ▸ Add Package Dependencies…**) or in `Packa
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ihodorchenko/MaskTextField.git", from: "3.0.0")
+    .package(url: "https://github.com/ihodorchenko/MaskTextField.git", from: "3.1.0")
 ],
 targets: [
     .target(name: "MyApp", dependencies: [
@@ -34,6 +34,9 @@ field.keyboardType = .numberPad
 Read and write the value without the mask through ``MaskTextField/textValue``. Observe changes
 with ``MaskTextField/textPublisher``, and use ``MaskTextField/isComplete`` /
 ``MaskTextField/onComplete`` to react when the mask is filled.
+
+Assigning `text` or `attributedText` to a masked field goes through the mask exactly like
+``MaskTextField/textValue``, so the displayed text and the mask state never diverge.
 
 ### SwiftUI
 

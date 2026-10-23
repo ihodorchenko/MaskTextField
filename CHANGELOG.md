@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 3.1.0
 
 ### Added
 - `MaskedTextField` (SwiftUI): `charValidator`, `textContentType`, `clearButtonColor`,

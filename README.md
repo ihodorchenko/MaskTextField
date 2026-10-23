@@ -48,7 +48,7 @@ xcodebuild docbuild -scheme MaskTextField-Package \
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ihodorchenko/MaskTextField.git", from: "3.0.0")
+    .package(url: "https://github.com/ihodorchenko/MaskTextField.git", from: "3.1.0")
 ],
 targets: [
     .target(
