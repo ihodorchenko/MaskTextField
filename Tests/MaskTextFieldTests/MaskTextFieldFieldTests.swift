@@ -672,6 +672,59 @@ final class MaskTextFieldFieldTests: XCTestCase {
         guard let range = field.selectedTextRange else { return 0 }
         return field.offset(from: field.beginningOfDocument, to: range.start)
     }
+
+    // MARK: - Утечки, text/attributedText, идемпотентность maskText
+
+    func testTextPublisherDoesNotRetainField() {
+        weak var weakField: MaskTextField?
+        var cancellable: AnyCancellable?
+        do {
+            let local = MaskTextField()
+            cancellable = local.textPublisher.sink { _ in }
+            weakField = local
+        }
+        cancellable?.cancel()
+
+        XCTAssertNil(weakField)
+    }
+
+    func testAssigningTextRoutesThroughMask() {
+        field.maskText = "dd-dd"
+        field.text = "1234"
+
+        XCTAssertEqual(field.text, "12-34")
+        XCTAssertEqual(field.textValue, "1234")
+    }
+
+    func testAssigningAttributedTextRoutesThroughMask() {
+        field.maskText = "dd-dd"
+        field.attributedText = NSAttributedString(string: "1234")
+
+        XCTAssertEqual(field.text, "12-34")
+        XCTAssertEqual(field.textValue, "1234")
+    }
+
+    func testAssignedTextSurvivesNextEdit() {
+        field.maskText = "dd-dd"
+        field.text = "12"
+        _ = field.textField(field, shouldChangeCharactersIn: NSRange(location: 2, length: 0), replacementString: "3")
+
+        XCTAssertEqual(field.textValue, "123")
+    }
+
+    func testTextOnFieldWithoutMaskStaysNative() {
+        field.text = "abc"
+
+        XCTAssertEqual(field.text, "abc")
+    }
+
+    func testReassigningSameMaskKeepsValue() {
+        field.maskText = "dd-dd"
+        field.textValue = "1234"
+        field.maskText = field.maskText
+
+        XCTAssertEqual(field.textValue, "1234")
+    }
 }
 
 /// Поле с подменяемым выделением (реальное выделение маска схлопывает сама).

@@ -11,6 +11,10 @@ final class MockMaskTextField: MaskTextFieldProtocol {
     /// Последняя позиция курсора, запрошенная трансформером.
     private(set) var cursorPosition: Int = 0
 
+    func display(text: String) {
+        self.text = text
+    }
+
     func check(char: Character) -> Bool { true }
     func check(string: String) -> Bool { true }
     func correct(string: String) -> String { string }

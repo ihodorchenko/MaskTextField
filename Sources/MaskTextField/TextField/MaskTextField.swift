@@ -12,6 +12,35 @@ public class MaskTextField: UITextField {
         }
     }
 
+    /// Set while the transformer writes the rendered text (see `display(text:)`).
+    var isDisplayingText = false
+
+    /// In a masked field, assigning `text` is equivalent to assigning `textValue`:
+    /// the string is treated as the raw value and rendered through the mask, so the mask
+    /// state does not desync from the displayed text. Reading returns the displayed text.
+    public override var text: String? {
+        get { super.text }
+        set {
+            guard !self.isDisplayingText, self._transformer is MaskTransformer else {
+                super.text = newValue
+                return
+            }
+            self.textValue = newValue ?? ""
+        }
+    }
+
+    /// Like `text`, in a masked field the plain string of the assigned value goes through the mask.
+    public override var attributedText: NSAttributedString? {
+        get { super.attributedText }
+        set {
+            guard self._transformer is MaskTransformer else {
+                super.attributedText = newValue
+                return
+            }
+            self.textValue = newValue?.string ?? ""
+        }
+    }
+
     private var requestedClearButtonMode: UITextField.ViewMode = .never
 
     /// Replaces the system clear button with our own (via `rightView`),
@@ -74,13 +103,17 @@ public class MaskTextField: UITextField {
         self.clearButtonSubject.eraseToAnyPublisher()
     }
 
-    public private(set) lazy var textPublisher: AnyPublisher<String, Never> = NotificationCenter.default
-        .publisher(for: UITextField.textDidChangeNotification, object: self)
-        .map {
-            ($0.object as? UITextField)?.text ?? ""
-        }
-        .receive(on: RunLoop.main)
-        .eraseToAnyPublisher()
+    /// Emits the displayed text after every change. Not stored: a publisher built with
+    /// `object: self` retains the field, so caching it would create a retain cycle.
+    public var textPublisher: AnyPublisher<String, Never> {
+        NotificationCenter.default
+            .publisher(for: UITextField.textDidChangeNotification, object: self)
+            .map {
+                ($0.object as? UITextField)?.text ?? ""
+            }
+            .receive(on: RunLoop.main)
+            .eraseToAnyPublisher()
+    }
 
     /// The user's delegate, assigned through `delegate`.
     ///
@@ -403,7 +436,7 @@ public class MaskTextField: UITextField {
     /// Use `maskLostFocus` for a mask with veiled characters shown when the field loses focus.
     public var maskText: String = "" {
         didSet {
-            guard !self.isApplyingConfiguration else { return }
+            guard !self.isApplyingConfiguration, self.maskText != oldValue else { return }
 
             if !self.maskText.isEmpty {
                 self.configureMask { $0.mask = self.maskText }

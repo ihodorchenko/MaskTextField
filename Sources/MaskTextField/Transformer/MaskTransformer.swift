@@ -516,13 +516,13 @@ final class MaskTransformer: BaseTransformer {
         guard let control = self.control else { return }
 
         if self.hiddenMaskIfEnteredTextEmpty && !self._isFocus && self.entered.allSatisfy({ $0 == nil }) {
-            control.text = ""
+            control.display(text: "")
             return
         }
 
         self.isRendering = true
         defer { self.isRendering = false }
-        control.text = text
+        control.display(text: text)
         control.setCursorPosition(cursor)
     }
 

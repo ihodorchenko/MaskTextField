@@ -13,6 +13,12 @@ extension MaskTextField: MaskTextFieldProtocol {
         return self.charValidator?.correct(string: string) ?? string
     }
 
+    func display(text: String) {
+        self.isDisplayingText = true
+        defer { self.isDisplayingText = false }
+        super.text = text
+    }
+
     public func setCursorPosition(_ offset: Int) {
         let utf16Offset = (self.text ?? "").utf16Offset(characterIndex: offset)
         let position = self.position(from: self.beginningOfDocument, offset: utf16Offset) ?? self.endOfDocument

@@ -9,6 +9,9 @@ import Foundation
 protocol MaskTextFieldProtocol: AnyObject {
     var text: String? { get set }
 
+    /// Puts the already rendered text into the field, bypassing the mask routing of `text`.
+    func display(text: String)
+
     func check(char: Character) -> Bool
     func check(string: String) -> Bool
     func correct(string: String) -> String

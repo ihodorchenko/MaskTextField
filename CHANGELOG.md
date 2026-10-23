@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- `textPublisher` no longer retains the field (it is now computed, not cached).
+- In a masked field, assigning `text` / `attributedText` goes through the mask like `textValue`
+  instead of desyncing the displayed text from the mask state.
+- Assigning the same `maskText` again no longer resets the entered value.
+
 ## 3.0.0
 
 See [MIGRATION.md](MIGRATION.md).
