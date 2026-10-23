@@ -595,6 +595,7 @@ final class MaskTextFieldFieldTests: XCTestCase {
     // MARK: - RTL
 
     func testForcesLeftToRightByDefault() {
+        field.maskText = "dd"
         XCTAssertTrue(field.forcesLeftToRight)
         XCTAssertEqual(field.semanticContentAttribute, .forceLeftToRight)
 
@@ -796,6 +797,27 @@ final class MaskTextFieldFieldTests: XCTestCase {
 
         XCTAssertFalse(field.canPerformAction(#selector(UIResponderStandardEditActions.copy(_:)), withSender: nil))
         XCTAssertTrue(field.canPerformAction(#selector(UIResponderStandardEditActions.paste(_:)), withSender: nil))
+    }
+    func testNonEmptySelectionCollapsesToCursor() throws {
+        field.maskText = "dd-dd"
+        field.textValue = "1234"
+        let start = try XCTUnwrap(field.position(from: field.beginningOfDocument, offset: 1))
+        let end = try XCTUnwrap(field.position(from: field.beginningOfDocument, offset: 4))
+        field.selectedTextRange = field.textRange(from: start, to: end)
+
+        field.textFieldDidChangeSelection(field)
+
+        XCTAssertEqual(field.selectedTextRange?.isEmpty, true)
+    }
+
+    func testMaskLessFieldIsNotForcedLeftToRight() {
+        XCTAssertEqual(field.semanticContentAttribute, .unspecified)
+
+        field.maskText = "dd"
+        XCTAssertEqual(field.semanticContentAttribute, .forceLeftToRight)
+
+        field.maskText = ""
+        XCTAssertEqual(field.semanticContentAttribute, .unspecified)
     }
 }
 

@@ -37,7 +37,8 @@ extension MaskTextField: UITextFieldDelegate {
             let upper = current.characterIndex(utf16Offset: range.location + range.length)
 
             self._transformer.onPaste(self.correct(string: string), in: lower..<max(lower, upper))
-            self.announceInputResult(accepted: true)
+            // A paste that changed nothing (no suitable characters) counts as rejected.
+            self.announceInputResult(accepted: self.text != textBefore || self.textValue != valueBefore)
             return false
         }
 

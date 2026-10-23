@@ -111,7 +111,9 @@ struct MyView: View {
 Optional parameters: `font`, `textColor`, `textAlignment`, `returnKeyType`,
 `clearButtonMode`, `isFocused: Binding<Bool>?` (read and drive focus) and
 `onCommit` (Return key), `isComplete: Binding<Bool>?`, `onComplete`, `forcesLeftToRight`, `announcesInputEvents`,
-`disablesAutocorrection`, `accessibilityLabelText` and `accessibilityHintText`.
+`disablesAutocorrection`, `charValidator`, `textContentType`, `clearButtonColor`,
+`textContainerInset`, `leftView` / `rightView` (with `leftViewMode` / `rightViewMode`; a custom
+`rightView` replaces the built-in clear button), `accessibilityLabelText` and `accessibilityHintText`.
 
 ```swift
 MaskedTextField(mask: "dd/dd/dddd", isFocused: $isDateFocused, onCommit: { submit() }, textValue: $date)
@@ -176,8 +178,9 @@ the end", so pasting over it drops the value after the selection start.
 
 Pasting and editing: pasted text is filtered to the characters the mask accepts.
 Pasting into the middle of a value keeps the surrounding characters (the tail
-shifts right), and typing, pasting or deleting over a selection replaces only the
-selected part.
+shifts right). A replaced range (for example text dictated or inserted over a range)
+affects only that part, but a selection made by the user is collapsed to a cursor, so
+see "Limitations of masked fields".
 
 Combine publishers: `textPublisher`, `deleteBackwardEvents`, `clearButtonEvents`
 (the events do not fire on subscription), `isCompletePublisher`.
@@ -240,7 +243,7 @@ field.configure {
   characters and a completed mask (off by default).
 - **Dynamic Type.** The default font is `preferredFont(.body)` with
   `adjustsFontForContentSizeCategory` enabled; a custom font must scale itself.
-- **RTL.** `forcesLeftToRight` (default `true`) keeps masked values (phones, cards,
+- **RTL.** `forcesLeftToRight` (default `true`, masked fields only) keeps masked values (phones, cards,
   dates) left-to-right in right-to-left interfaces; with `.natural` alignment the
   text is right-aligned there. Set it to `false` for fully mirrored layout. The
   clear button always sits at the end of the line (left in RTL).
@@ -306,8 +309,9 @@ programmatically (`textValue`, `text`) goes through `check(char:)` only.
 - **Custom `maskProvider` together with `maskVariants`.** `maskVariants` is a convenience that
   generates the provider, so set only one of them. If both are set, `configuration` reports the
   variants only and `configure { }` replaces the custom provider with the one built from them.
-- **Selection.** A non-empty selection is collapsed to a cursor when it changes; editing a
-  range goes through the paste path (typing or pasting over a selection works).
+- **Selection.** A non-empty selection is collapsed to a cursor when it changes, so a
+  masked field cannot hold a user selection (and `copy` has nothing to copy). A range
+  replacement that UIKit passes to the delegate still goes through the paste path.
 
 ## Architecture
 

@@ -82,6 +82,31 @@ public struct MaskedTextField: UIViewRepresentable {
     /// Makes VoiceOver announce rejected characters and a filled mask.
     public var announcesInputEvents: Bool
 
+    /// Additional restrictions on the characters that can be entered.
+    public var charValidator: CharValidator?
+
+    /// The content type hint for AutoFill (for example `.telephoneNumber`, `.oneTimeCode`).
+    public var textContentType: UITextContentType?
+
+    /// The color of the built-in clear button; `nil` keeps the default.
+    public var clearButtonColor: UIColor?
+
+    /// Insets of the text inside the field.
+    public var textContainerInset: UIEdgeInsets
+
+    /// A view at the leading side of the field (for example an icon); `nil` means none.
+    public var leftView: UIView?
+
+    /// When `leftView` is shown.
+    public var leftViewMode: UITextField.ViewMode
+
+    /// A view at the trailing side of the field (for example a "show" button for a password).
+    /// It takes the place of the built-in clear button, which is then not shown.
+    public var rightView: UIView?
+
+    /// When `rightView` is shown.
+    public var rightViewMode: UITextField.ViewMode
+
     /// The field's VoiceOver label.
     public var accessibilityLabelText: String?
 
@@ -126,6 +151,14 @@ public struct MaskedTextField: UIViewRepresentable {
     ///   - forcesLeftToRight: lay the value out left to right in RTL too.
     ///   - disablesAutocorrection: disable keyboard autocorrection and substitutions.
     ///   - announcesInputEvents: announce rejected characters and a filled mask.
+    ///   - charValidator: additional restrictions on the entered characters.
+    ///   - textContentType: the AutoFill content type.
+    ///   - clearButtonColor: the clear button color.
+    ///   - textContainerInset: insets of the text inside the field.
+    ///   - leftView: a view at the leading side of the field.
+    ///   - leftViewMode: when `leftView` is shown.
+    ///   - rightView: a view at the trailing side of the field (replaces the clear button).
+    ///   - rightViewMode: when `rightView` is shown.
     ///   - accessibilityLabelText: the VoiceOver label.
     ///   - accessibilityHintText: the VoiceOver hint.
     ///   - isFocused: a binding to the focus state (read and drive).
@@ -154,6 +187,14 @@ public struct MaskedTextField: UIViewRepresentable {
         forcesLeftToRight: Bool = true,
         disablesAutocorrection: Bool = true,
         announcesInputEvents: Bool = false,
+        charValidator: CharValidator? = nil,
+        textContentType: UITextContentType? = nil,
+        clearButtonColor: UIColor? = nil,
+        textContainerInset: UIEdgeInsets = .zero,
+        leftView: UIView? = nil,
+        leftViewMode: UITextField.ViewMode = .always,
+        rightView: UIView? = nil,
+        rightViewMode: UITextField.ViewMode = .always,
         accessibilityLabelText: String? = nil,
         accessibilityHintText: String? = nil,
         isFocused: Binding<Bool>? = nil,
@@ -182,6 +223,14 @@ public struct MaskedTextField: UIViewRepresentable {
         self.forcesLeftToRight = forcesLeftToRight
         self.disablesAutocorrection = disablesAutocorrection
         self.announcesInputEvents = announcesInputEvents
+        self.charValidator = charValidator
+        self.textContentType = textContentType
+        self.clearButtonColor = clearButtonColor
+        self.textContainerInset = textContainerInset
+        self.leftView = leftView
+        self.leftViewMode = leftViewMode
+        self.rightView = rightView
+        self.rightViewMode = rightViewMode
         self.accessibilityLabelText = accessibilityLabelText
         self.accessibilityHintText = accessibilityHintText
         self.isFocused = isFocused
@@ -198,6 +247,7 @@ public struct MaskedTextField: UIViewRepresentable {
     public func makeUIView(context: Context) -> MaskTextField {
         let field = MaskTextField()
         apply(to: field)
+        applyRightView(to: field, coordinator: context.coordinator)
         if let maskProvider { field.maskProvider = maskProvider }
         field.delegate = context.coordinator
         field.onComplete = { [weak coordinator = context.coordinator] in
@@ -214,6 +264,7 @@ public struct MaskedTextField: UIViewRepresentable {
     public func updateUIView(_ field: MaskTextField, context: Context) {
         context.coordinator.parent = self
         apply(to: field)
+        applyRightView(to: field, coordinator: context.coordinator)
 
         // Sync the value only when it differs, to avoid an update loop.
         if field.textValue != textValue {
@@ -248,6 +299,20 @@ public struct MaskedTextField: UIViewRepresentable {
         }
     }
 
+    /// Installs the custom `rightView`. The built-in clear button lives in the same slot, so a
+    /// removed custom view hands it back instead of leaving the slot empty.
+    private func applyRightView(to field: MaskTextField, coordinator: Coordinator) {
+        guard rightView !== coordinator.appliedRightView else { return }
+
+        coordinator.appliedRightView = rightView
+        if let rightView {
+            field.rightView = rightView
+        } else {
+            field.rightView = nil
+            field.clearButtonMode = field.clearButtonMode
+        }
+    }
+
     /// Applies the configuration to the field only when it changes, so that extra SwiftUI
     /// redraws do not reset the cursor and the already entered value.
     private func apply(to field: MaskTextField) {
@@ -270,6 +335,13 @@ public struct MaskedTextField: UIViewRepresentable {
         if field.forcesLeftToRight != forcesLeftToRight { field.forcesLeftToRight = forcesLeftToRight }
         if field.disablesAutocorrection != disablesAutocorrection { field.disablesAutocorrection = disablesAutocorrection }
         if field.announcesInputEvents != announcesInputEvents { field.announcesInputEvents = announcesInputEvents }
+        if field.charValidator !== charValidator { field.charValidator = charValidator }
+        if field.textContentType != textContentType { field.textContentType = textContentType }
+        if let clearButtonColor, field.clearButtonColor != clearButtonColor { field.clearButtonColor = clearButtonColor }
+        if field.textContainerInset != textContainerInset { field.textContainerInset = textContainerInset }
+        if field.leftView !== leftView { field.leftView = leftView }
+        if field.leftViewMode != leftViewMode { field.leftViewMode = leftViewMode }
+        if rightView != nil, field.rightViewMode != rightViewMode { field.rightViewMode = rightViewMode }
         if field.accessibilityLabel != accessibilityLabelText { field.accessibilityLabel = accessibilityLabelText }
         if field.accessibilityHint != accessibilityHintText { field.accessibilityHint = accessibilityHintText }
     }
@@ -278,6 +350,7 @@ public struct MaskedTextField: UIViewRepresentable {
     /// and of focus back into the bindings.
     public final class Coordinator: NSObject, UITextFieldDelegate {
         var parent: MaskedTextField
+        var appliedRightView: UIView?
 
         init(_ parent: MaskedTextField) {
             self.parent = parent

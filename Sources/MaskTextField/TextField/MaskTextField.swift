@@ -229,6 +229,7 @@ public class MaskTextField: UITextField {
     ///
     /// Masked values (phone, card, date) read left to right in RTL interfaces too.
     /// With `.natural` alignment the text is pinned to the right edge in RTL.
+    /// A field without a mask is not affected: its text follows the interface direction.
     public var forcesLeftToRight: Bool = true {
         didSet {
             self.updateLayoutDirection()
@@ -251,15 +252,19 @@ public class MaskTextField: UITextField {
         }
     }
 
+    private var appliesLeftToRight: Bool {
+        self.forcesLeftToRight && self._transformer is MaskTransformer
+    }
+
     private func updateLayoutDirection() {
-        self.semanticContentAttribute = self.forcesLeftToRight ? .forceLeftToRight : .unspecified
+        self.semanticContentAttribute = self.appliesLeftToRight ? .forceLeftToRight : .unspecified
         self.applyTextAlignment()
     }
 
     private func applyTextAlignment() {
         let isRTLInterface = UIView.userInterfaceLayoutDirection(for: .unspecified) == .rightToLeft
 
-        if self.forcesLeftToRight, self.requestedTextAlignment == .natural, isRTLInterface {
+        if self.appliesLeftToRight, self.requestedTextAlignment == .natural, isRTLInterface {
             super.textAlignment = .right
         } else {
             super.textAlignment = self.requestedTextAlignment
@@ -466,6 +471,7 @@ public class MaskTextField: UITextField {
                 self._transformer = BaseTransformer(textField: self)
             }
 
+            self.updateLayoutDirection()
             self.refreshCompletion(userInitiated: false)
         }
     }
@@ -486,6 +492,7 @@ public class MaskTextField: UITextField {
                 self.configureMask { $0.maskProvider = nil }
             }
 
+            self.updateLayoutDirection()
             self.refreshCompletion(userInitiated: false)
         }
     }
@@ -581,6 +588,7 @@ public class MaskTextField: UITextField {
 
         let isMasked = !configuration.mask.isEmpty || self.maskProvider != nil
         self._transformer = isMasked ? self.makeMaskTransformer() : BaseTransformer(textField: self)
+        self.updateLayoutDirection()
         self.refreshCompletion(userInitiated: false)
     }
 

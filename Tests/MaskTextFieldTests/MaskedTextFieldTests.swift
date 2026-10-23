@@ -114,6 +114,57 @@ final class MaskedTextFieldTests: XCTestCase {
         XCTAssertEqual(text.value, "37")
     }
 
+    // MARK: - Паритет с MaskTextField
+
+    private final class DigitsOnly: CharValidator {
+        func check(char: Character) -> Bool { char.isNumber }
+    }
+
+    func testPassesValidatorContentTypeColorAndInset() {
+        let text = Box("")
+        let validator = DigitsOnly()
+        let inset = UIEdgeInsets(top: 1, left: 2, bottom: 3, right: 4)
+        let field = show(MaskedTextField(
+            charValidator: validator,
+            textContentType: .oneTimeCode,
+            clearButtonColor: .red,
+            textContainerInset: inset,
+            textValue: text.binding
+        ))
+
+        XCTAssertTrue(field.charValidator === validator)
+        XCTAssertEqual(field.textContentType, .oneTimeCode)
+        XCTAssertEqual(field.clearButtonColor, .red)
+        XCTAssertEqual(field.textContainerInset, inset)
+    }
+
+    func testPassesAccessoryViews() {
+        let text = Box("")
+        let left = UIView()
+        let right = UIView()
+        let field = show(MaskedTextField(
+            mask: "dd",
+            clearButtonMode: .always,
+            leftView: left,
+            rightView: right,
+            textValue: text.binding
+        ))
+
+        XCTAssertTrue(field.leftView === left)
+        XCTAssertTrue(field.rightView === right)
+    }
+
+    func testRemovingCustomRightViewRestoresClearButton() {
+        let text = Box("")
+        let right = UIView()
+        let field = show(MaskedTextField(mask: "dd", clearButtonMode: .always, rightView: right, textValue: text.binding))
+
+        update(MaskedTextField(mask: "dd", clearButtonMode: .always, textValue: text.binding))
+
+        XCTAssertNotNil(field.rightView)
+        XCTAssertFalse(field.rightView === right)
+    }
+
     // MARK: - Return, фокус
 
     func testReturnKeyCallsOnCommit() {

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+- `MaskedTextField` (SwiftUI): `charValidator`, `textContentType`, `clearButtonColor`,
+  `textContainerInset`, `leftView` / `leftViewMode` and `rightView` / `rightViewMode`.
+
 ### Fixed
 - `textPublisher` no longer retains the field (it is now computed, not cached).
 - In a masked field, assigning `text` / `attributedText` goes through the mask like `textValue`
@@ -11,6 +15,9 @@
   is rejected or a backspace changes nothing.
 - The built-in clear button no longer removes a custom `leftView` / `rightView` and is hidden on an
   empty field.
+- `forcesLeftToRight` applies only to masked fields; a field without a mask follows the interface
+  direction.
+- An accessibility announcement for a paste that added nothing reports a rejected input.
 - `setEditActions(only:)` replaces the previous set instead of adding to it.
 
 ### Removed

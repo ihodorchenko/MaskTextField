@@ -39,7 +39,8 @@ A masked field rewrites its text itself and rejects the native change, so system
 (shake to undo, keyboard undo) does nothing there; plain fields keep native undo. A masked field
 does not handle IME composition (marked text), so composing input such as Chinese, Japanese or
 Korean is not supported: use a plain field with a ``CharValidator`` for it. A non-empty selection
-is collapsed to a cursor when it changes; typing or pasting over a selection still replaces it.
+is collapsed to a cursor when it changes, so a masked field cannot hold a user selection; a range
+replacement that UIKit passes to the delegate still goes through the paste path.
 
 ### Keyboard suggestions
 
