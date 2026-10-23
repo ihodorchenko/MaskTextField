@@ -85,6 +85,10 @@ print(field.textValue) // "291234567"
 While editing, the field shows `+375 (29) 123-45-67`; after losing focus it shows
 `+375 (••) •••-••-••`.
 
+In a masked field, assigning `text` or `attributedText` is the same as assigning `textValue`
+(the string is the raw value and goes through the mask), so the displayed text and the mask
+state never diverge.
+
 ## SwiftUI
 
 The `MaskTextFieldSwiftUI` product provides a ready-to-use `MaskedTextField`
@@ -168,8 +172,9 @@ Examples:
 | `visibleTextMask` | `String` | The mask being displayed |
 | `charValidator` | `CharValidator?` | Additional input restrictions |
 
-Cursor behavior: with `.free` (default) the cursor can be placed anywhere and
-edits happen at the cursor. With `.snapOnFocus` the first tap that gives the field focus
+Cursor behavior: with `.free` (default) the cursor can be placed anywhere; a typed character
+goes to the first free position at or after the cursor, or, if there is none, to the first free
+position before it (an entered character is never overwritten). With `.snapOnFocus` the first tap that gives the field focus
 puts the cursor on the first free position (wherever the tap landed); after that the
 cursor moves freely as in `.free`. With `.sequential` the cursor always sits on the first
 free position, input and deletion go strictly in order (append / erase from the
@@ -181,6 +186,14 @@ Pasting into the middle of a value keeps the surrounding characters (the tail
 shifts right). A replaced range (for example text dictated or inserted over a range)
 affects only that part, but a selection made by the user is collapsed to a cursor, so
 see "Limitations of masked fields".
+
+Clear button: `clearButtonMode` shows the library's own button (tint it with
+`clearButtonColor`). It is hidden on an empty field and sits in `rightView` (`leftView` in RTL);
+a `leftView` / `rightView` you set yourself is never replaced, and if it occupies the end of the
+line the clear button is not shown.
+
+Change notifications (`textPublisher`, `.editingChanged`, `.valueChanged`) fire only when the
+text or value really changed: a rejected character does not notify.
 
 Combine publishers: `textPublisher`, `deleteBackwardEvents`, `clearButtonEvents`
 (the events do not fire on subscription), `isCompletePublisher`.
@@ -339,7 +352,7 @@ Package-level tests (transformer logic and the real `MaskTextField`, no host app
 
 ```sh
 xcodebuild -scheme MaskTextField-Package \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
   test
 ```
 
